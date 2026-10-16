@@ -136,7 +136,17 @@ h1 {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
-.file-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+/* 투명한 파일 입력을 버튼 위에 그대로 덮어서, 누르면 입력 자체가 눌리게 */
+.file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
 
 .pick {
   position: relative;
@@ -161,6 +171,26 @@ h1 {
 .pick-text { display: flex; flex-direction: column; min-width: 0; }
 .pick-title { font-weight: 600; font-size: 17px; }
 .pick-sub { font-size: 13px; color: var(--muted); }
+
+.paste {
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 14px;
+  outline: none;
+  caret-color: transparent;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.paste:empty::before {
+  content: attr(data-placeholder);
+  white-space: pre-line;
+  color: var(--muted);
+}
+.paste:focus { border-color: var(--accent); }
 
 /* settings panel */
 .panel {
@@ -276,6 +306,8 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
 .name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dims { font-family: var(--f-num); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .dims b { font-weight: 500; color: var(--fg); }
+.quality { font-size: 12px; font-weight: 600; color: var(--muted); }
+.quality.same { color: var(--accent); }
 .chip {
   flex: none;
   font-size: 12px; font-weight: 600;
@@ -333,8 +365,8 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
     <p class="lede">사진 맨 아래 워터마크 줄만 잘라내요. 사진은 이 폰 안에서만 처리되고 어디에도 올라가지 않아요.</p>
   </header>
 
-  <label class="pick" for="file">
-    <input class="file-input" type="file" id="file" accept="image/*" multiple>
+  <div class="pick">
+    <input class="file-input" type="file" id="file" accept="image/*" multiple aria-label="사진 고르기">
     <span class="pick-icon" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L6 21"/></svg>
     </span>
@@ -342,7 +374,11 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
       <span class="pick-title" id="pickTitle">사진 고르기</span>
       <span class="pick-sub">여러 장을 한 번에 골라도 돼요</span>
     </span>
-  </label>
+  </div>
+
+  <div class="paste" id="paste" contenteditable="true" role="textbox" inputmode="none" spellcheck="false"
+       aria-label="사진 붙여넣기 칸"
+       data-placeholder="사진 고르기가 안 열리면 여기에 붙여넣으세요&#10;사진 앱에서 사진을 '복사'한 뒤, 이 칸을 길게 눌러 '붙여넣기'"></div>
 
   <section class="panel" aria-label="자르기 설정">
     <div class="field">
@@ -371,7 +407,7 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
       <span class="knob" aria-hidden="true"></span>
       <span class="switch-text">
         <span class="label">원래 비율 유지</span>
-        <small>양옆도 조금씩 잘라서 3:4 같은 원래 비율을 지켜요</small>
+        <small>양옆도 조금씩 잘라서 3:4 같은 원래 비율을 지켜요. 켜면 사진을 다시 압축해요(97%)</small>
       </span>
     </label>
 
@@ -385,7 +421,7 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
 
 <div class="bar" id="bar" hidden>
   <div class="bar-inner">
-    <label class="btn btn-ghost" for="file">다시 고르기</label>
+    <button class="btn btn-ghost" type="button" id="repick">다시 고르기</button>
     <button class="btn btn-primary" type="button" id="saveAll">모두 저장</button>
   </div>
 </div>
@@ -393,8 +429,227 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
+/* 무손실 JPEG 아래 자르기.
+   기본(baseline) JPEG는 위에서부터 MCU 줄 단위로 압축 데이터가 이어져 있어서,
+   남길 줄까지의 데이터만 그대로 복사하고 높이 값만 바꾸면 다시 압축하지 않고 자를 수 있어요.
+   EXIF(썸네일 포함), MPF, HDR 게인맵처럼 잘리기 전 원본 모습이 남는 부분은 빼요. */
+const JpegCrop = (() => {
+  function ascii(u8, p, s) {
+    for (let i = 0; i < s.length; i++) if (u8[p + i] !== s.charCodeAt(i)) return false;
+    return true;
+  }
+
+  function exifOrientation(u8, p, end) {
+    const t = p + 6;
+    if (t + 8 > end) return 1;
+    const le = u8[t] === 0x49;
+    const u16 = (o) => (le ? u8[o] | (u8[o + 1] << 8) : (u8[o] << 8) | u8[o + 1]);
+    const u32 = (o) => (le
+      ? (u8[o] | (u8[o + 1] << 8) | (u8[o + 2] << 16) | (u8[o + 3] << 24)) >>> 0
+      : ((u8[o] << 24) | (u8[o + 1] << 16) | (u8[o + 2] << 8) | u8[o + 3]) >>> 0);
+    const ifd = t + u32(t + 4);
+    if (ifd + 2 > end) return 1;
+    const n = u16(ifd);
+    for (let i = 0; i < n; i++) {
+      const e = ifd + 2 + i * 12;
+      if (e + 12 > end) break;
+      if (u16(e) === 0x0112) return u16(e + 8);
+    }
+    return 1;
+  }
+
+  function buildHuffman(counts, symbols) {
+    const maxcode = new Int32Array(18).fill(-1);
+    const mincode = new Int32Array(17);
+    const valptr = new Int32Array(17);
+    let code = 0, k = 0;
+    for (let l = 1; l <= 16; l++) {
+      const n = counts[l - 1];
+      if (n) {
+        valptr[l] = k;
+        mincode[l] = code;
+        code += n;
+        k += n;
+        maxcode[l] = code - 1;
+      }
+      code <<= 1;
+    }
+    return { maxcode, mincode, valptr, symbols };
+  }
+
+  // 구조를 읽어서 무손실로 자를 수 있는 JPEG면 정보를, 아니면 null을 돌려줘요.
+  function parse(u8) {
+    if (u8.length < 4 || u8[0] !== 0xFF || u8[1] !== 0xD8) return null;
+    const keep = [];
+    const dc = [], ac = [];
+    let sof = null, sos = null, dri = 0, orientation = 1;
+    let i = 2;
+    while (i + 4 <= u8.length) {
+      if (u8[i] !== 0xFF) return null;
+      const m = u8[i + 1];
+      if (m === 0xFF) { i++; continue; }
+      if (m === 0xD8 || m === 0x01 || (m >= 0xD0 && m <= 0xD7)) { i += 2; continue; }
+      if (m === 0xD9) return null;
+      const len = (u8[i + 2] << 8) | u8[i + 3];
+      const end = i + 2 + len;
+      if (len < 2 || end > u8.length) return null;
+      const p = i + 4;
+      const seg = u8.subarray(i, end);
+      if (m === 0xC0 || m === 0xC1) {
+        if (sof || u8[p] !== 8) return null;
+        const Y = (u8[p + 1] << 8) | u8[p + 2];
+        const X = (u8[p + 3] << 8) | u8[p + 4];
+        const nf = u8[p + 5];
+        if (!X || !Y || !nf) return null;
+        const comps = [];
+        for (let k = 0; k < nf; k++) {
+          const q = p + 6 + k * 3;
+          comps.push({ id: u8[q], h: u8[q + 1] >> 4, v: u8[q + 1] & 15 });
+        }
+        sof = { X, Y, comps };
+        keep.push({ seg, sof: true });
+      } else if (m >= 0xC2 && m <= 0xCF && m !== 0xC4) {
+        return null; // 프로그레시브·산술 부호화 등은 다시 압축하는 방식으로
+      } else if (m === 0xC4) {
+        let q = p;
+        while (q < end) {
+          const tc = u8[q] >> 4, th = u8[q] & 15;
+          const counts = u8.subarray(q + 1, q + 17);
+          let total = 0;
+          for (let k = 0; k < 16; k++) total += counts[k];
+          if (q + 17 + total > end) return null;
+          const table = buildHuffman(counts, u8.slice(q + 17, q + 17 + total));
+          (tc === 0 ? dc : ac)[th] = table;
+          q += 17 + total;
+        }
+        keep.push({ seg });
+      } else if (m === 0xDD) {
+        dri = (u8[p] << 8) | u8[p + 1];
+        keep.push({ seg });
+      } else if (m === 0xDB || m === 0xE0 || m === 0xEE) {
+        keep.push({ seg }); // 양자화 표, JFIF, Adobe(색 변환 정보)
+      } else if (m === 0xE2) {
+        if (ascii(u8, p, "ICC_PROFILE\0")) keep.push({ seg }); // 색 프로필은 남겨요
+      } else if (m === 0xE1) {
+        if (ascii(u8, p, "Exif\0\0")) orientation = exifOrientation(u8, p, end);
+      } else if (m === 0xDA) {
+        const ns = u8[p];
+        const comps = [];
+        for (let k = 0; k < ns; k++) comps.push({ id: u8[p + 1 + k * 2], td: u8[p + 2 + k * 2] >> 4, ta: u8[p + 2 + k * 2] & 15 });
+        const q = p + 1 + ns * 2;
+        if (u8[q] !== 0 || u8[q + 1] !== 63 || u8[q + 2] !== 0) return null;
+        sos = { seg, dataStart: end, comps };
+        break;
+      } else if (m === 0xDC) {
+        return null;
+      }
+      i = end;
+    }
+    if (!sof || !sos || sos.comps.length !== sof.comps.length) return null;
+
+    const hmax = Math.max(...sof.comps.map((c) => c.h));
+    const vmax = Math.max(...sof.comps.map((c) => c.v));
+    const single = sof.comps.length === 1;
+    const mcuH = single ? 8 : 8 * vmax;
+    const mcusPerRow = single ? Math.ceil(sof.X / 8) : Math.ceil(sof.X / (8 * hmax));
+    const scan = [];
+    for (const sc of sos.comps) {
+      const c = sof.comps.find((x) => x.id === sc.id);
+      if (!c || !dc[sc.td] || !ac[sc.ta]) return null;
+      scan.push({ blocks: single ? 1 : c.h * c.v, dc: dc[sc.td], ac: ac[sc.ta] });
+    }
+    return { u8, width: sof.X, height: sof.Y, orientation, mcuH, mcusPerRow, dri, keep, sos, scan };
+  }
+
+  // 위에서 keepH 픽셀만 남긴 JPEG 바이트(Blob 조각 목록)를 만들어요. keepH는 mcuH의 배수.
+  function cropBottom(info, keepH) {
+    const { u8, mcuH, mcusPerRow, dri, scan } = info;
+    if (keepH <= 0 || keepH % mcuH !== 0 || keepH >= info.height) throw new Error("bad height");
+    const total = (keepH / mcuH) * mcusPerRow;
+
+    let pos = info.sos.dataStart, cur = 0, left = 0, curStart = pos;
+    function load() {
+      const b = u8[pos];
+      if (b === 0xFF) {
+        if (u8[pos + 1] !== 0x00) throw new Error("marker in data");
+        curStart = pos; pos += 2; cur = 0xFF; left = 8;
+        return;
+      }
+      if (pos >= u8.length) throw new Error("eof");
+      curStart = pos; pos += 1; cur = b; left = 8;
+    }
+    function bit() {
+      if (left === 0) load();
+      left--;
+      return (cur >> left) & 1;
+    }
+    function skip(n) { for (let k = 0; k < n; k++) bit(); }
+    function decode(t) {
+      let code = bit(), l = 1;
+      while (code > t.maxcode[l]) {
+        code = (code << 1) | bit();
+        if (++l > 16) throw new Error("bad huffman");
+      }
+      return t.symbols[t.valptr[l] + code - t.mincode[l]];
+    }
+    function restart() {
+      left = 0;
+      while (u8[pos] === 0xFF && u8[pos + 1] === 0xFF) pos++;
+      if (u8[pos] !== 0xFF || (u8[pos + 1] & 0xF8) !== 0xD0) throw new Error("missing restart");
+      pos += 2;
+    }
+
+    for (let m = 0; m < total; m++) {
+      if (dri && m > 0 && m % dri === 0) restart();
+      for (const c of scan) {
+        for (let b = 0; b < c.blocks; b++) {
+          skip(decode(c.dc));
+          for (let k = 1; k < 64;) {
+            const rs = decode(c.ac);
+            const r = rs >> 4, s = rs & 15;
+            if (s === 0) {
+              if (r !== 15) break;
+              k += 16;
+              continue;
+            }
+            k += r;
+            skip(s);
+            k++;
+          }
+        }
+      }
+    }
+
+    const parts = [new Uint8Array([0xFF, 0xD8])];
+    for (const k of info.keep) {
+      if (k.sof) {
+        const s = k.seg.slice();
+        s[5] = keepH >> 8;
+        s[6] = keepH & 255;
+        parts.push(s);
+      } else {
+        parts.push(k.seg);
+      }
+    }
+    parts.push(info.sos.seg);
+    if (left > 0) {
+      parts.push(u8.subarray(info.sos.dataStart, curStart));
+      const last = cur | ((1 << left) - 1);
+      parts.push(last === 0xFF ? new Uint8Array([0xFF, 0x00]) : new Uint8Array([last]));
+    } else {
+      parts.push(u8.subarray(info.sos.dataStart, pos));
+    }
+    parts.push(new Uint8Array([0xFF, 0xD9]));
+    return parts;
+  }
+
+  return { parse, cropBottom };
+})();
+</script>
+
+<script>
 (() => {
-  const DEFAULT_RATIO = 0.085;   // 짧은 변의 8.5% (1440px 사진이면 122px) — 레드노트 워터마크 높이보다 조금 넉넉하게
+  const DEFAULT_RATIO = 0.085;   // 짧은 변의 8.5% (1440×1920 사진이면 122px, 무손실 경계에 맞춰 128px) — 워터마크(약 107px)보다 넉넉하게
   const STORE_KEY = "wmcut:v1";
   const $ = (id) => document.getElementById(id);
 
@@ -418,14 +673,20 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
   /* ---------- geometry ---------- */
   function geom(it) {
     const { w, h } = it;
-    const cut = Math.max(1, Math.min(h - 1, Math.round(Math.min(w, h) * state.ratio)));
+    let cut = Math.max(1, Math.min(h - 1, Math.round(Math.min(w, h) * state.ratio)));
+    // 무손실로 자를 수 있으면 압축 단위(보통 16px) 경계에 맞춰 몇 px 더 잘라요
+    let lossless = false;
+    if (it.jpeg && !state.keepAspect) {
+      const keepH = Math.floor((h - cut) / it.jpeg.mcuH) * it.jpeg.mcuH;
+      if (keepH > 0) { cut = h - keepH; lossless = true; }
+    }
     const outH = h - cut;
     let outW = w, x0 = 0;
     if (state.keepAspect) {
       outW = Math.max(1, Math.min(w, Math.round(outH * w / h)));
       x0 = Math.floor((w - outW) / 2);
     }
-    return { cut, outW, outH, x0, key: cut + "|" + outW + "|" + x0 };
+    return { cut, outW, outH, x0, lossless, key: [cut, outW, x0, lossless ? "L" : "R"].join("|") };
   }
 
   /* ---------- helpers ---------- */
@@ -600,6 +861,11 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
       document.createTextNode(`${it.w}×${it.h} → `),
       el("b", null, `${g.outW}×${g.outH}`)
     );
+    if (it.qualityEl) {
+      const same = g.lossless || it.type === "image/png";
+      it.qualityEl.className = "quality" + (same ? " same" : "");
+      it.qualityEl.textContent = same ? "화질 그대로 (다시 압축 안 함)" : "고화질로 다시 압축 (97%)";
+    }
     if (it.savedEl) it.savedEl.hidden = it.savedKey !== g.key;
   }
 
@@ -656,6 +922,8 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
       if (it.sample) {
         info.append(el("div", "sample-note", "위에서 내 사진을 고르면 바뀌어요"));
       } else {
+        it.qualityEl = el("div", "quality");
+        info.append(it.qualityEl);
         const chip = el("span", "chip", "저장됨");
         chip.hidden = true;
         const btn = el("button", "btn btn-ghost btn-sm", "저장");
@@ -678,16 +946,40 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
     return `${base}_crop.${it.type === "image/png" ? "png" : "jpg"}`;
   }
 
+  function decodeSize(blob) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => { resolve([img.naturalWidth, img.naturalHeight]); URL.revokeObjectURL(url); };
+      img.onerror = () => { resolve(null); URL.revokeObjectURL(url); };
+      img.src = url;
+    });
+  }
+
   async function makeBlob(it) {
-    const g = geom(it);
+    let g = geom(it);
     if (it.blob && it.blobKey === g.key) return it.blob;
+    if (g.lossless) {
+      try {
+        const blob = new Blob(JpegCrop.cropBottom(it.jpeg, g.outH), { type: "image/jpeg" });
+        const size = await decodeSize(blob);
+        if (size && size[0] === g.outW && size[1] === g.outH) {
+          if (geom(it).key === g.key) { it.blob = blob; it.blobKey = g.key; }
+          return blob;
+        }
+      } catch (e) {}
+      // 무손실로 못 자르는 파일이면 다시 압축하는 방식으로 바꿔요
+      it.jpeg = null;
+      refresh();
+      g = geom(it);
+    }
     const c = document.createElement("canvas");
     c.width = g.outW;
     c.height = g.outH;
     const ctx = c.getContext("2d");
     ctx.drawImage(it.src, g.x0, 0, g.outW, g.outH, 0, 0, g.outW, g.outH);
     const type = it.type === "image/png" ? "image/png" : "image/jpeg";
-    const blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), type, .95));
+    const blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), type, .97));
     c.width = 0; c.height = 0;
     if (geom(it).key === g.key) { it.blob = blob; it.blobKey = g.key; }
     return blob;
@@ -744,7 +1036,10 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
     try {
       const dl = await getDownloads();
       const jobs = [];
-      for (const it of items) jobs.push({ it, key: geom(it).key, blob: await makeBlob(it) });
+      for (const it of items) {
+        const blob = await makeBlob(it);
+        jobs.push({ it, key: geom(it).key, blob });
+      }
 
       if (dl) {
         let done = 0;
@@ -809,37 +1104,103 @@ input[type="range"] { flex: 1; min-width: 0; height: 32px; margin: 0; accent-col
     });
   }
 
-  $("file").addEventListener("change", async (ev) => {
-    const input = ev.target;
-    const files = Array.from(input.files || []);
-    input.value = "";
-    if (!files.length) return;
+  async function readJpeg(file, w, h) {
+    try {
+      const u8 = new Uint8Array(await file.arrayBuffer());
+      const info = JpegCrop.parse(u8);
+      if (info && info.orientation === 1 && info.width === w && info.height === h) return info;
+    } catch (e) {}
+    return null;
+  }
+
+  let pasteCount = 0;
+  async function loadFiles(files, append) {
     const next = [];
     let failed = 0;
     for (const [i, f] of files.entries()) {
       try {
         const { img, url } = await loadImage(f);
+        const w = img.naturalWidth, h = img.naturalHeight;
+        let name = f.name || `사진 ${i + 1}`;
+        if (append) name = `붙여넣은 사진 ${++pasteCount}`;
         next.push({
           id: "f" + Date.now() + "_" + i,
-          name: f.name || `사진 ${i + 1}`,
+          name,
           type: f.type,
           src: img,
           url,
-          w: img.naturalWidth,
-          h: img.naturalHeight,
+          w,
+          h,
+          jpeg: await readJpeg(f, w, h),
         });
       } catch (e) {
         failed++;
       }
     }
     if (!next.length) { toast("사진을 열지 못했어요. 다른 사진으로 해 주세요"); return; }
-    for (const it of state.items) if (it.url) URL.revokeObjectURL(it.url);
-    state.items = next;
+    const kept = append ? state.items.filter((it) => !it.sample) : [];
+    for (const it of state.items) if (it.url && !kept.includes(it)) URL.revokeObjectURL(it.url);
+    state.items = kept.concat(next);
     encRun++;
     renderList();
     if (failed) toast(`${failed}장은 열지 못했어요`);
+    else if (append) toast(`사진을 붙여넣었어요 · 지금 ${state.items.length}장`);
     else toast(next.length > 1 ? `${next.length}장 불러왔어요` : "사진을 불러왔어요");
+  }
+
+  $("file").addEventListener("change", (ev) => {
+    const input = ev.target;
+    const files = Array.from(input.files || []);
+    input.value = "";
+    if (files.length) loadFiles(files, false);
   });
+  $("repick").addEventListener("click", () => $("file").click());
+
+  /* 붙여넣기: 사진 고르기 창이 안 열리는 앱 화면에서도 쓸 수 있게 */
+  function dataUrlToFile(src) {
+    const m = /^data:(image\/[\w.+-]+);base64,(.*)$/i.exec(src);
+    if (!m) return null;
+    try {
+      const bin = atob(m[2]);
+      const u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return new File([u8], "pasted", { type: m[1] });
+    } catch (e) {
+      return null;
+    }
+  }
+  const pasteBox = $("paste");
+  document.addEventListener("paste", (e) => {
+    const cd = e.clipboardData;
+    if (!cd) return;
+    const inBox = e.target instanceof Node && pasteBox.contains(e.target);
+    let files = Array.from(cd.files || []).filter((f) => f.type.startsWith("image/"));
+    if (!files.length) {
+      for (const item of Array.from(cd.items || [])) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const f = item.getAsFile();
+          if (f) files.push(f);
+        }
+      }
+    }
+    if (!files.length) {
+      const html = cd.getData("text/html") || "";
+      for (const m of html.matchAll(/<img[^>]+src="(data:image\/[^"]+)"/gi)) {
+        const f = dataUrlToFile(m[1]);
+        if (f) files.push(f);
+      }
+    }
+    if (files.length) {
+      e.preventDefault();
+      pasteBox.textContent = "";
+      pasteBox.blur();
+      loadFiles(files, true);
+    } else if (inBox) {
+      e.preventDefault();
+      toast("붙여넣은 것 중에 사진이 없어요. 사진 앱에서 '복사'를 먼저 해 주세요");
+    }
+  });
+  pasteBox.addEventListener("input", () => { pasteBox.textContent = ""; });
 
   /* ---------- controls ---------- */
   function setRatio(v) {
