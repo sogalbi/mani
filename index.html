@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d7a50">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
 <!-- app:start -->
@@ -1060,9 +1064,11 @@ const JpegCrop = (() => {
         return;
       }
 
-      // Claude 화면 밖(일반 브라우저)에서 열었을 때: 공유 시트 → '이미지 저장'
+      // Claude 밖(폰 브라우저)에서 열었을 때
+      // 아이폰: 공유 시트 → '이미지 저장'. 안드로이드: 공유 시트에 저장 메뉴가 없어서 바로 내려받기(갤러리 Download 앨범)
+      const android = /Android/i.test(navigator.userAgent);
       const files = jobs.map((j) => new File([j.blob], outName(j.it), { type: j.blob.type }));
-      if (navigator.canShare && navigator.canShare({ files })) {
+      if (!android && navigator.canShare && navigator.canShare({ files })) {
         try {
           await navigator.share({ files });
           jobs.forEach((j) => markSaved(j.it, j.key));
@@ -1071,7 +1077,8 @@ const JpegCrop = (() => {
           if (e && e.name === "AbortError") return;
         }
       }
-      for (const j of jobs) {
+      for (const [n, j] of jobs.entries()) {
+        if (n) await new Promise((r) => setTimeout(r, 400));
         const url = URL.createObjectURL(j.blob);
         const a = document.createElement("a");
         a.href = url;
@@ -1082,7 +1089,8 @@ const JpegCrop = (() => {
         setTimeout(() => URL.revokeObjectURL(url), 60000);
         markSaved(j.it, j.key);
       }
-      toast(jobs.length > 1 ? `${jobs.length}장 내려받았어요` : "내려받았어요");
+      const count = jobs.length > 1 ? `${jobs.length}장 ` : "";
+      toast(android ? `${count}저장했어요 · 갤러리의 Download 앨범에 있어요` : `${count}내려받았어요`);
     } catch (e) {
       toast("사진을 만들지 못했어요. 사진이 너무 크면 몇 장씩 나눠서 해 주세요");
     } finally {

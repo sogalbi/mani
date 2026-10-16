@@ -14,4 +14,13 @@
 - PNG는 PNG로 저장해서 화질이 그대로예요.
 - "원래 비율 유지"를 켰을 때나 프로그레시브 JPEG·HEIC·WebP 같은 파일은 품질 97% JPEG로 다시 압축해요.
 
-폰 브라우저에서 열면 "저장"이 공유 시트로 열리고, 거기서 "이미지 저장"을 누르면 사진첩에 들어가요.
+## 폰 앱처럼 쓰기 (GitHub Pages)
+
+한 번만 켜 두면 Claude 없이 `https://sogalbi.github.io/mani/` 로 바로 열려요.
+
+1. 폰 브라우저에서 `github.com/sogalbi/mani/settings/pages` 열기
+2. Build and deployment → Source: **Deploy from a branch**
+3. Branch: **ccr-bc37d147-85gn25**, 폴더 **/ (root)** → **Save**
+4. 1~2분 뒤 주소를 열고 Chrome 메뉴(⋮) → **홈 화면에 추가**(또는 **앱 설치**)
+
+저장하면 안드로이드는 갤러리의 Download 앨범으로, 아이폰은 공유 시트의 "이미지 저장"으로 사진첩에 들어가요.
