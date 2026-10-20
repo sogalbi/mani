@@ -1,0 +1,1923 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c2185b">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<!-- app:start -->
+<title>드립 카드</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700;900&display=swap">
+<style>
+/* Layout: one phone-width column. The live card sits on top, the form below reads in the same order as the card (제목 → 아이디 › 주제 → 본문 → 회색 상자), save bar pinned to the bottom. Wide screens: sticky card on the left, form on the right. */
+:root {
+  --bg: #f1eff4;
+  --surface: #ffffff;
+  --fg: #18161c;
+  --muted: #676170;
+  --line: #dcd7e2;
+  --accent: #c2185b;
+  --accent-fg: #ffffff;
+  --accent-soft: #fbe5ee;
+  --warn: #b4321f;
+  --card-edge: rgba(24, 22, 28, .12);
+  --shadow: 0 1px 2px rgba(24, 22, 28, .06), 0 12px 32px rgba(24, 22, 28, .08);
+  --f-ui: "Gothic A1", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121015;
+    --surface: #1d1a22;
+    --fg: #eeeaf3;
+    --muted: #a39dad;
+    --line: #34303b;
+    --accent: #ff5c95;
+    --accent-fg: #2a0414;
+    --accent-soft: #3b1a2a;
+    --warn: #ff8a72;
+    --card-edge: rgba(255, 255, 255, .10);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121015;
+  --surface: #1d1a22;
+  --fg: #eeeaf3;
+  --muted: #a39dad;
+  --line: #34303b;
+  --accent: #ff5c95;
+  --accent-fg: #2a0414;
+  --accent-soft: #3b1a2a;
+  --warn: #ff8a72;
+  --card-edge: rgba(255, 255, 255, .10);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-ui);
+  font-size: 16px;
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* header */
+.head { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
+h1 {
+  margin: 0;
+  font-weight: 900;
+  font-size: 42px;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+  text-wrap: balance;
+}
+.lede { margin: 2px 0 0; color: var(--muted); font-size: 15px; max-width: 34em; }
+
+.layout { display: flex; flex-direction: column; gap: 20px; }
+.editor { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* card preview */
+.stage { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.frame {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px var(--card-edge), var(--shadow);
+}
+.frame canvas { display: block; width: 100%; height: auto; max-width: 100%; }
+.tag {
+  position: absolute;
+  top: 10px; left: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.stage-note { margin: 0; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage-note.warn { color: var(--warn); font-weight: 600; }
+
+/* panels */
+.panel {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.panel-title { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.label { font-weight: 700; font-size: 15px; display: flex; align-items: baseline; gap: 8px; }
+.opt { font-weight: 400; font-size: 13px; color: var(--muted); }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.hint b { color: var(--fg); font-weight: 700; }
+
+.text-in {
+  width: 100%;
+  min-width: 0;
+  font: 400 16px/1.6 var(--f-ui);
+  color: var(--fg);
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 14px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.text-in::placeholder { color: var(--muted); opacity: .8; font-weight: 400; }
+.text-in:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
+#title { font-weight: 900; font-size: 20px; line-height: 1.35; letter-spacing: -.02em; min-height: 82px; }
+#body { min-height: 200px; }
+#box { min-height: 76px; }
+#handle { font-weight: 700; }
+
+/* 아이디 › 주제 row: mirrors the card's header line */
+.who { display: flex; align-items: center; gap: 12px; }
+.avatar-wrap { position: relative; flex: none; width: 56px; height: 56px; }
+.avatar-pick {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e9e9e9;
+  cursor: pointer;
+}
+.avatar-pick img, .avatar-pick svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.avatar-badge {
+  position: absolute;
+  right: -3px; bottom: -3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: 0 0 0 2px var(--surface);
+  display: grid; place-items: center;
+  pointer-events: none;
+}
+.file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.avatar-pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.who-fields { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.who-fields .text-in { flex: 1 1 0; }
+.chev { flex: none; color: var(--muted); font-size: 22px; line-height: 1; }
+.who-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 2px; }
+
+/* segmented choices */
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.seg span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px 6px;
+}
+.seg small { font-size: 11px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.seg input:checked + span { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+
+/* buttons */
+.btn {
+  appearance: none;
+  border: 0;
+  border-radius: 12px;
+  font: 700 16px/1 var(--f-ui);
+  min-height: 48px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-ghost { background: var(--surface); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.btn-soft { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+
+/* 자동으로 쓰기 */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips label { position: relative; cursor: pointer; }
+.chips input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.chips label > span {
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.chips input:checked + span { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.chips input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.topic-groups { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.topic-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  margin: 0 -2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.topic-row::-webkit-scrollbar { display: none; }
+.topic-row.chips { flex-wrap: nowrap; }
+.topic-row .group-label { flex: none; min-width: 4.8em; white-space: nowrap; font-size: 12px; font-weight: 700; color: var(--muted); }
+.topic-row .group-label.hot { color: var(--accent); }
+.topic-row label { flex: none; }
+.switch { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.knob {
+  flex: none;
+  width: 48px; height: 28px;
+  border-radius: 999px;
+  background: var(--line);
+  position: relative;
+  transition: background .15s;
+}
+.knob::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+  transition: transform .15s;
+}
+.switch input:checked + .knob { background: var(--accent); }
+.switch input:checked + .knob::after { transform: translateX(20px); }
+.switch input:focus-visible + .knob { outline: 3px solid var(--accent); outline-offset: 2px; }
+.switch-text { display: flex; flex-direction: column; min-width: 0; }
+.switch-text small { font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .knob, .knob::after { transition: none; } }
+.auto-row { display: flex; gap: 10px; }
+.auto-row .btn-soft { flex: 1; min-width: 0; }
+.stepper { display: flex; align-items: center; gap: 14px; }
+.step {
+  flex: none;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--fg);
+  font: 600 22px/1 var(--f-ui);
+  cursor: pointer;
+}
+.step:disabled { opacity: .4; cursor: default; }
+.step:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.count-out { min-width: 3.2em; text-align: center; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* 캐러셀: 미리보기 아래 작은 카드 줄 */
+.deck { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.deck-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.deck-title { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.deck-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.thumb {
+  position: relative;
+  flex: none;
+  width: 84px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px var(--card-edge);
+  cursor: pointer;
+  scroll-snap-align: center;
+}
+.thumb canvas { display: block; width: 100%; height: auto; }
+.thumb.active { box-shadow: 0 0 0 3px var(--accent); }
+.thumb:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.thumb .num, .thumb .ok {
+  position: absolute;
+  bottom: 4px;
+  min-width: 20px; height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 700; line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.thumb .num { left: 4px; background: var(--fg); color: var(--bg); }
+.thumb .ok { right: 4px; background: var(--accent); color: var(--accent-fg); }
+.deck-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.tool {
+  appearance: none;
+  border: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--fg);
+  font: 600 14px/1 var(--f-ui);
+  cursor: pointer;
+}
+.tool:disabled { opacity: .45; cursor: default; }
+.tool:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.tool-warn { color: var(--warn); }
+.deck-start { align-self: flex-start; }
+.btn:disabled { opacity: .55; cursor: default; }
+.linkish {
+  appearance: none; border: 0; background: none; padding: 6px 2px;
+  font: 700 14px/1 var(--f-ui); color: var(--accent); cursor: pointer;
+}
+.btn:focus-visible, .linkish:focus-visible, .seg input:focus-visible + span {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  background: var(--surface);
+  box-shadow: 0 -1px 0 var(--line), 0 -8px 24px rgba(0, 0, 0, .06);
+  padding-top: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.bar-inner { max-width: 560px; margin: 0 auto; display: flex; gap: 10px; }
+.bar .btn-primary { flex: 1; min-width: 0; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+  transform: translate(-50%, 8px);
+  max-width: calc(100% - 32px);
+  width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 6;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.show.has-action { pointer-events: auto; }
+.toast button {
+  appearance: none; border: 0; background: none; padding: 4px 0;
+  font: 700 14px/1 var(--f-ui); color: var(--accent-soft); cursor: pointer; white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+@media (min-width: 880px) {
+  .wrap { max-width: 1040px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .stage { position: sticky; top: 20px; }
+  .bar-inner { max-width: 1040px; justify-content: flex-end; }
+  .bar .btn-primary { flex: 0 0 240px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <p class="eyebrow">인스타 게시물 · 캐러셀</p>
+    <h1>드립 카드</h1>
+    <p class="lede">제목이랑 글만 쓰면 인스타 피드에 바로 올릴 수 있는 1080px 이미지로 만들어 줘요. 캐러셀은 10장까지 한 번에 만들 수 있어요. 쓴 글은 이 폰에만 남아요.</p>
+  </header>
+
+  <div class="layout">
+    <section class="stage" aria-label="카드 미리보기">
+      <div class="deck" id="deck" hidden>
+        <div class="deck-head">
+          <span class="deck-title" id="deckTitle">캐러셀</span>
+          <button class="linkish" type="button" id="deckClose">캐러셀 끝내기</button>
+        </div>
+        <div class="deck-strip" id="deckStrip" role="list" aria-label="캐러셀 카드"></div>
+        <div class="deck-tools">
+          <button class="tool" type="button" id="deckLeft">‹ 앞으로</button>
+          <button class="tool" type="button" id="deckRight">뒤로 ›</button>
+          <button class="tool" type="button" id="deckAdd">+ 빈 장</button>
+          <button class="tool tool-warn" type="button" id="deckRemove">이 장 빼기</button>
+        </div>
+      </div>
+      <div class="frame">
+        <canvas id="card" width="1080" height="1440" role="img" aria-label="카드 미리보기"></canvas>
+        <span class="tag" id="exampleTag" hidden>예시</span>
+      </div>
+      <p class="stage-note" id="note" aria-live="polite"></p>
+
+      <button class="linkish deck-start" type="button" id="deckStart">+ 장 추가해서 캐러셀 만들기</button>
+    </section>
+
+    <div class="editor">
+      <section class="panel" id="autoPanel" aria-labelledby="autoTitle" hidden>
+        <h2 class="panel-title" id="autoTitle">자동으로 만들기</h2>
+        <div class="field">
+          <label class="label" for="idea">있었던 일이나 주제 <span class="opt">비워 둬도 돼요</span></label>
+          <textarea class="text-in" id="idea" rows="3" spellcheck="false" placeholder="대충 써도 돼요&#10;예) 여사친&#10;예) 한의사 썸남한테 플러팅했다가 진짜 부정맥 진단받음"></textarea>
+        </div>
+        <div class="field">
+          <span class="label" id="moodLabel">새로 지을 때 주제 <span class="opt">옆으로 밀면 더 있어요</span></span>
+          <div class="topic-groups" id="moods" role="radiogroup" aria-labelledby="moodLabel"></div>
+        </div>
+        <div class="field">
+          <span class="label" id="kindLabel">카드 종류 <span class="opt">여러 개 고르면 섞어서 만들어요</span></span>
+          <div class="chips" id="kinds" role="group" aria-labelledby="kindLabel"></div>
+        </div>
+        <div class="field">
+          <span class="label" id="countLabel">장 수</span>
+          <div class="stepper" role="group" aria-labelledby="countLabel">
+            <button class="step" type="button" id="countMinus" aria-label="한 장 줄이기">−</button>
+            <output class="count-out" id="countOut" aria-live="polite">4장</output>
+            <button class="step" type="button" id="countPlus" aria-label="한 장 늘리기">+</button>
+          </div>
+          <p class="hint">1장은 지금 카드를 바꿔요. 2장 이상은 캐러셀을 새로 만들어요 (최대 10장, 10장이면 1~2분).</p>
+        </div>
+        <label class="switch" for="tagLine">
+          <input type="checkbox" id="tagLine" checked>
+          <span class="knob" aria-hidden="true"></span>
+          <span class="switch-text">
+            <span class="label">마지막 줄에 태그·댓글 유도</span>
+            <small>"이거 보고 생각난 사람 태그ㅋㅋ"처럼 친구를 부르고 싶게 끝내요</small>
+          </span>
+        </label>
+        <div class="auto-row">
+          <button class="btn btn-soft" type="button" id="autoGo">4장 캐러셀 만들어 줘</button>
+          <button class="btn btn-ghost" type="button" id="autoStop" hidden>그만</button>
+        </div>
+        <p class="hint" id="autoNote" aria-live="polite">Claude가 큰 제목·주제·본문을 채워 줘요. 다 쓴 장부터 위에 바로 나와요.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="writeTitle">
+        <h2 class="panel-title" id="writeTitle">글 쓰기</h2>
+
+        <div class="field">
+          <label class="label" for="title">큰 제목 <span class="opt">비워도 돼요</span></label>
+          <textarea class="text-in" id="title" rows="2" spellcheck="false" placeholder="예) 남편이 갑자기&#10;다정해질 때"></textarea>
+        </div>
+
+        <div class="field">
+          <span class="label" id="whoLabel">아이디 › 주제</span>
+          <div class="who" role="group" aria-labelledby="whoLabel">
+            <div class="avatar-wrap">
+              <div class="avatar-pick">
+                <input class="file-input" type="file" id="avatarFile" accept="image/*" aria-label="프로필 사진 고르기">
+                <img id="avatarImg" alt="" hidden>
+                <svg id="avatarBlank" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" fill="#e9e9e9"/><circle cx="28" cy="22.5" r="10.5" fill="#c4c4c4"/><ellipse cx="28" cy="56" rx="20" ry="17" fill="#c4c4c4"/></svg>
+              </div>
+              <span class="avatar-badge" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </span>
+            </div>
+            <div class="who-fields">
+              <input class="text-in" id="handle" type="text" placeholder="아이디" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="인스타 아이디">
+              <span class="chev" aria-hidden="true">›</span>
+              <input class="text-in" id="topic" type="text" placeholder="주제" autocomplete="off" spellcheck="false" aria-label="주제">
+            </div>
+          </div>
+          <div class="who-foot">
+            <p class="hint">동그라미를 누르면 프로필 사진을 넣어요</p>
+            <button class="linkish" type="button" id="avatarClear" hidden>사진 빼기</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="body">본문</label>
+          <textarea class="text-in" id="body" rows="8" spellcheck="false" placeholder="쓴 그대로 줄이 바뀌어요"></textarea>
+          <p class="hint">빈 줄은 문단 사이 간격이 돼요. <b>ㄴ</b>, <b>1.</b>, <b>&gt;</b>로 시작하는 줄은 길어져도 그 뒤에 맞춰 들여써져요. <b>{쪽}</b>처럼 중괄호로 감싸면 그 글자는 모자이크돼요 (제목·회색 상자도 돼요).</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="box">회색 상자 <span class="opt">비워도 돼요</span></label>
+          <textarea class="text-in" id="box" rows="2" spellcheck="false" placeholder="기사 한 줄처럼 회색 상자 안에 넣을 글"></textarea>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="lookTitle">
+        <h2 class="panel-title" id="lookTitle">모양</h2>
+        <div class="field">
+          <span class="label" id="ratioLabel">비율</span>
+          <div class="seg" role="radiogroup" aria-labelledby="ratioLabel">
+            <label><input type="radio" name="ratio" id="ratio34" value="3:4" checked><span>3:4<small>1080×1440</small></span></label>
+            <label><input type="radio" name="ratio" id="ratio45" value="4:5"><span>4:5<small>1080×1350</small></span></label>
+            <label><input type="radio" name="ratio" id="ratio11" value="1:1"><span>1:1<small>1080×1080</small></span></label>
+          </div>
+          <p class="hint">3:4는 프로필 격자에서도 잘리지 않고 그대로 보여요.</p>
+        </div>
+        <div class="field">
+          <span class="label" id="sizeLabel">글씨 크기</span>
+          <div class="seg" role="radiogroup" aria-labelledby="sizeLabel">
+            <label><input type="radio" name="size" id="sizeS" value="s"><span>작게</span></label>
+            <label><input type="radio" name="size" id="sizeM" value="m" checked><span>보통</span></label>
+            <label><input type="radio" name="size" id="sizeL" value="l"><span>크게</span></label>
+          </div>
+          <p class="hint">글이 길면 카드에 다 들어가게 알아서 줄여요.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <button class="btn btn-ghost" type="button" id="clear">새로 쓰기</button>
+    <button class="btn btn-ghost" type="button" id="share" hidden>공유</button>
+    <button class="btn btn-primary" type="button" id="save">이미지 저장</button>
+    <button class="btn btn-primary" type="button" id="saveAll" hidden>모두 저장</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- card spec (1080px wide, Threads-style post on white) ---------- */
+  const W = 1080;
+  const HEIGHTS = { "3:4": 1440, "4:5": 1350, "1:1": 1080 };
+  const SIZES = { s: .88, m: 1, l: 1.14 };
+  const STACK = '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+  const INK = {
+    paper: "#ffffff",
+    title: "#0b0b0b",
+    text: "#111111",
+    soft: "#9a9a9a",
+    boxBg: "#efefef",
+    boxText: "#333333",
+    avBg: "#e9e9e9",
+    avFg: "#c4c4c4",
+    hint: "#b9b9b9",
+  };
+  const M = {
+    padX: 56,        // avatar's left edge
+    right: 60,       // right margin
+    padY: 100,       // minimum top/bottom margin
+    avatar: 104,
+    avatarGap: 24,
+    title: 120, titleMin: 66, titleLH: 1.2, titleTrack: -.025, titleGap: 52,
+    name: 40, nameLH: 1.45,
+    body: 46, bodyLH: 1.55, blank: .5, bodyWeight: 500, bodyTrack: -.01,
+    box: 38, boxLH: 1.5, boxPadX: 34, boxPadY: 26, boxRadius: 20, boxGap: 26,
+  };
+  const HANG = /^(\s*(?:ㄴ|└|↳|>|-|·|•|\*|✔|✓|☑|□|\d{1,2}[.)]|[①-⑳])\s*)\S/;
+
+  const EXAMPLE = {
+    title: "남편이 갑자기\n다정해질 때",
+    handle: "kangdrip",
+    topic: "남편속마음",
+    body: "1. 시키지도 않은 설거지를 한다\n2. 내 폰 충전기를 먼저 꽂아준다\n3. 주말에 장 보러 같이 가자고 한다\n4. 안 물어본 회사 얘기를 한다\n\nㄴ 카드값 나오기 3일 전임ㅋㅋ\nㄴ 4번은 골프 약속 잡아놓은 거야ㅎ",
+    box: "",
+  };
+  const TEXT_FIELDS = ["title", "handle", "topic", "body", "box"];
+  const DRAFT_KEY = "dripcard:v1:draft";
+  const AVATAR_KEY = "dripcard:v1:avatar";   // 고른 사진(data URL), 뺐으면 "none"
+  // 기본 프로필 사진: 맥도날드 종이봉투 쓴 사진
+  const DEFAULT_AVATAR = "data:image/jpeg;base64,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";
+
+  // 자동으로 만들기에서 고르는 카드 종류
+  const FORMATS = [
+    { id: "story", label: "반전 썰", guide: "짧은 이야기. 장면이 바뀌면 빈 줄, 끝은 반전이나 펀치라인. 어울리면 마지막에 'ㄴ ' 댓글 한 줄." },
+    { id: "list", label: "특징 모음", guide: "제목은 '○○ 특징 모음'처럼. 본문은 '1. ' 번호 목록 4~5개, 빈 줄 하나, 'ㄴ ' 반전 한 줄." },
+    { id: "translate", label: "말 번역기", guide: "제목은 '○○ 말 번역기'처럼. “겉으로 하는 말” 한 줄, 다음 줄에 '> 속뜻'. 이런 쌍 3~4개를 빈 줄로 나누고 마지막에 'ㄴ ' 한 줄." },
+    { id: "diagnose", label: "자가진단", guide: "제목은 '○○ 자가진단'처럼. 증상 한 줄, 다음 줄에 '> 엉뚱한 병명'(예: 남편이 갑자기 멋있어 보인다 / > 백내장). 4~5쌍을 빈 줄 없이." },
+    { id: "tips", label: "꿀팁", guide: "제목은 '○○ 꿀팁'처럼. '1. ' 번호 팁 4~5개, 빈 줄 하나, 'ㄴ ' 반전 한 줄." },
+    { id: "chat", label: "대화", guide: "카톡처럼 '나: ', '남편: '처럼 말한 사람을 앞에 붙인 대화 4~8줄. 마지막 줄이 펀치라인." },
+    { id: "types", label: "유형 모음", guide: "제목은 '○○ 유형'처럼. '1. ○○형: 한 줄 설명' 4~5개, 빈 줄, 'ㄴ 나는 몇 번?'처럼 댓글을 부르는 한 줄." },
+    { id: "thennow", label: "그때 vs 지금", guide: "제목은 '연애 초 vs 3년 차'처럼. 같은 상황을 '그때: …' 다음 줄 '지금: …'으로. 이런 쌍 3~4개를 빈 줄로 나누고 마지막 'ㄴ ' 한 줄." },
+    { id: "checklist", label: "체크리스트", guide: "제목은 '○○ 체크리스트'나 '이러면 ○○이다'처럼. '✔ '로 시작하는 항목 5~6개, 빈 줄, 'ㄴ 몇 개 해당? 댓글로ㅋㅋ'처럼 한 줄." },
+  ];
+  const OLD_KINDS = ["story", "list", "translate", "diagnose", "tips", "chat"];
+  // 새로 지을 때 고르는 주제. 공감·태그가 잘 붙는 것들 위주로.
+  const TOPIC_GROUPS = [
+    { label: "연애", items: ["썸·소개팅", "전남친", "남사친·여사친", "장기연애", "카톡 답장"] },
+    { label: "결혼·가족", items: ["남편", "시댁", "친정엄마", "육아", "워킹맘"] },
+    { label: "회사", items: ["부장님", "MZ 신입", "회식", "월요병", "퇴사 욕구"] },
+    { label: "일상", items: ["다이어트", "월급·카드값", "MBTI T vs F", "단톡방", "30대 노화", "찐친"] },
+  ];
+  // 달마다 바뀌는 시즌 주제 (그달 20일부터는 다음 달 것도 미리)
+  const SEASONS = {
+    1: ["새해 다짐", "연말정산", "설 연휴"], 2: ["설날 시댁", "발렌타인데이", "졸업식"], 3: ["화이트데이", "새 학기", "봄 다이어트"],
+    4: ["벚꽃 데이트", "중간고사", "봄나들이"], 5: ["어버이날", "어린이날", "가정의 달 지출"], 6: ["여름휴가 계획", "여름 다이어트", "장마"],
+    7: ["여름휴가", "에어컨 전쟁", "휴가지 커플"], 8: ["휴가 후유증", "열대야", "추석 준비"], 9: ["추석 시댁", "추석 용돈", "가을 타는 남친"],
+    10: ["할로윈", "가을 타는 남친", "단풍 데이트"], 11: ["빼빼로데이", "수능", "김장"], 12: ["크리스마스 솔로", "연말 회식", "송년회"],
+  };
+  function seasonTopics(now) {
+    const m = now.getMonth() + 1;
+    const list = now.getDate() >= 20 ? [...SEASONS[m], ...SEASONS[m === 12 ? 1 : m + 1]] : SEASONS[m];
+    return Array.from(new Set(list)).slice(0, 6);
+  }
+  const MAX_CARDS = 10;
+  const DECK_KEY = "dripcard:v1:deck";
+  const CARD_FIELDS = ["title", "topic", "body", "box"];
+
+  const state = {
+    title: "", handle: "", topic: "", body: "", box: "", ratio: "3:4", size: "m", example: true,
+    count: 4, kinds: FORMATS.map((f) => f.id), mood: "", tagLine: true,
+  };
+  // 캐러셀: 카드마다 제목·주제·본문·회색 상자. 아이디·비율·글씨 크기·프로필은 모든 장이 같이 써요.
+  const deck = { cards: [], active: 0 };
+  function deckOn() { return deck.cards.length > 0; }
+  let avatar = null;      // HTMLImageElement (square)
+  let avatarData = "";    // data URL kept in storage
+
+  /* ---------- storage (per-device convenience only) ---------- */
+  function readDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (d && typeof d === "object") return d;
+    } catch (e) {}
+    return null;
+  }
+  let persistTimer = 0;
+  function persist() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) {}
+      try {
+        if (deckOn()) localStorage.setItem(DECK_KEY, JSON.stringify(deck));
+        else localStorage.removeItem(DECK_KEY);
+      } catch (e) {}
+    }, 250);
+  }
+
+  /* ---------- text helpers ---------- */
+  const seg = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter("ko", { granularity: "grapheme" }) : null;
+  function graphemes(s) {
+    return seg ? Array.from(seg.segment(s), (x) => x.segment) : Array.from(s);
+  }
+  function font(weight, px) { return `${weight} ${px.toFixed(2)}px ${STACK}`; }
+  function track(ctx, px) { if ("letterSpacing" in ctx) ctx.letterSpacing = px.toFixed(2) + "px"; }
+  function widthOf(ctx, s) { return ctx.measureText(s).width; }
+
+  // 한 줄을 maxW 안에 들어가게 나눠요. 띄어쓰기 단위로 바꾸고, 한 단어가 너무 길면 글자 단위로 끊어요.
+  // hang: 둘째 줄부터 들여쓸 너비. start: 그 줄이 text의 몇 번째 글자부터인지 (모자이크 위치 계산용)
+  function wrap(ctx, text, maxW, hang) {
+    const out = [];
+    let line = "", start = 0, first = true;
+    const limit = () => (first ? maxW : maxW - hang);
+    const push = () => {
+      out.push({ text: line.replace(/\s+$/, ""), indent: first ? 0 : hang, start });
+      first = false;
+      line = "";
+    };
+    const re = /\s+|\S+/g;
+    let m;
+    while ((m = re.exec(text))) {
+      const part = m[0], at = m.index;
+      if (/^\s/.test(part)) {
+        if (line || first) { if (!line) start = at; line += part; }
+        continue;
+      }
+      if (!line) start = at;
+      if (widthOf(ctx, line + part) <= limit()) { line += part; continue; }
+      if (line.trim()) { push(); start = at; }
+      if (widthOf(ctx, line + part) <= limit()) { line += part; continue; }
+      let off = at;
+      for (const g of graphemes(part)) {
+        if (line.trim() && widthOf(ctx, line + g) > limit()) { push(); start = off; }
+        line += g;
+        off += g.length;
+      }
+    }
+    if (line.trim() || !out.length) push();
+    return out;
+  }
+
+  // {쪽}처럼 중괄호로 감싼 글자는 모자이크해요. 괄호를 뺀 글과, 글자마다 모자이크 여부를 돌려줘요.
+  function marks(raw) {
+    let plain = "";
+    const mask = [];
+    const re = /\{([^{}\n]+)\}/g;
+    let last = 0, m;
+    const add = (s, on) => { plain += s; for (let i = 0; i < s.length; i++) mask.push(on); };
+    while ((m = re.exec(raw))) {
+      add(raw.slice(last, m.index), 0);
+      add(m[1], 1);
+      last = m.index + m[0].length;
+    }
+    add(raw.slice(last), 0);
+    return { plain, mask };
+  }
+  function rangesOf(mask, ln) {
+    const out = [];
+    let a = -1;
+    for (let i = 0; i <= ln.text.length; i++) {
+      const on = i < ln.text.length && mask[ln.start + i];
+      if (on && a < 0) a = i;
+      if (!on && a >= 0) { out.push([a, i]); a = -1; }
+    }
+    return out.length ? out : null;
+  }
+  function pixelate(ctx, x, y, w, h, block) {
+    const x0 = Math.max(0, Math.floor(x)), y0 = Math.max(0, Math.floor(y));
+    const x1 = Math.min(ctx.canvas.width, Math.ceil(x + w)), y1 = Math.min(ctx.canvas.height, Math.ceil(y + h));
+    const rw = x1 - x0, rh = y1 - y0;
+    if (rw <= 0 || rh <= 0) return;
+    let img;
+    try { img = ctx.getImageData(x0, y0, rw, rh); } catch (e) { return; }
+    const px = img.data;
+    for (let by = 0; by < rh; by += block) {
+      for (let bx = 0; bx < rw; bx += block) {
+        const ye = Math.min(by + block, rh), xe = Math.min(bx + block, rw);
+        let r = 0, g = 0, b = 0, a = 0, n = 0;
+        for (let yy = by; yy < ye; yy++) {
+          for (let xx = bx; xx < xe; xx++) {
+            const i = (yy * rw + xx) * 4;
+            r += px[i]; g += px[i + 1]; b += px[i + 2]; a += px[i + 3]; n++;
+          }
+        }
+        // 흰 바탕에 섞여 너무 옅어지지 않게 조금 진하게
+        r = 255 - Math.min(255, (255 - r / n) * 1.6);
+        g = 255 - Math.min(255, (255 - g / n) * 1.6);
+        b = 255 - Math.min(255, (255 - b / n) * 1.6);
+        a /= n;
+        for (let yy = by; yy < ye; yy++) {
+          for (let xx = bx; xx < xe; xx++) {
+            const i = (yy * rw + xx) * 4;
+            px[i] = r; px[i + 1] = g; px[i + 2] = b; px[i + 3] = a;
+          }
+        }
+      }
+    }
+    ctx.putImageData(img, x0, y0);
+  }
+  // 방금 그린 줄에서 표시된 부분만 모자이크. ctx의 글꼴·자간은 그 줄을 그릴 때 그대로여야 해요.
+  function mosaic(ctx, it, cy) {
+    const block = Math.max(6, Math.round(it.size / 4.4));
+    for (const [a, b] of it.marks) {
+      const xa = it.x + widthOf(ctx, it.text.slice(0, a));
+      const xb = it.x + widthOf(ctx, it.text.slice(0, b));
+      // 글자가 실제로 차지하는 높이를 재서 위아래가 삐져나오지 않게, 칸 크기의 배수로 맞춰요
+      const mt = ctx.measureText(it.text.slice(a, b));
+      const asc = mt.actualBoundingBoxAscent || it.size * .55, desc = mt.actualBoundingBoxDescent || it.size * .45;
+      const m = it.size * .06;
+      let x = xa - (a === 0 ? 0 : m), w = xb - xa + (a === 0 ? m : m * 2);
+      let y = cy - asc - m, h = asc + desc + m * 2;
+      const fw = Math.ceil(w / block) * block, fh = Math.ceil(h / block) * block;
+      if (a !== 0) x -= (fw - w) / 2;
+      y -= (fh - h) / 2;
+      pixelate(ctx, x, y, fw, fh, block);
+    }
+  }
+  function ellipsize(ctx, s, maxW) {
+    if (maxW <= 0) return "";
+    if (widthOf(ctx, s) <= maxW) return s;
+    const g = graphemes(s);
+    while (g.length && widthOf(ctx, g.join("") + "…") > maxW) g.pop();
+    return g.length ? g.join("") + "…" : "";
+  }
+  function cleanBlock(s) {
+    return String(s || "").replace(/\t/g, "  ").replace(/\r/g, "").replace(/^(?:[ 　]*\n)+/, "").replace(/\s+$/, "");
+  }
+
+  // 카드 한 장(편집 중인 글이나 캐러셀의 한 장)을 그릴 데이터로. 아이디는 모든 장이 같이 써요.
+  function dataOf(src) {
+    return {
+      title: cleanBlock(src.title),
+      handle: state.handle.trim(),
+      topic: String(src.topic || "").trim(),
+      body: cleanBlock(src.body),
+      box: cleanBlock(src.box),
+    };
+  }
+  function readData() { return dataOf(state); }
+  function isEmpty(d) { return !d.title && !d.body && !d.box; }
+
+  /* ---------- layout ---------- */
+  function measure(ctx, d, k) {
+    const items = [];
+    let y = 0;
+    const av = Math.round(M.avatar * k);
+    const hasPost = !!(d.body || d.box);
+    const cx = M.padX + av + Math.round(M.avatarGap * k);
+    const right = W - M.right;
+
+    if (d.title) {
+      const x = hasPost ? cx : M.padX + 26;
+      const cw = right - x;
+      const lines = d.title.split("\n").map((l) => marks(l.trim()));
+      let ts = M.title * k;
+      ctx.font = font(900, ts);
+      track(ctx, M.titleTrack * ts);
+      const widest = Math.max(1, ...lines.map((l) => widthOf(ctx, l.plain)));
+      if (widest > cw) ts = Math.max(M.titleMin * k, ts * cw / widest * .995);
+      ctx.font = font(900, ts);
+      track(ctx, M.titleTrack * ts);
+      const lh = ts * M.titleLH;
+      for (const p of lines) {
+        if (!p.plain) { y += lh * .5; continue; }
+        for (const ln of wrap(ctx, p.plain, cw, 0)) {
+          items.push({ t: "title", text: ln.text, x, y, size: ts, lh, marks: rangesOf(p.mask, ln) });
+          y += lh;
+        }
+      }
+      if (hasPost) y += M.titleGap * k;
+    }
+
+    if (hasPost) {
+      const top = y;
+      const cw = right - cx;
+      items.push({ t: "avatar", x: M.padX, y: top + Math.round(3 * k), d: av });
+      if (d.handle || d.topic) {
+        const ns = M.name * k, nlh = ns * M.nameLH;
+        items.push({ t: "name", x: cx, y, size: ns, lh: nlh, maxW: cw });
+        y += nlh + 6 * k;
+      } else {
+        y += 10 * k;
+      }
+
+      const bs = M.body * k, blh = bs * M.bodyLH;
+      ctx.font = font(M.bodyWeight, bs);
+      track(ctx, M.bodyTrack * bs);
+      if (d.body) {
+        for (const raw of d.body.split("\n")) {
+          if (!raw.trim()) { y += blh * M.blank; continue; }
+          const p = marks(raw);
+          const m = HANG.exec(p.plain);
+          const hang = m ? widthOf(ctx, m[1]) : 0;
+          for (const ln of wrap(ctx, p.plain, cw, hang)) {
+            items.push({ t: "text", text: ln.text, x: cx + ln.indent, y, size: bs, lh: blh, marks: rangesOf(p.mask, ln) });
+            y += blh;
+          }
+        }
+      }
+
+      if (d.box) {
+        y += (d.body ? M.boxGap : 4) * k;
+        const xs = M.box * k, xlh = xs * M.boxLH;
+        const px = M.boxPadX * k, py = M.boxPadY * k;
+        ctx.font = font(400, xs);
+        track(ctx, 0);
+        const inner = [];
+        let iy = 0;
+        for (const raw of d.box.split("\n")) {
+          if (!raw.trim()) { iy += xlh * M.blank; continue; }
+          const p = marks(raw);
+          for (const ln of wrap(ctx, p.plain, cw - px * 2, 0)) {
+            inner.push({ t: "boxtext", text: ln.text, x: cx + px, y: y + py + iy, size: xs, lh: xlh, marks: rangesOf(p.mask, ln) });
+            iy += xlh;
+          }
+        }
+        const bh = iy + py * 2;
+        items.push({ t: "box", x: cx, y, w: cw, h: bh, r: M.boxRadius * k }, ...inner);
+        y += bh;
+      }
+      y = Math.max(y, top + av + 3 * k);
+    }
+    return { items, h: y };
+  }
+
+  function compose(ctx, d, H, base) {
+    const avail = H - M.padY * 2;
+    let k = base, plan = measure(ctx, d, k);
+    while (plan.h > avail && k > .5) {
+      k = Math.max(.5, k * .96);
+      plan = measure(ctx, d, k);
+    }
+    const fits = plan.h <= avail;
+    const top = fits ? Math.max(M.padY * .8, (H - plan.h) / 2 - H * .015) : M.padY;
+    return { items: plan.items, h: plan.h, top, k, overflow: !fits, shrunk: k < base - 1e-6 };
+  }
+
+  /* ---------- drawing ---------- */
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function drawAvatar(ctx, img, x, y, d) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x + d / 2, y + d / 2, d / 2, 0, Math.PI * 2);
+    ctx.clip();
+    if (img) {
+      const iw = img.naturalWidth, ih = img.naturalHeight, s = Math.min(iw, ih);
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, (iw - s) / 2, (ih - s) / 2, s, s, x, y, d, d);
+    } else {
+      ctx.fillStyle = INK.avBg;
+      ctx.fillRect(x, y, d, d);
+      ctx.fillStyle = INK.avFg;
+      ctx.beginPath();
+      ctx.arc(x + d / 2, y + d * .4, d * .19, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + d / 2, y + d, d * .36, d * .3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(x + d / 2, y + d / 2, d / 2 - .75, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(0, 0, 0, .12)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  function drawName(ctx, it, y, d) {
+    const cy = y + it.lh / 2;
+    const end = it.x + it.maxW;
+    let x = it.x;
+    track(ctx, 0);
+    if (d.handle) {
+      ctx.font = font(700, it.size);
+      ctx.fillStyle = INK.text;
+      const h = ellipsize(ctx, d.handle, it.maxW * (d.topic ? .6 : 1));
+      ctx.fillText(h, x, cy);
+      x += widthOf(ctx, h);
+    }
+    if (d.topic) {
+      if (d.handle) {
+        const gap = it.size * .34;
+        ctx.font = font(400, it.size * 1.05);
+        ctx.fillStyle = INK.soft;
+        x += gap;
+        ctx.fillText("›", x, cy);
+        x += widthOf(ctx, "›") + gap;
+      }
+      ctx.font = font(700, it.size);
+      ctx.fillStyle = INK.text;
+      const t = ellipsize(ctx, d.topic, end - x);
+      if (t) ctx.fillText(t, x, cy);
+    }
+  }
+
+  function drawCard(canvas, d, opts) {
+    const H = HEIGHTS[opts.ratio] || 1440;
+    if (canvas.width !== W) canvas.width = W;
+    if (canvas.height !== H) canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = INK.paper;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+
+    if (isEmpty(d)) {
+      if (opts.preview) {
+        ctx.font = font(600, 36);
+        track(ctx, 0);
+        ctx.fillStyle = INK.hint;
+        ctx.textAlign = "center";
+        ctx.fillText("제목이나 본문을 쓰면", W / 2, H / 2 - 28);
+        ctx.fillText("여기에 바로 보여요", W / 2, H / 2 + 28);
+      }
+      return { empty: true, overflow: false, shrunk: false, k: 1, H };
+    }
+
+    const plan = compose(ctx, d, H, SIZES[opts.size] || 1);
+    for (const it of plan.items) {
+      const y = plan.top + it.y;
+      if (it.t === "title") {
+        ctx.font = font(900, it.size);
+        track(ctx, M.titleTrack * it.size);
+        ctx.fillStyle = INK.title;
+        ctx.fillText(it.text, it.x, y + it.lh / 2);
+      } else if (it.t === "text") {
+        ctx.font = font(M.bodyWeight, it.size);
+        track(ctx, M.bodyTrack * it.size);
+        ctx.fillStyle = INK.text;
+        ctx.fillText(it.text, it.x, y + it.lh / 2);
+      } else if (it.t === "box") {
+        ctx.fillStyle = INK.boxBg;
+        roundRect(ctx, it.x, y, it.w, it.h, it.r);
+        ctx.fill();
+      } else if (it.t === "boxtext") {
+        ctx.font = font(400, it.size);
+        track(ctx, 0);
+        ctx.fillStyle = INK.boxText;
+        ctx.fillText(it.text, it.x, y + it.lh / 2);
+      } else if (it.t === "avatar") {
+        drawAvatar(ctx, opts.avatar, it.x, y, it.d);
+      } else if (it.t === "name") {
+        drawName(ctx, it, y, d);
+      }
+      if (it.marks) mosaic(ctx, it, y + it.lh / 2);
+    }
+    track(ctx, 0);
+    return { ...plan, H };
+  }
+
+  /* ---------- fonts: canvas never pulls web fonts by itself, so ask for the glyphs in use ---------- */
+  const seenFaces = new Set();
+  function fontLoads(d) {
+    if (!document.fonts || !document.fonts.load) return [];
+    const text = [d.title, d.handle, d.topic, d.body, d.box, "가A1›…제목이나본문을쓰면여기에바로보여요"].join("");
+    return ["400", "500", "600", "700", "900"].map((w) => document.fonts.load(`${w} 40px "Gothic A1"`, text).catch(() => []));
+  }
+  function requestFonts(d) {
+    for (const p of fontLoads(d)) {
+      p.then((faces) => {
+        let fresh = false;
+        for (const f of faces || []) if (!seenFaces.has(f)) { seenFaces.add(f); fresh = true; }
+        if (fresh) { schedule(); scheduleThumbs("all"); }
+      });
+    }
+  }
+  function fontsReady(d) {
+    return Promise.race([Promise.all(fontLoads(d)), new Promise((r) => setTimeout(r, 4000))]);
+  }
+
+  /* ---------- preview ---------- */
+  let raf = 0;
+  function schedule() {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(render);
+  }
+  function render() {
+    const d = readData();
+    const plan = drawCard($("card"), d, { ratio: state.ratio, size: state.size, avatar, preview: true });
+    requestFonts(d);
+    $("exampleTag").hidden = !state.example;
+    $("card").setAttribute("aria-label", d.title ? `카드 미리보기: ${d.title.replace(/\n/g, " ").replace(/[{}]/g, "")}` : "카드 미리보기");
+    const note = $("note");
+    note.classList.toggle("warn", !!plan.overflow);
+    if (plan.empty) note.textContent = "제목이나 본문을 쓰면 카드가 만들어져요";
+    else if (plan.overflow) note.textContent = "글이 길어서 카드 아래가 잘려요. 글을 줄이거나 비율을 3:4로 바꿔 보세요";
+    else if (plan.shrunk) note.textContent = `글이 길어서 글씨를 ${Math.round(plan.k / (SIZES[state.size] || 1) * 100)}% 크기로 줄였어요 · ${W}×${plan.H}`;
+    else note.textContent = `${W}×${plan.H} PNG로 저장돼요`;
+  }
+
+  /* ---------- form wiring ---------- */
+  function fillForm() {
+    for (const f of TEXT_FIELDS) $(f).value = state[f];
+    const r = document.querySelector(`input[name="ratio"][value="${state.ratio}"]`);
+    if (r) r.checked = true;
+    const s = document.querySelector(`input[name="size"][value="${state.size}"]`);
+    if (s) s.checked = true;
+  }
+  for (const f of TEXT_FIELDS) {
+    $(f).addEventListener("input", (e) => {
+      state[f] = e.target.value;
+      if (f !== "handle") state.example = false;
+      if (deckOn()) {
+        if (f === "handle") {
+          scheduleThumbs("all");
+        } else {
+          const c = deck.cards[deck.active];
+          c[f] = e.target.value;
+          c.saved = false;
+          scheduleThumbs(deck.active);
+          renderDeck();
+        }
+      }
+      persist();
+      schedule();
+    });
+  }
+  for (const r of document.querySelectorAll('input[name="ratio"], input[name="size"]')) {
+    r.addEventListener("change", (e) => {
+      if (!e.target.checked) return;
+      state[e.target.name] = e.target.value;
+      for (const c of deck.cards) c.saved = false;
+      persist();
+      schedule();
+      scheduleThumbs("all");
+      renderDeck();
+    });
+  }
+
+  /* ---------- avatar ---------- */
+  function showAvatar() {
+    const has = !!avatarData;
+    $("avatarImg").hidden = !has;
+    $("avatarBlank").hidden = has;
+    $("avatarClear").hidden = !has;
+    if (has) $("avatarImg").src = avatarData;
+    else $("avatarImg").removeAttribute("src");
+  }
+  function useAvatar(dataUrl, store) {
+    avatarData = dataUrl || "";
+    avatar = null;
+    if (store) {
+      try {
+        localStorage.setItem(AVATAR_KEY, avatarData || "none");
+      } catch (e) {}
+    }
+    showAvatar();
+    if (!avatarData) { schedule(); scheduleThumbs("all"); return; }
+    const img = new Image();
+    img.onload = () => { if (avatarData === dataUrl) { avatar = img; schedule(); scheduleThumbs("all"); } };
+    img.src = avatarData;
+  }
+  $("avatarFile").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const S = 256;
+      const c = document.createElement("canvas");
+      c.width = S; c.height = S;
+      const x = c.getContext("2d");
+      const iw = img.naturalWidth, ih = img.naturalHeight, s = Math.min(iw, ih);
+      x.imageSmoothingQuality = "high";
+      x.drawImage(img, (iw - s) / 2, (ih - s) / 2, s, s, 0, 0, S, S);
+      URL.revokeObjectURL(url);
+      useAvatar(c.toDataURL("image/jpeg", .9), true);
+      toast("프로필 사진을 넣었어요");
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); toast("사진을 열지 못했어요. 다른 사진으로 해 주세요"); };
+    img.src = url;
+  });
+  $("avatarClear").addEventListener("click", () => { useAvatar("", true); toast("프로필 사진을 뺐어요"); });
+
+  /* ---------- toast ---------- */
+  let toastTimer = 0;
+  function toast(msg, action) {
+    const t = $("toast"), btn = $("toastAct");
+    $("toastMsg").textContent = msg;
+    btn.hidden = !action;
+    btn.onclick = null;
+    if (action) {
+      btn.textContent = action.label;
+      btn.onclick = () => { t.classList.remove("show"); action.run(); };
+    }
+    t.classList.toggle("has-action", !!action);
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), action ? 5000 : 2800);
+  }
+
+  /* ---------- 새로 쓰기 ---------- */
+  $("clear").addEventListener("click", () => {
+    const prev = { title: state.title, topic: state.topic, body: state.body, box: state.box, example: state.example };
+    if (!prev.title && !prev.topic && !prev.body && !prev.box) { toast("이미 비어 있어요"); return; }
+    Object.assign(state, { title: "", topic: "", body: "", box: "", example: false });
+    fillForm();
+    persist();
+    schedule();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("글을 다 지웠어요", {
+      label: "되돌리기",
+      run: () => { Object.assign(state, prev); fillForm(); persist(); schedule(); },
+    });
+  });
+
+  /* ---------- 캐러셀 ---------- */
+  function blankCard(topic) { return { title: "", topic: topic || "", body: "", box: "", saved: false }; }
+  function normalizeCard(c) {
+    const s = (v) => (typeof v === "string" ? v : "");
+    return { title: s(c && c.title), topic: s(c && c.topic), body: s(c && c.body), box: s(c && c.box), saved: !!(c && c.saved) };
+  }
+  function snapshot() {
+    const fields = {};
+    for (const f of CARD_FIELDS) fields[f] = state[f];
+    return { cards: deck.cards.map((c) => ({ ...c })), active: deck.active, fields, example: state.example };
+  }
+  function restore(s) {
+    deck.cards = s.cards.map((c) => ({ ...c }));
+    deck.active = s.active;
+    Object.assign(state, s.fields, { example: s.example });
+    fillForm();
+    persist();
+    schedule();
+    $("deckStrip").replaceChildren();
+    renderDeck();
+  }
+
+  // 작은 카드는 큰 캔버스 하나에 그려서 줄여 옮겨요 (폰 메모리 아끼려고)
+  const thumbCanvas = document.createElement("canvas");
+  const dirtyThumbs = new Set();
+  let thumbRaf = 0;
+  function scheduleThumbs(which) {
+    if (!deckOn()) return;
+    if (which === "all") deck.cards.forEach((_, i) => dirtyThumbs.add(i));
+    else dirtyThumbs.add(which);
+    cancelAnimationFrame(thumbRaf);
+    thumbRaf = requestAnimationFrame(drawThumbs);
+  }
+  function drawThumbs() {
+    const strip = $("deckStrip");
+    for (const i of dirtyThumbs) {
+      const b = strip.children[i], card = deck.cards[i];
+      if (!b || !card) continue;
+      const d = dataOf(card);
+      drawCard(thumbCanvas, d, { ratio: state.ratio, size: state.size, avatar, preview: true });
+      requestFonts(d);
+      const c = b.querySelector("canvas");
+      const tw = 216, th = Math.round(tw * thumbCanvas.height / W);
+      if (c.width !== tw) c.width = tw;
+      if (c.height !== th) c.height = th;
+      const x = c.getContext("2d");
+      x.imageSmoothingQuality = "high";
+      x.drawImage(thumbCanvas, 0, 0, tw, th);
+    }
+    dirtyThumbs.clear();
+  }
+  function makeThumb(i) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "thumb";
+    b.setAttribute("role", "listitem");
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = String(i + 1);
+    const ok = document.createElement("span");
+    ok.className = "ok";
+    ok.textContent = "✓";
+    b.append(document.createElement("canvas"), num, ok);
+    b.addEventListener("click", () => selectCard(i));
+    return b;
+  }
+  function renderDeck() {
+    const on = deckOn();
+    $("deck").hidden = !on;
+    $("deckStart").hidden = on;
+    const strip = $("deckStrip");
+    if (!on) {
+      strip.replaceChildren();
+      updateBar();
+      return;
+    }
+    if (strip.children.length > deck.cards.length) strip.replaceChildren();
+    for (let i = strip.children.length; i < deck.cards.length; i++) {
+      strip.append(makeThumb(i));
+      scheduleThumbs(i);
+    }
+    Array.from(strip.children).forEach((b, i) => {
+      const c = deck.cards[i];
+      b.classList.toggle("active", i === deck.active);
+      b.setAttribute("aria-current", i === deck.active ? "true" : "false");
+      b.setAttribute("aria-label", `${i + 1}번 카드${c.saved ? ", 저장함" : ""}`);
+      b.querySelector(".ok").hidden = !c.saved;
+    });
+    const savedN = deck.cards.filter((c) => c.saved).length;
+    $("deckTitle").textContent = `캐러셀 ${deck.cards.length}장 · 지금 ${deck.active + 1}번` + (savedN ? ` · 저장 ${savedN}장` : "");
+    $("deckLeft").disabled = deck.active === 0;
+    $("deckRight").disabled = deck.active === deck.cards.length - 1;
+    $("deckAdd").disabled = deck.cards.length >= MAX_CARDS;
+    updateBar();
+  }
+  function selectCard(i) {
+    if (!deckOn()) return;
+    deck.active = Math.max(0, Math.min(deck.cards.length - 1, i));
+    const c = deck.cards[deck.active];
+    for (const f of CARD_FIELDS) state[f] = c[f] || "";
+    state.example = false;
+    fillForm();
+    persist();
+    schedule();
+    renderDeck();
+    const t = $("deckStrip").children[deck.active];
+    if (t && t.scrollIntoView) t.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }
+  function moveActive(step) {
+    const a = deck.active, b = a + step;
+    if (b < 0 || b >= deck.cards.length) return;
+    [deck.cards[a], deck.cards[b]] = [deck.cards[b], deck.cards[a]];
+    deck.active = b;
+    persist();
+    scheduleThumbs(a);
+    scheduleThumbs(b);
+    renderDeck();
+  }
+  $("deckLeft").addEventListener("click", () => moveActive(-1));
+  $("deckRight").addEventListener("click", () => moveActive(1));
+  $("deckAdd").addEventListener("click", () => {
+    if (deck.cards.length >= MAX_CARDS) return;
+    deck.cards.splice(deck.active + 1, 0, blankCard(state.topic));
+    $("deckStrip").replaceChildren();
+    selectCard(deck.active + 1);
+    $("title").focus({ preventScroll: true });
+    toast(`${deck.active + 1}번에 빈 장을 넣었어요. 아래 칸에 쓰면 돼요`);
+  });
+  $("deckRemove").addEventListener("click", () => {
+    const before = snapshot();
+    const n = deck.active + 1;
+    deck.cards.splice(deck.active, 1);
+    $("deckStrip").replaceChildren();
+    if (deckOn()) selectCard(Math.min(deck.active, deck.cards.length - 1));
+    else { renderDeck(); persist(); }
+    toast(`${n}번 카드를 뺐어요`, { label: "되돌리기", run: () => restore(before) });
+  });
+  $("deckClose").addEventListener("click", () => {
+    const before = snapshot();
+    deck.cards = [];
+    deck.active = 0;
+    persist();
+    renderDeck();
+    toast("캐러셀을 끝냈어요. 지금 카드만 남겨 뒀어요", { label: "되돌리기", run: () => restore(before) });
+  });
+  $("deckStart").addEventListener("click", () => {
+    const first = normalizeCard(state);
+    deck.cards = [first, blankCard(state.topic)];
+    $("deckStrip").replaceChildren();
+    selectCard(1);
+    toast("캐러셀을 만들었어요. 2번 카드를 쓰면 돼요");
+  });
+
+  let shareOK = false;   // 클로드 밖 안드로이드: 공유 시트로 인스타에 바로
+  function updateBar() {
+    const on = deckOn();
+    $("clear").hidden = on;
+    $("saveAll").hidden = !on;
+    $("share").hidden = !shareOK;
+    const save = $("save");
+    if (!save.disabled) save.textContent = on ? "이 장 저장" : "이미지 저장";
+    save.className = "btn " + (on ? "btn-ghost" : "btn-primary");
+    if (on && !$("saveAll").disabled) $("saveAll").textContent = `모두 저장 · ${deck.cards.length}장`;
+  }
+  function markActiveSaved() {
+    if (!deckOn()) return;
+    deck.cards[deck.active].saved = true;
+    persist();
+    renderDeck();
+  }
+
+  /* ---------- save / share ---------- */
+  let downloadsPromise = null;
+  function getDownloads() {
+    if (!downloadsPromise) {
+      downloadsPromise = window.claude && typeof window.claude.use === "function"
+        ? Promise.resolve(window.claude.use("downloads")).catch(() => null)
+        : Promise.resolve(null);
+    }
+    return downloadsPromise;
+  }
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  function shareFilesSupported() {
+    try {
+      return !!(navigator.canShare && navigator.canShare({ files: [new File([new Uint8Array(1)], "t.png", { type: "image/png" })] }));
+    } catch (e) {
+      return false;
+    }
+  }
+  // 클로드 밖(폰 브라우저·홈 화면 앱)의 안드로이드에서는 '공유'로 인스타에 바로 보낼 수 있게
+  getDownloads().then((dl) => { shareOK = !dl && isAndroid && shareFilesSupported(); updateBar(); });
+
+  function stampNow() {
+    const n = new Date();
+    const p = (v) => String(v).padStart(2, "0");
+    return `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}_${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
+  }
+  function fileName() {
+    return deckOn()
+      ? `dripcard_${stampNow()}_${String(deck.active + 1).padStart(2, "0")}.png`
+      : `dripcard_${stampNow()}.png`;
+  }
+  async function makeBlob(d) {
+    await fontsReady(d);
+    const c = document.createElement("canvas");
+    drawCard(c, d, { ratio: state.ratio, size: state.size, avatar, preview: false });
+    const blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), "image/png"));
+    c.width = 0; c.height = 0;
+    return blob;
+  }
+  function saveErrorText(code) {
+    switch (code) {
+      case "rate_limited": return "저장 창이 이미 열려 있어요. 잠깐 뒤에 다시 눌러 주세요";
+      case "too_large": return "이미지가 너무 커서 저장하지 못했어요";
+      case "unavailable": case "not_granted": case "capability_disabled": case "capability_removed":
+        return "이 화면에서는 저장할 수 없어요. 앱을 새로 고친 뒤 다시 해 주세요";
+      default: return "저장하지 못했어요. 다시 해 주세요";
+    }
+  }
+
+  let busy = false;
+  async function exportCard(mode) {
+    if (busy) return;
+    const d = readData();
+    if (isEmpty(d)) { toast("제목이나 본문을 먼저 써 주세요"); return; }
+    busy = true;
+    const btn = $(mode === "share" ? "share" : "save");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "만드는 중…";
+    try {
+      const blob = await makeBlob(d);
+      const name = fileName();
+      const dl = await getDownloads();
+      if (dl) {
+        btn.textContent = "저장 중…";
+        try {
+          await dl.save({ filename: name, data: blob });
+          markActiveSaved();
+          toast("저장했어요. 인스타에서 이 사진을 올리면 돼요");
+        } catch (e) {
+          const code = e && e.code;
+          toast(code === "declined" ? "저장을 취소했어요" : saveErrorText(code));
+        }
+        return;
+      }
+      // 아이폰: 공유 시트 → '이미지 저장' 또는 인스타그램. 안드로이드: 저장은 바로 내려받기, 공유는 공유 시트
+      const file = new File([blob], name, { type: "image/png" });
+      const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+      if (canShare && (mode === "share" || !isAndroid)) {
+        try {
+          await navigator.share({ files: [file] });
+          markActiveSaved();
+          return;
+        } catch (e) {
+          if (e && e.name === "AbortError") return;
+          if (mode === "share") { toast("공유하지 못했어요. 저장한 뒤 인스타에서 올려 주세요"); return; }
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      markActiveSaved();
+      toast(isAndroid ? "저장했어요 · 갤러리의 Download 앨범에 있어요" : "이미지를 내려받았어요");
+    } catch (e) {
+      toast("이미지를 만들지 못했어요. 다시 해 주세요");
+    } finally {
+      busy = false;
+      btn.disabled = false;
+      btn.textContent = label;
+      updateBar();
+    }
+  }
+
+  // 캐러셀 모두 저장. 파일 이름 끝 번호(_01, _02…)가 올리는 순서예요.
+  async function exportAll(mode) {
+    if (busy || !deckOn()) return;
+    const items = deck.cards.map((c, i) => ({ c, i, d: dataOf(c) })).filter((x) => !isEmpty(x.d));
+    if (!items.length) { toast("빈 카드뿐이에요. 글을 먼저 써 주세요"); return; }
+    busy = true;
+    const btn = $(mode === "share" ? "share" : "saveAll");
+    const label = btn.textContent;
+    btn.disabled = true;
+    const stamp = stampNow();
+    const nameOf = (i) => `dripcard_${stamp}_${String(i + 1).padStart(2, "0")}.png`;
+    const skipped = deck.cards.length - items.length;
+    try {
+      const dl = await getDownloads();
+      if (dl) {
+        // 저장 창이 한 장씩 떠요. 중간에 멈추면 다음엔 안 저장한 장부터 이어서 해요
+        const todo = items.some((x) => !x.c.saved) ? items.filter((x) => !x.c.saved) : items;
+        let done = 0;
+        for (const x of todo) {
+          btn.textContent = `저장 중 ${done + 1}/${todo.length}`;
+          const blob = await makeBlob(x.d);
+          try {
+            await dl.save({ filename: nameOf(x.i), data: blob });
+          } catch (e) {
+            const code = e && e.code;
+            if (code === "declined") toast(done ? `${done}장 저장하고 멈췄어요. 다시 누르면 남은 장부터 이어서 저장해요` : "저장을 취소했어요");
+            else if (code === "rate_limited") toast(`${done}장 저장했어요. 잠깐 뒤에 다시 누르면 남은 장부터 이어서 저장해요`);
+            else toast(saveErrorText(code));
+            return;
+          }
+          x.c.saved = true;
+          done++;
+          persist();
+          renderDeck();
+        }
+        toast(`${done}장 저장했어요. 인스타에서 1번부터 순서대로 고르면 돼요` + (skipped ? ` (빈 장 ${skipped}개는 뺐어요)` : ""));
+        return;
+      }
+      // 클로드 밖: 아이폰은 공유 시트 한 번에, 안드로이드는 차례로 내려받기
+      btn.textContent = "만드는 중…";
+      const files = [];
+      for (const x of items) files.push(new File([await makeBlob(x.d)], nameOf(x.i), { type: "image/png" }));
+      const canShare = navigator.canShare && navigator.canShare({ files });
+      if (canShare && (mode === "share" || !isAndroid)) {
+        try {
+          await navigator.share({ files });
+          items.forEach((x) => { x.c.saved = true; });
+          persist();
+          renderDeck();
+          return;
+        } catch (e) {
+          if (e && e.name === "AbortError") return;
+          if (mode === "share") { toast("공유하지 못했어요. 저장한 뒤 인스타에서 올려 주세요"); return; }
+        }
+      }
+      for (const [n, f] of files.entries()) {
+        if (n) await new Promise((r) => setTimeout(r, 400));
+        const url = URL.createObjectURL(f);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = f.name;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
+      items.forEach((x) => { x.c.saved = true; });
+      persist();
+      renderDeck();
+      toast(isAndroid ? `${files.length}장 저장했어요 · 갤러리의 Download 앨범에 있어요` : `${files.length}장 내려받았어요`);
+    } catch (e) {
+      toast("이미지를 만들지 못했어요. 다시 해 주세요");
+    } finally {
+      busy = false;
+      btn.disabled = false;
+      btn.textContent = label;
+      updateBar();
+    }
+  }
+  $("save").addEventListener("click", () => exportCard("save"));
+  $("saveAll").addEventListener("click", () => exportAll("save"));
+  $("share").addEventListener("click", () => (deckOn() ? exportAll("share") : exportCard("share")));
+
+  /* ---------- 자동으로 만들기: Claude 앱 안에서만 보여요 ---------- */
+  // 실제로 올려서 반응 좋았던 카드들. 말투와 형식의 본보기로 같이 보내요.
+  const STYLE_EXAMPLES = [
+    { type: "반전 썰", title: "남친 만들려다가\n화타 만났네...", topic: "한의사썸남", body: "한의사 썸남한테\n“오빠만 보면 심장이 너무 빨리 뛰어💕”\n이렇게 플러팅했는데\n\n갑자기 증상을 자세히 물어보더니\n“그거 부정맥 같은데? 병원 가봐.”\n\n근데 진짜 부정맥 진단받음ㅋㅋㅋㅋ\n\n{쪽}팔려서 어떡해", box: "" },
+    { type: "반전 썰", title: "김장하러 갔더니\n간만 보래", topic: "시댁김장", body: "김장한다고 해서\n각오하고 시댁 갔는데\n시어머니가 고무장갑 대신\n젓가락 주시면서\n“너는 간만 봐”\n\n하루 종일 수육 먹으면서\n간만 봤는데\n\n배추 나르던 남편이\n“엄마 나는 왜 이거 해?”\n\nㄴ 시어머니: “넌 내 아들이잖아”", box: "" },
+    { type: "말 번역기", title: "시어머니 말\n번역기", topic: "시어머니", body: "“아무것도 사 오지 마~”\n> 빈손으로 오면 서운해\n\n“편하게 있다 가~”\n> 설거지는 네 담당\n\n“우리 아들 얼굴이 반쪽이네”\n> 밥 좀 잘 해 먹여라\n\n“나는 괜찮다~”\n> 안 괜찮음\n\nㄴ 남편 말 번역기는 아직 개발 중..", box: "" },
+    { type: "특징 모음", title: "우리 부장님\n특징 모음", topic: "부장님", body: "1. 모든 얘기가 “나 때는 말이야”\n2. 퇴근 10분 전에 “잠깐 얘기 좀”\n3. 카톡 답장은 ‘ㅇㅇ’ 아니면 ‘.’\n4. 점심 메뉴 물어보고 결국 국밥\n5. 엑셀은 몰라도 수정은 제일 많음\n\nㄴ 근데 2차 계산은 늘 부장님ㅠ", box: "" },
+    { type: "꿀팁", title: "명절 시댁\n생존 꿀팁", topic: "명절", body: "1. 도착하자마자 앞치마부터\n2. “제가 할게요”는 세 번까지만\n3. 남편 옆자리 사수하기\n4. 칭찬은 무조건 음식 맛으로\n5. 출발 시간은 미리 정해두기\n\nㄴ 우리 어머니: “앉아 있어~ 넌 손님이야”", box: "" },
+  ];
+  function autoPrompt(idea, mood, kinds, count, avoid, tagLine) {
+    const fmts = FORMATS.filter((f) => kinds.includes(f.id));
+    const subject = idea
+      ? `재료: ${idea.slice(0, 2000)}\n  (있었던 일이면 ${count > 1 ? "1장은 그 이야기를 내용 그대로 웃기게 다듬고, 나머지는 같은 주제로 다양하게" : "내용은 바꾸지 말고 웃기게 다듬어"}. '여사친'처럼 주제만 짧게 있으면 그 주제로 써.)`
+      : mood ? `주제: ${mood}` : count > 1 ? "주제: 자유. 장마다 연애·썸, 남편·결혼, 시댁, 회사, 일상 중에서 다양하게." : "주제: 자유.";
+    const lines = [
+      "너는 인스타그램 유머 계정의 '드립 카드' 작가야. 카드는 흰 바탕에 큰 제목이 있고, 그 아래 스레드 글 캡처처럼 [아이디 › 주제]와 짧은 글이 들어가. 20~40대가 \"아 ㅋㅋ 내 얘기\" 하면서 친구를 태그하고 싶어지는 공감·반전 유머가 목표야.",
+      "",
+      "카드 한 장 쓰는 법",
+      "- title(큰 제목): 2줄, 많아야 3줄. 한 줄은 10자 안쪽. 반전이나 속마음을 혼잣말처럼 한 방에. 줄바꿈은 \\n.",
+      "- topic(주제 태그): 띄어쓰기 없는 2~6자 (예: 한의사썸남, 남편회식, 시댁김장).",
+      "- body(본문): 반말 구어체. 한 줄은 20자 안쪽으로 짧게 끊어. 전체 5~11줄. 대사는 “ ”로. ㅋㅋ, .., 이모지는 아껴서.",
+      "- 목록은 '1. '처럼 번호만. [ ] 괄호나 제목을 되풀이하는 머리말 줄은 쓰지 마.",
+      "- box(회색 상자): 거의 항상 \"\". 뉴스 기사 한 줄처럼 쓰는 게 더 웃길 때만 한 문장.",
+      "- 살짝 민망한 단어 하나를 {쪽}처럼 중괄호로 감싸면 카드에서 모자이크돼. 웃길 때만, 캐러셀 전체에서 많아야 두 번.",
+      "- 실존 인물이나 브랜드를 비방하거나, 너무 선정적이거나, 누군가를 비하하는 내용은 빼.",
+      "- 바이럴 포인트: 누구나 겪어 봤을 구체적인 장면(카톡 한 줄, 말투, 숫자, 장소)을 넣고, 뻔한 결말 대신 한 번 비틀어. 제목만 봐도 스크롤을 멈추게.",
+      "",
+      "카드 종류 (type에는 아래 이름을 그대로 써)",
+      ...fmts.map((f) => `- ${f.label}: ${f.guide}`),
+      "",
+      "이번에 쓸 것",
+      `- 카드 ${count}장${count > 1 ? ". 인스타 캐러셀로 1장부터 순서대로 올릴 거야" : ""}.`,
+      `- ${subject}`,
+    ];
+    if (count > 1) {
+      lines.push(
+        fmts.length > 1 ? "- 위 종류를 골고루 섞고, 같은 종류가 연달아 오지 않게." : `- 모두 '${fmts[0].label}' 종류로.`,
+        kinds.includes("story") && fmts.length > 1 ? "- 1장은 제일 센 반전 썰로 시선을 끌어." : "- 1장은 제일 센 걸로 시선을 끌어.",
+        "- 장마다 다른 상황, 다른 농담으로. 같은 펀치라인을 되풀이하지 마.",
+        "- 마지막 장은 훈훈하거나 제일 웃긴 한 줄로 마무리.",
+      );
+    } else if (fmts.length > 1) {
+      lines.push("- 위 종류 중 이 재료에 제일 어울리는 걸로 하나.");
+    }
+    if (tagLine) lines.push(`- ${count > 1 ? "마지막 장" : "이 카드"} 맨 끝 줄은 친구를 태그하거나 댓글 달고 싶게 만드는 'ㄴ ' 한 줄로 (예: ㄴ 이거 보고 생각난 사람 태그ㅋㅋ / ㄴ 나만 이래?). 내용에 맞게 매번 다르게.`);
+    if (avoid.length) lines.push(`- 이미 쓴 카드와 겹치지 마: ${avoid.slice(0, 12).join(" / ")}`);
+    lines.push(
+      "",
+      "잘 된 예시 (실제로 올린 카드)",
+      ...STYLE_EXAMPLES.map((x) => JSON.stringify(x)),
+      "",
+      `답하는 형식: 한 줄에 카드 하나씩, JSON 객체만 ${count}줄. 다른 말이나 코드 블록은 쓰지 마.`,
+      '{"type": "...", "title": "...", "topic": "...", "body": "...", "box": ""}',
+    );
+    return lines.join("\n");
+  }
+  function autoErrorText(code) {
+    switch (code) {
+      case "rate_limited": return "지금은 너무 자주 불렀어요. 잠깐 뒤에 다시 눌러 주세요";
+      case "session_expired": return "Claude에 다시 로그인한 뒤 해 주세요";
+      case "refused": return "이 내용으로는 쓸 수 없대요. 재료를 조금 바꿔서 다시 해 주세요";
+      case "invalid_json": case "empty_completion": return "답을 제대로 못 받았어요. 한 번 더 눌러 주세요";
+      case "prompt_too_large": return "재료가 너무 길어요. 조금 줄여서 다시 해 주세요";
+      default: return "연결이 잠깐 끊겼어요. 한 번 더 눌러 주세요";
+    }
+  }
+  // 흘러 들어오는 답에서 다 닫힌 { … } 덩어리만 골라내요. 줄바꿈 모양과 상관없이 동작해요.
+  function scanObjects(text, from) {
+    const objs = [];
+    let depth = 0, start = -1, inStr = false, esc = false, next = from;
+    for (let i = from; i < text.length; i++) {
+      const ch = text[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === "\\") esc = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"' && depth > 0) { inStr = true; continue; }
+      if (ch === "{") {
+        if (depth === 0) start = i;
+        depth++;
+      } else if (ch === "}" && depth > 0) {
+        depth--;
+        if (depth === 0) { objs.push(text.slice(start, i + 1)); next = i + 1; }
+      }
+    }
+    return { objs, next };
+  }
+  function toCard(raw) {
+    let o;
+    try { o = JSON.parse(raw); } catch (e) { return null; }
+    if (!o || typeof o !== "object") return null;
+    const pick = (v, max) => (typeof v === "string" ? v.replace(/\r/g, "").replace(/\\n/g, "\n").trim().slice(0, max) : "");
+    const c = { title: pick(o.title, 80), topic: pick(o.topic, 20).replace(/\s+/g, ""), body: pick(o.body, 900), box: pick(o.box, 200), saved: false };
+    return c.title || c.body ? c : null;
+  }
+
+  function buildMoods() {
+    const groups = [{ label: "지금 시즌", hot: true, items: seasonTopics(new Date()) }, ...TOPIC_GROUPS];
+    const radio = (value, text) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "mood";
+      input.value = value;
+      input.checked = state.mood === value;
+      input.addEventListener("change", () => { if (input.checked) { state.mood = value; persist(); } });
+      const span = document.createElement("span");
+      span.textContent = text;
+      label.append(input, span);
+      return label;
+    };
+    const rows = groups.map((g) => {
+      const row = document.createElement("div");
+      row.className = "topic-row chips";
+      const name = document.createElement("span");
+      name.className = "group-label" + (g.hot ? " hot" : "");
+      name.textContent = g.label;
+      row.append(name, ...g.items.map((t) => radio(t, t)));
+      return row;
+    });
+    const anyRow = document.createElement("div");
+    anyRow.className = "topic-row chips";
+    const anyName = document.createElement("span");
+    anyName.className = "group-label";
+    anyName.textContent = "자유";
+    anyRow.append(anyName, radio("", "아무거나"));
+    $("moods").replaceChildren(anyRow, ...rows);
+    if (!document.querySelector('input[name="mood"]:checked')) {
+      state.mood = "";
+      document.querySelector('input[name="mood"][value=""]').checked = true;
+    }
+  }
+  $("tagLine").addEventListener("change", (e) => { state.tagLine = e.target.checked; persist(); });
+
+  function buildKinds() {
+    $("kinds").replaceChildren(...FORMATS.map((f) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.name = "kind";
+      input.id = "kind-" + f.id;
+      input.value = f.id;
+      input.checked = state.kinds.includes(f.id);
+      input.addEventListener("change", () => {
+        const on = Array.from(document.querySelectorAll('input[name="kind"]:checked'), (x) => x.value);
+        if (!on.length) { input.checked = true; toast("카드 종류는 하나 이상 골라 주세요"); return; }
+        state.kinds = on;
+        persist();
+      });
+      const span = document.createElement("span");
+      span.textContent = f.label;
+      label.append(input, span);
+      return label;
+    }));
+  }
+  function setCount(n) {
+    state.count = Math.max(1, Math.min(MAX_CARDS, Math.round(n) || 1));
+    $("countOut").textContent = state.count + "장";
+    $("countMinus").disabled = state.count <= 1;
+    $("countPlus").disabled = state.count >= MAX_CARDS;
+    updateGoLabel();
+    persist();
+  }
+  $("countMinus").addEventListener("click", () => setCount(state.count - 1));
+  $("countPlus").addEventListener("click", () => setCount(state.count + 1));
+
+  let sampleFn = null, autoCtl = null;
+  function updateGoLabel() {
+    if (autoCtl) return;
+    $("autoGo").textContent = state.count > 1 ? `${state.count}장 캐러셀 만들어 줘` : deckOn() ? "이 장만 다시 써 줘" : "한 장 써 줘";
+  }
+  (window.claude && typeof window.claude.use === "function"
+    ? Promise.resolve(window.claude.use("sample")).catch(() => null)
+    : Promise.resolve(null)
+  ).then((fn) => { sampleFn = fn; $("autoPanel").hidden = !fn; });
+
+  // 한 장: 지금 카드(캐러셀이면 지금 보고 있는 장)를 바꿔요
+  function applySingle(c) {
+    for (const f of CARD_FIELDS) state[f] = c[f];
+    state.example = false;
+    if (deckOn()) {
+      Object.assign(deck.cards[deck.active], c, { saved: false });
+      scheduleThumbs(deck.active);
+      renderDeck();
+    }
+    fillForm();
+    persist();
+    schedule();
+  }
+  // 여러 장: 첫 장이 오면 새 캐러셀을 열고, 다음 장부터는 뒤에 붙여요
+  function addGenerated(c, first) {
+    if (first) {
+      deck.cards = [c];
+      deck.active = 0;
+      $("deckStrip").replaceChildren();
+      selectCard(0);
+    } else {
+      deck.cards.push(c);
+      persist();
+      renderDeck();
+    }
+  }
+
+  $("autoGo").addEventListener("click", async () => {
+    if (!sampleFn || autoCtl) return;
+    const idea = $("idea").value.trim();
+    const mood = state.mood;
+    const count = state.count, kinds = state.kinds.slice();
+    const avoid = [...deck.cards.map((c) => c.title), state.example ? "" : state.title]
+      .map((t) => String(t || "").replace(/\s+/g, " ").replace(/[{}]/g, "").trim())
+      .filter(Boolean);
+    const before = snapshot();
+    const go = $("autoGo"), stop = $("autoStop"), note = $("autoNote");
+    autoCtl = new AbortController();
+    go.disabled = true;
+    go.textContent = "쓰는 중…";
+    stop.hidden = false;
+    note.textContent = count > 1 ? `Claude가 ${count}장을 쓰고 있어요. 다 쓴 장부터 위에 바로 나와요` : "Claude가 쓰고 있어요. 10~30초쯤 걸려요";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    let got = 0, pos = 0;
+    const take = (text) => {
+      const r = scanObjects(text, pos);
+      pos = r.next;
+      for (const raw of r.objs) {
+        if (got >= count) break;
+        const c = toCard(raw);
+        if (!c) continue;
+        got++;
+        if (count === 1) applySingle(c);
+        else {
+          addGenerated(c, got === 1);
+          note.textContent = `${count}장 중 ${got}장 썼어요…`;
+        }
+      }
+    };
+    const undo = { label: "되돌리기", run: () => restore(before) };
+    try {
+      const res = await sampleFn(autoPrompt(idea, mood, kinds, count, avoid, state.tagLine), {
+        signal: autoCtl.signal,
+        cache: false,
+        onText: ({ text }) => take(text),
+      });
+      take(res.text);
+      if (!got) throw { code: "invalid_json" };
+      if (count === 1) {
+        note.textContent = "다 썼어요. 고칠 곳은 아래 칸에서 바로 고치면 돼요";
+        toast("제목이랑 본문을 채웠어요", undo);
+      } else {
+        note.textContent = got < count
+          ? `${got}장만 왔어요. 작은 카드를 눌러 하나씩 보고 고칠 수 있어요`
+          : `${got}장 다 썼어요. 작은 카드를 눌러 하나씩 보고 고칠 수 있어요`;
+        toast(`캐러셀 ${got}장을 만들었어요`, undo);
+      }
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "refused") {
+        if (got) restore(before);
+        note.textContent = autoErrorText(code);
+      } else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+        if (got) restore(before);
+        $("autoPanel").hidden = true;
+        toast("이 화면에서는 자동으로 만들기를 쓸 수 없어요");
+      } else {
+        if (e && typeof e.text === "string") take(e.text);
+        if (got && count > 1) {
+          note.textContent = code === "cancelled"
+            ? `멈췄어요. ${got}장까지 남겨 뒀어요`
+            : `${got}장까지 쓰고 끊겼어요. 모자란 장은 '+ 빈 장'으로 넣거나 다시 만들어 주세요`;
+          toast(`캐러셀 ${got}장을 남겨 뒀어요`, undo);
+        } else if (got) {
+          note.textContent = "다 썼어요. 고칠 곳은 아래 칸에서 바로 고치면 돼요";
+        } else {
+          note.textContent = code === "cancelled" ? "멈췄어요" : autoErrorText(code);
+        }
+      }
+    } finally {
+      autoCtl = null;
+      go.disabled = false;
+      stop.hidden = true;
+      updateGoLabel();
+    }
+  });
+  $("autoStop").addEventListener("click", () => { if (autoCtl) autoCtl.abort(); });
+
+  /* ---------- start ---------- */
+  const saved = readDraft();
+  if (saved) {
+    for (const f of TEXT_FIELDS) if (typeof saved[f] === "string") state[f] = saved[f];
+    if (state.handle === "your.id") state.handle = EXAMPLE.handle; // 예전 예시 아이디가 남아 있으면 바꿔요
+    if (HEIGHTS[saved.ratio]) state.ratio = saved.ratio;
+    if (SIZES[saved.size]) state.size = saved.size;
+    if (Number.isFinite(saved.count)) state.count = Math.max(1, Math.min(MAX_CARDS, Math.round(saved.count)));
+    if (Array.isArray(saved.kinds)) {
+      const ok = saved.kinds.filter((k) => FORMATS.some((f) => f.id === k));
+      const wasAllOld = ok.length === OLD_KINDS.length && OLD_KINDS.every((k) => ok.includes(k));
+      if (ok.length && !wasAllOld) state.kinds = ok;
+    }
+    if (typeof saved.mood === "string") state.mood = saved.mood;
+    if (typeof saved.tagLine === "boolean") state.tagLine = saved.tagLine;
+    state.example = !!saved.example;
+  } else {
+    Object.assign(state, EXAMPLE, { example: true });
+  }
+  try {
+    const sd = JSON.parse(localStorage.getItem(DECK_KEY) || "null");
+    if (sd && Array.isArray(sd.cards) && sd.cards.length) {
+      deck.cards = sd.cards.slice(0, MAX_CARDS).map(normalizeCard);
+      deck.active = Math.max(0, Math.min(deck.cards.length - 1, Number(sd.active) || 0));
+    }
+  } catch (e) {}
+  fillForm();
+  buildMoods();
+  buildKinds();
+  $("tagLine").checked = state.tagLine;
+  setCount(state.count);
+  if (deckOn()) selectCard(deck.active);
+  else renderDeck();
+  let storedAvatar = null;
+  try { storedAvatar = localStorage.getItem(AVATAR_KEY); } catch (e) {}
+  useAvatar(storedAvatar === "none" ? "" : storedAvatar || DEFAULT_AVATAR, false);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { schedule(); scheduleThumbs("all"); });
+  render();
+})();
+</script>
+<!-- app:end -->
+</body>
+</html>
