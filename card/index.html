@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;600;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700;900&display=swap">
 <style>
 /* Layout: one phone-width column. The live card sits on top, the form below reads in the same order as the card (제목 → 아이디 › 주제 → 본문 → 회색 상자), save bar pinned to the bottom. Wide screens: sticky card on the left, form on the right. */
 :root {
@@ -421,24 +421,24 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
   const INK = {
     paper: "#ffffff",
     title: "#0b0b0b",
-    text: "#161616",
+    text: "#111111",
     soft: "#9a9a9a",
     boxBg: "#efefef",
-    boxText: "#3a3a3a",
+    boxText: "#333333",
     avBg: "#e9e9e9",
     avFg: "#c4c4c4",
     hint: "#b9b9b9",
   };
   const M = {
-    padX: 64,        // avatar's left edge
-    right: 72,       // right margin
+    padX: 56,        // avatar's left edge
+    right: 60,       // right margin
     padY: 100,       // minimum top/bottom margin
-    avatar: 92,
-    avatarGap: 22,
-    title: 120, titleMin: 66, titleLH: 1.2, titleTrack: -.025, titleGap: 46,
-    name: 34, nameLH: 1.5,
-    body: 37, bodyLH: 1.6, blank: .55,
-    box: 31, boxLH: 1.55, boxPadX: 30, boxPadY: 24, boxRadius: 18, boxGap: 22,
+    avatar: 104,
+    avatarGap: 24,
+    title: 120, titleMin: 66, titleLH: 1.2, titleTrack: -.025, titleGap: 52,
+    name: 40, nameLH: 1.45,
+    body: 46, bodyLH: 1.55, blank: .5, bodyWeight: 500, bodyTrack: -.01,
+    box: 38, boxLH: 1.5, boxPadX: 34, boxPadY: 26, boxRadius: 20, boxGap: 26,
   };
   const HANG = /^(\s*(?:ㄴ|└|↳|>|-|·|•|\*|\d{1,2}[.)]|[①-⑳])\s*)\S/;
 
@@ -575,8 +575,8 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
       }
 
       const bs = M.body * k, blh = bs * M.bodyLH;
-      ctx.font = font(400, bs);
-      track(ctx, 0);
+      ctx.font = font(M.bodyWeight, bs);
+      track(ctx, M.bodyTrack * bs);
       if (d.body) {
         for (const raw of d.body.split("\n")) {
           if (!raw.trim()) { y += blh * M.blank; continue; }
@@ -594,6 +594,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
         const xs = M.box * k, xlh = xs * M.boxLH;
         const px = M.boxPadX * k, py = M.boxPadY * k;
         ctx.font = font(400, xs);
+        track(ctx, 0);
         const inner = [];
         let iy = 0;
         for (const raw of d.box.split("\n")) {
@@ -721,8 +722,8 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
         ctx.fillStyle = INK.title;
         ctx.fillText(it.text, it.x, y + it.lh / 2);
       } else if (it.t === "text") {
-        ctx.font = font(400, it.size);
-        track(ctx, 0);
+        ctx.font = font(M.bodyWeight, it.size);
+        track(ctx, M.bodyTrack * it.size);
         ctx.fillStyle = INK.text;
         ctx.fillText(it.text, it.x, y + it.lh / 2);
       } else if (it.t === "box") {
@@ -749,7 +750,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
   function fontLoads(d) {
     if (!document.fonts || !document.fonts.load) return [];
     const text = [d.title, d.handle, d.topic, d.body, d.box, "가A1›…제목이나본문을쓰면여기에바로보여요"].join("");
-    return ["400", "600", "700", "900"].map((w) => document.fonts.load(`${w} 40px "Gothic A1"`, text).catch(() => []));
+    return ["400", "500", "600", "700", "900"].map((w) => document.fonts.load(`${w} 40px "Gothic A1"`, text).catch(() => []));
   }
   function requestFonts(d) {
     for (const p of fontLoads(d)) {
