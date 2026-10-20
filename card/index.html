@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c2185b">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<!-- app:start -->
+<title>드립 카드</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;600;700;900&display=swap">
+<style>
+/* Layout: one phone-width column. The live card sits on top, the form below reads in the same order as the card (제목 → 아이디 › 주제 → 본문 → 회색 상자), save bar pinned to the bottom. Wide screens: sticky card on the left, form on the right. */
+:root {
+  --bg: #f1eff4;
+  --surface: #ffffff;
+  --fg: #18161c;
+  --muted: #676170;
+  --line: #dcd7e2;
+  --accent: #c2185b;
+  --accent-fg: #ffffff;
+  --accent-soft: #fbe5ee;
+  --warn: #b4321f;
+  --card-edge: rgba(24, 22, 28, .12);
+  --shadow: 0 1px 2px rgba(24, 22, 28, .06), 0 12px 32px rgba(24, 22, 28, .08);
+  --f-ui: "Gothic A1", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121015;
+    --surface: #1d1a22;
+    --fg: #eeeaf3;
+    --muted: #a39dad;
+    --line: #34303b;
+    --accent: #ff5c95;
+    --accent-fg: #2a0414;
+    --accent-soft: #3b1a2a;
+    --warn: #ff8a72;
+    --card-edge: rgba(255, 255, 255, .10);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121015;
+  --surface: #1d1a22;
+  --fg: #eeeaf3;
+  --muted: #a39dad;
+  --line: #34303b;
+  --accent: #ff5c95;
+  --accent-fg: #2a0414;
+  --accent-soft: #3b1a2a;
+  --warn: #ff8a72;
+  --card-edge: rgba(255, 255, 255, .10);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-ui);
+  font-size: 16px;
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* header */
+.head { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
+h1 {
+  margin: 0;
+  font-weight: 900;
+  font-size: 42px;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+  text-wrap: balance;
+}
+.lede { margin: 2px 0 0; color: var(--muted); font-size: 15px; max-width: 34em; }
+
+.layout { display: flex; flex-direction: column; gap: 20px; }
+.editor { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* card preview */
+.stage { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.frame {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px var(--card-edge), var(--shadow);
+}
+.frame canvas { display: block; width: 100%; height: auto; max-width: 100%; }
+.tag {
+  position: absolute;
+  top: 10px; left: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.stage-note { margin: 0; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage-note.warn { color: var(--warn); font-weight: 600; }
+
+/* panels */
+.panel {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.panel-title { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.label { font-weight: 700; font-size: 15px; display: flex; align-items: baseline; gap: 8px; }
+.opt { font-weight: 400; font-size: 13px; color: var(--muted); }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.hint b { color: var(--fg); font-weight: 700; }
+
+.text-in {
+  width: 100%;
+  min-width: 0;
+  font: 400 16px/1.6 var(--f-ui);
+  color: var(--fg);
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 14px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.text-in::placeholder { color: var(--muted); opacity: .8; font-weight: 400; }
+.text-in:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
+#title { font-weight: 900; font-size: 20px; line-height: 1.35; letter-spacing: -.02em; min-height: 82px; }
+#body { min-height: 200px; }
+#box { min-height: 76px; }
+#handle { font-weight: 700; }
+
+/* 아이디 › 주제 row: mirrors the card's header line */
+.who { display: flex; align-items: center; gap: 12px; }
+.avatar-wrap { position: relative; flex: none; width: 56px; height: 56px; }
+.avatar-pick {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e9e9e9;
+  cursor: pointer;
+}
+.avatar-pick img, .avatar-pick svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.avatar-badge {
+  position: absolute;
+  right: -3px; bottom: -3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: 0 0 0 2px var(--surface);
+  display: grid; place-items: center;
+  pointer-events: none;
+}
+.file-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.avatar-pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.who-fields { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.who-fields .text-in { flex: 1 1 0; }
+.chev { flex: none; color: var(--muted); font-size: 22px; line-height: 1; }
+.who-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 2px; }
+
+/* segmented choices */
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.seg span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px 6px;
+}
+.seg small { font-size: 11px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.seg input:checked + span { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+
+/* buttons */
+.btn {
+  appearance: none;
+  border: 0;
+  border-radius: 12px;
+  font: 700 16px/1 var(--f-ui);
+  min-height: 48px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-ghost { background: var(--surface); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.btn:disabled { opacity: .55; cursor: default; }
+.linkish {
+  appearance: none; border: 0; background: none; padding: 6px 2px;
+  font: 700 14px/1 var(--f-ui); color: var(--accent); cursor: pointer;
+}
+.btn:focus-visible, .linkish:focus-visible, .seg input:focus-visible + span {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  background: var(--surface);
+  box-shadow: 0 -1px 0 var(--line), 0 -8px 24px rgba(0, 0, 0, .06);
+  padding-top: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.bar-inner { max-width: 560px; margin: 0 auto; display: flex; gap: 10px; }
+.bar .btn-primary { flex: 1; min-width: 0; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+  transform: translate(-50%, 8px);
+  max-width: calc(100% - 32px);
+  width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 6;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.show.has-action { pointer-events: auto; }
+.toast button {
+  appearance: none; border: 0; background: none; padding: 4px 0;
+  font: 700 14px/1 var(--f-ui); color: var(--accent-soft); cursor: pointer; white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+@media (min-width: 880px) {
+  .wrap { max-width: 1040px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .stage { position: sticky; top: 20px; }
+  .bar-inner { max-width: 1040px; justify-content: flex-end; }
+  .bar .btn-primary { flex: 0 0 240px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <p class="eyebrow">인스타 게시물 한 장</p>
+    <h1>드립 카드</h1>
+    <p class="lede">제목이랑 글만 쓰면 인스타 피드에 바로 올릴 수 있는 1080px 이미지로 만들어 줘요. 쓴 글은 이 폰에만 남아요.</p>
+  </header>
+
+  <div class="layout">
+    <section class="stage" aria-label="카드 미리보기">
+      <div class="frame">
+        <canvas id="card" width="1080" height="1440" role="img" aria-label="카드 미리보기"></canvas>
+        <span class="tag" id="exampleTag" hidden>예시</span>
+      </div>
+      <p class="stage-note" id="note" aria-live="polite"></p>
+    </section>
+
+    <div class="editor">
+      <section class="panel" aria-labelledby="writeTitle">
+        <h2 class="panel-title" id="writeTitle">글 쓰기</h2>
+
+        <div class="field">
+          <label class="label" for="title">큰 제목 <span class="opt">비워도 돼요</span></label>
+          <textarea class="text-in" id="title" rows="2" spellcheck="false" placeholder="예) 남편이 갑자기&#10;다정해질 때"></textarea>
+        </div>
+
+        <div class="field">
+          <span class="label" id="whoLabel">아이디 › 주제</span>
+          <div class="who" role="group" aria-labelledby="whoLabel">
+            <div class="avatar-wrap">
+              <div class="avatar-pick">
+                <input class="file-input" type="file" id="avatarFile" accept="image/*" aria-label="프로필 사진 고르기">
+                <img id="avatarImg" alt="" hidden>
+                <svg id="avatarBlank" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" fill="#e9e9e9"/><circle cx="28" cy="22.5" r="10.5" fill="#c4c4c4"/><ellipse cx="28" cy="56" rx="20" ry="17" fill="#c4c4c4"/></svg>
+              </div>
+              <span class="avatar-badge" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </span>
+            </div>
+            <div class="who-fields">
+              <input class="text-in" id="handle" type="text" placeholder="아이디" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="인스타 아이디">
+              <span class="chev" aria-hidden="true">›</span>
+              <input class="text-in" id="topic" type="text" placeholder="주제" autocomplete="off" spellcheck="false" aria-label="주제">
+            </div>
+          </div>
+          <div class="who-foot">
+            <p class="hint">동그라미를 누르면 프로필 사진을 넣어요</p>
+            <button class="linkish" type="button" id="avatarClear" hidden>사진 빼기</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="body">본문</label>
+          <textarea class="text-in" id="body" rows="8" spellcheck="false" placeholder="쓴 그대로 줄이 바뀌어요"></textarea>
+          <p class="hint">빈 줄은 문단 사이 간격이 돼요. <b>ㄴ</b>, <b>1.</b>, <b>&gt;</b>로 시작하는 줄은 길어져도 그 뒤에 맞춰 들여써져요.</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="box">회색 상자 <span class="opt">비워도 돼요</span></label>
+          <textarea class="text-in" id="box" rows="2" spellcheck="false" placeholder="기사 한 줄처럼 회색 상자 안에 넣을 글"></textarea>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="lookTitle">
+        <h2 class="panel-title" id="lookTitle">모양</h2>
+        <div class="field">
+          <span class="label" id="ratioLabel">비율</span>
+          <div class="seg" role="radiogroup" aria-labelledby="ratioLabel">
+            <label><input type="radio" name="ratio" id="ratio34" value="3:4" checked><span>3:4<small>1080×1440</small></span></label>
+            <label><input type="radio" name="ratio" id="ratio45" value="4:5"><span>4:5<small>1080×1350</small></span></label>
+            <label><input type="radio" name="ratio" id="ratio11" value="1:1"><span>1:1<small>1080×1080</small></span></label>
+          </div>
+          <p class="hint">3:4는 프로필 격자에서도 잘리지 않고 그대로 보여요.</p>
+        </div>
+        <div class="field">
+          <span class="label" id="sizeLabel">글씨 크기</span>
+          <div class="seg" role="radiogroup" aria-labelledby="sizeLabel">
+            <label><input type="radio" name="size" id="sizeS" value="s"><span>작게</span></label>
+            <label><input type="radio" name="size" id="sizeM" value="m" checked><span>보통</span></label>
+            <label><input type="radio" name="size" id="sizeL" value="l"><span>크게</span></label>
+          </div>
+          <p class="hint">글이 길면 카드에 다 들어가게 알아서 줄여요.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <button class="btn btn-ghost" type="button" id="clear">새로 쓰기</button>
+    <button class="btn btn-ghost" type="button" id="share" hidden>공유</button>
+    <button class="btn btn-primary" type="button" id="save">이미지 저장</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- card spec (1080px wide, Threads-style post on white) ---------- */
+  const W = 1080;
+  const HEIGHTS = { "3:4": 1440, "4:5": 1350, "1:1": 1080 };
+  const SIZES = { s: .88, m: 1, l: 1.14 };
+  const STACK = '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+  const INK = {
+    paper: "#ffffff",
+    title: "#0b0b0b",
+    text: "#161616",
+    soft: "#9a9a9a",
+    boxBg: "#efefef",
+    boxText: "#3a3a3a",
+    avBg: "#e9e9e9",
+    avFg: "#c4c4c4",
+    hint: "#b9b9b9",
+  };
+  const M = {
+    padX: 64,        // avatar's left edge
+    right: 72,       // right margin
+    padY: 100,       // minimum top/bottom margin
+    avatar: 92,
+    avatarGap: 22,
+    title: 120, titleMin: 66, titleLH: 1.2, titleTrack: -.025, titleGap: 46,
+    name: 34, nameLH: 1.5,
+    body: 37, bodyLH: 1.6, blank: .55,
+    box: 31, boxLH: 1.55, boxPadX: 30, boxPadY: 24, boxRadius: 18, boxGap: 22,
+  };
+  const HANG = /^(\s*(?:ㄴ|└|↳|>|-|·|•|\*|\d{1,2}[.)]|[①-⑳])\s*)\S/;
+
+  const EXAMPLE = {
+    title: "남편이 갑자기\n다정해질 때",
+    handle: "your.id",
+    topic: "남편속마음",
+    body: "[ 남편이 갑자기 다정해지는 순간 모음\n\n1. 시키지도 않은 설거지를 한다\n2. 내 폰 충전기를 먼저 꽂아준다\n3. 주말에 장 보러 같이 가자고 한다\n4. 안 물어본 회사 얘기를 한다 ]\n\nㄴ 카드값 나오기 3일 전임ㅋㅋ\nㄴ 4번은 골프 약속 잡아놓은 거야ㅎ",
+    box: "",
+  };
+  const TEXT_FIELDS = ["title", "handle", "topic", "body", "box"];
+  const DRAFT_KEY = "dripcard:v1:draft";
+  const AVATAR_KEY = "dripcard:v1:avatar";
+
+  const state = { title: "", handle: "", topic: "", body: "", box: "", ratio: "3:4", size: "m", example: true };
+  let avatar = null;      // HTMLImageElement (square)
+  let avatarData = "";    // data URL kept in storage
+
+  /* ---------- storage (per-device convenience only) ---------- */
+  function readDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (d && typeof d === "object") return d;
+    } catch (e) {}
+    return null;
+  }
+  let persistTimer = 0;
+  function persist() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) {}
+    }, 250);
+  }
+
+  /* ---------- text helpers ---------- */
+  const seg = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter("ko", { granularity: "grapheme" }) : null;
+  function graphemes(s) {
+    return seg ? Array.from(seg.segment(s), (x) => x.segment) : Array.from(s);
+  }
+  function font(weight, px) { return `${weight} ${px.toFixed(2)}px ${STACK}`; }
+  function track(ctx, px) { if ("letterSpacing" in ctx) ctx.letterSpacing = px.toFixed(2) + "px"; }
+  function widthOf(ctx, s) { return ctx.measureText(s).width; }
+
+  // 한 줄을 maxW 안에 들어가게 나눠요. 띄어쓰기 단위로 바꾸고, 한 단어가 너무 길면 글자 단위로 끊어요.
+  // hang: 둘째 줄부터 들여쓸 너비
+  function wrap(ctx, text, maxW, hang) {
+    const out = [];
+    let line = "", first = true;
+    const limit = () => (first ? maxW : maxW - hang);
+    const push = () => {
+      out.push({ text: line.replace(/\s+$/, ""), indent: first ? 0 : hang });
+      first = false;
+      line = "";
+    };
+    for (const part of text.match(/\s+|\S+/g) || []) {
+      if (/^\s/.test(part)) {
+        if (line || first) line += part;
+        continue;
+      }
+      if (widthOf(ctx, line + part) <= limit()) { line += part; continue; }
+      if (line.trim()) push();
+      if (widthOf(ctx, line + part) <= limit()) { line += part; continue; }
+      for (const g of graphemes(part)) {
+        if (line.trim() && widthOf(ctx, line + g) > limit()) push();
+        line += g;
+      }
+    }
+    if (line.trim() || !out.length) push();
+    return out;
+  }
+  function ellipsize(ctx, s, maxW) {
+    if (maxW <= 0) return "";
+    if (widthOf(ctx, s) <= maxW) return s;
+    const g = graphemes(s);
+    while (g.length && widthOf(ctx, g.join("") + "…") > maxW) g.pop();
+    return g.length ? g.join("") + "…" : "";
+  }
+  function cleanBlock(s) {
+    return String(s || "").replace(/\t/g, "  ").replace(/\r/g, "").replace(/^(?:[ 　]*\n)+/, "").replace(/\s+$/, "");
+  }
+
+  function readData() {
+    return {
+      title: cleanBlock(state.title),
+      handle: state.handle.trim(),
+      topic: state.topic.trim(),
+      body: cleanBlock(state.body),
+      box: cleanBlock(state.box),
+    };
+  }
+  function isEmpty(d) { return !d.title && !d.body && !d.box; }
+
+  /* ---------- layout ---------- */
+  function measure(ctx, d, k) {
+    const items = [];
+    let y = 0;
+    const av = Math.round(M.avatar * k);
+    const hasPost = !!(d.body || d.box);
+    const cx = M.padX + av + Math.round(M.avatarGap * k);
+    const right = W - M.right;
+
+    if (d.title) {
+      const x = hasPost ? cx : M.padX + 26;
+      const cw = right - x;
+      const lines = d.title.split("\n").map((l) => l.trim());
+      let ts = M.title * k;
+      ctx.font = font(900, ts);
+      track(ctx, M.titleTrack * ts);
+      const widest = Math.max(1, ...lines.map((l) => widthOf(ctx, l)));
+      if (widest > cw) ts = Math.max(M.titleMin * k, ts * cw / widest * .995);
+      ctx.font = font(900, ts);
+      track(ctx, M.titleTrack * ts);
+      const lh = ts * M.titleLH;
+      for (const raw of lines) {
+        if (!raw) { y += lh * .5; continue; }
+        for (const ln of wrap(ctx, raw, cw, 0)) {
+          items.push({ t: "title", text: ln.text, x, y, size: ts, lh });
+          y += lh;
+        }
+      }
+      if (hasPost) y += M.titleGap * k;
+    }
+
+    if (hasPost) {
+      const top = y;
+      const cw = right - cx;
+      items.push({ t: "avatar", x: M.padX, y: top + Math.round(3 * k), d: av });
+      if (d.handle || d.topic) {
+        const ns = M.name * k, nlh = ns * M.nameLH;
+        items.push({ t: "name", x: cx, y, size: ns, lh: nlh, maxW: cw });
+        y += nlh + 6 * k;
+      } else {
+        y += 10 * k;
+      }
+
+      const bs = M.body * k, blh = bs * M.bodyLH;
+      ctx.font = font(400, bs);
+      track(ctx, 0);
+      if (d.body) {
+        for (const raw of d.body.split("\n")) {
+          if (!raw.trim()) { y += blh * M.blank; continue; }
+          const m = HANG.exec(raw);
+          const hang = m ? widthOf(ctx, m[1]) : 0;
+          for (const ln of wrap(ctx, raw, cw, hang)) {
+            items.push({ t: "text", text: ln.text, x: cx + ln.indent, y, size: bs, lh: blh });
+            y += blh;
+          }
+        }
+      }
+
+      if (d.box) {
+        y += (d.body ? M.boxGap : 4) * k;
+        const xs = M.box * k, xlh = xs * M.boxLH;
+        const px = M.boxPadX * k, py = M.boxPadY * k;
+        ctx.font = font(400, xs);
+        const inner = [];
+        let iy = 0;
+        for (const raw of d.box.split("\n")) {
+          if (!raw.trim()) { iy += xlh * M.blank; continue; }
+          for (const ln of wrap(ctx, raw, cw - px * 2, 0)) {
+            inner.push({ t: "boxtext", text: ln.text, x: cx + px, y: y + py + iy, size: xs, lh: xlh });
+            iy += xlh;
+          }
+        }
+        const bh = iy + py * 2;
+        items.push({ t: "box", x: cx, y, w: cw, h: bh, r: M.boxRadius * k }, ...inner);
+        y += bh;
+      }
+      y = Math.max(y, top + av + 3 * k);
+    }
+    return { items, h: y };
+  }
+
+  function compose(ctx, d, H, base) {
+    const avail = H - M.padY * 2;
+    let k = base, plan = measure(ctx, d, k);
+    while (plan.h > avail && k > .5) {
+      k = Math.max(.5, k * .96);
+      plan = measure(ctx, d, k);
+    }
+    const fits = plan.h <= avail;
+    const top = fits ? Math.max(M.padY * .8, (H - plan.h) / 2 - H * .015) : M.padY;
+    return { items: plan.items, h: plan.h, top, k, overflow: !fits, shrunk: k < base - 1e-6 };
+  }
+
+  /* ---------- drawing ---------- */
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function drawAvatar(ctx, img, x, y, d) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x + d / 2, y + d / 2, d / 2, 0, Math.PI * 2);
+    ctx.clip();
+    if (img) {
+      const iw = img.naturalWidth, ih = img.naturalHeight, s = Math.min(iw, ih);
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, (iw - s) / 2, (ih - s) / 2, s, s, x, y, d, d);
+    } else {
+      ctx.fillStyle = INK.avBg;
+      ctx.fillRect(x, y, d, d);
+      ctx.fillStyle = INK.avFg;
+      ctx.beginPath();
+      ctx.arc(x + d / 2, y + d * .4, d * .19, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + d / 2, y + d, d * .36, d * .3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(x + d / 2, y + d / 2, d / 2 - .75, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(0, 0, 0, .08)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  function drawName(ctx, it, y, d) {
+    const cy = y + it.lh / 2;
+    const end = it.x + it.maxW;
+    let x = it.x;
+    track(ctx, 0);
+    if (d.handle) {
+      ctx.font = font(700, it.size);
+      ctx.fillStyle = INK.text;
+      const h = ellipsize(ctx, d.handle, it.maxW * (d.topic ? .6 : 1));
+      ctx.fillText(h, x, cy);
+      x += widthOf(ctx, h);
+    }
+    if (d.topic) {
+      if (d.handle) {
+        const gap = it.size * .34;
+        ctx.font = font(400, it.size * 1.05);
+        ctx.fillStyle = INK.soft;
+        x += gap;
+        ctx.fillText("›", x, cy);
+        x += widthOf(ctx, "›") + gap;
+      }
+      ctx.font = font(700, it.size);
+      ctx.fillStyle = INK.text;
+      const t = ellipsize(ctx, d.topic, end - x);
+      if (t) ctx.fillText(t, x, cy);
+    }
+  }
+
+  function drawCard(canvas, d, opts) {
+    const H = HEIGHTS[opts.ratio] || 1440;
+    if (canvas.width !== W) canvas.width = W;
+    if (canvas.height !== H) canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = INK.paper;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+
+    if (isEmpty(d)) {
+      if (opts.preview) {
+        ctx.font = font(600, 36);
+        track(ctx, 0);
+        ctx.fillStyle = INK.hint;
+        ctx.textAlign = "center";
+        ctx.fillText("제목이나 본문을 쓰면", W / 2, H / 2 - 28);
+        ctx.fillText("여기에 바로 보여요", W / 2, H / 2 + 28);
+      }
+      return { empty: true, overflow: false, shrunk: false, k: 1, H };
+    }
+
+    const plan = compose(ctx, d, H, SIZES[opts.size] || 1);
+    for (const it of plan.items) {
+      const y = plan.top + it.y;
+      if (it.t === "title") {
+        ctx.font = font(900, it.size);
+        track(ctx, M.titleTrack * it.size);
+        ctx.fillStyle = INK.title;
+        ctx.fillText(it.text, it.x, y + it.lh / 2);
+      } else if (it.t === "text") {
+        ctx.font = font(400, it.size);
+        track(ctx, 0);
+        ctx.fillStyle = INK.text;
+        ctx.fillText(it.text, it.x, y + it.lh / 2);
+      } else if (it.t === "box") {
+        ctx.fillStyle = INK.boxBg;
+        roundRect(ctx, it.x, y, it.w, it.h, it.r);
+        ctx.fill();
+      } else if (it.t === "boxtext") {
+        ctx.font = font(400, it.size);
+        track(ctx, 0);
+        ctx.fillStyle = INK.boxText;
+        ctx.fillText(it.text, it.x, y + it.lh / 2);
+      } else if (it.t === "avatar") {
+        drawAvatar(ctx, opts.avatar, it.x, y, it.d);
+      } else if (it.t === "name") {
+        drawName(ctx, it, y, d);
+      }
+    }
+    track(ctx, 0);
+    return { ...plan, H };
+  }
+
+  /* ---------- fonts: canvas never pulls web fonts by itself, so ask for the glyphs in use ---------- */
+  const seenFaces = new Set();
+  function fontLoads(d) {
+    if (!document.fonts || !document.fonts.load) return [];
+    const text = [d.title, d.handle, d.topic, d.body, d.box, "가A1›…제목이나본문을쓰면여기에바로보여요"].join("");
+    return ["400", "600", "700", "900"].map((w) => document.fonts.load(`${w} 40px "Gothic A1"`, text).catch(() => []));
+  }
+  function requestFonts(d) {
+    for (const p of fontLoads(d)) {
+      p.then((faces) => {
+        let fresh = false;
+        for (const f of faces || []) if (!seenFaces.has(f)) { seenFaces.add(f); fresh = true; }
+        if (fresh) schedule();
+      });
+    }
+  }
+  function fontsReady(d) {
+    return Promise.race([Promise.all(fontLoads(d)), new Promise((r) => setTimeout(r, 4000))]);
+  }
+
+  /* ---------- preview ---------- */
+  let raf = 0;
+  function schedule() {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(render);
+  }
+  function render() {
+    const d = readData();
+    const plan = drawCard($("card"), d, { ratio: state.ratio, size: state.size, avatar, preview: true });
+    requestFonts(d);
+    $("exampleTag").hidden = !state.example;
+    $("card").setAttribute("aria-label", d.title ? `카드 미리보기: ${d.title.replace(/\n/g, " ")}` : "카드 미리보기");
+    const note = $("note");
+    note.classList.toggle("warn", !!plan.overflow);
+    if (plan.empty) note.textContent = "제목이나 본문을 쓰면 카드가 만들어져요";
+    else if (plan.overflow) note.textContent = "글이 길어서 카드 아래가 잘려요. 글을 줄이거나 비율을 3:4로 바꿔 보세요";
+    else if (plan.shrunk) note.textContent = `글이 길어서 글씨를 ${Math.round(plan.k / (SIZES[state.size] || 1) * 100)}% 크기로 줄였어요 · ${W}×${plan.H}`;
+    else note.textContent = `${W}×${plan.H} PNG로 저장돼요`;
+  }
+
+  /* ---------- form wiring ---------- */
+  function fillForm() {
+    for (const f of TEXT_FIELDS) $(f).value = state[f];
+    const r = document.querySelector(`input[name="ratio"][value="${state.ratio}"]`);
+    if (r) r.checked = true;
+    const s = document.querySelector(`input[name="size"][value="${state.size}"]`);
+    if (s) s.checked = true;
+  }
+  for (const f of TEXT_FIELDS) {
+    $(f).addEventListener("input", (e) => {
+      state[f] = e.target.value;
+      if (f !== "handle") state.example = false;
+      persist();
+      schedule();
+    });
+  }
+  for (const r of document.querySelectorAll('input[name="ratio"], input[name="size"]')) {
+    r.addEventListener("change", (e) => {
+      if (!e.target.checked) return;
+      state[e.target.name] = e.target.value;
+      persist();
+      schedule();
+    });
+  }
+
+  /* ---------- avatar ---------- */
+  function showAvatar() {
+    const has = !!avatarData;
+    $("avatarImg").hidden = !has;
+    $("avatarBlank").hidden = has;
+    $("avatarClear").hidden = !has;
+    if (has) $("avatarImg").src = avatarData;
+    else $("avatarImg").removeAttribute("src");
+  }
+  function useAvatar(dataUrl, store) {
+    avatarData = dataUrl || "";
+    avatar = null;
+    if (store) {
+      try {
+        if (avatarData) localStorage.setItem(AVATAR_KEY, avatarData);
+        else localStorage.removeItem(AVATAR_KEY);
+      } catch (e) {}
+    }
+    showAvatar();
+    if (!avatarData) { schedule(); return; }
+    const img = new Image();
+    img.onload = () => { if (avatarData === dataUrl) { avatar = img; schedule(); } };
+    img.src = avatarData;
+  }
+  $("avatarFile").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const S = 256;
+      const c = document.createElement("canvas");
+      c.width = S; c.height = S;
+      const x = c.getContext("2d");
+      const iw = img.naturalWidth, ih = img.naturalHeight, s = Math.min(iw, ih);
+      x.imageSmoothingQuality = "high";
+      x.drawImage(img, (iw - s) / 2, (ih - s) / 2, s, s, 0, 0, S, S);
+      URL.revokeObjectURL(url);
+      useAvatar(c.toDataURL("image/jpeg", .9), true);
+      toast("프로필 사진을 넣었어요");
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); toast("사진을 열지 못했어요. 다른 사진으로 해 주세요"); };
+    img.src = url;
+  });
+  $("avatarClear").addEventListener("click", () => { useAvatar("", true); toast("프로필 사진을 뺐어요"); });
+
+  /* ---------- toast ---------- */
+  let toastTimer = 0;
+  function toast(msg, action) {
+    const t = $("toast"), btn = $("toastAct");
+    $("toastMsg").textContent = msg;
+    btn.hidden = !action;
+    btn.onclick = null;
+    if (action) {
+      btn.textContent = action.label;
+      btn.onclick = () => { t.classList.remove("show"); action.run(); };
+    }
+    t.classList.toggle("has-action", !!action);
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), action ? 5000 : 2800);
+  }
+
+  /* ---------- 새로 쓰기 ---------- */
+  $("clear").addEventListener("click", () => {
+    const prev = { title: state.title, topic: state.topic, body: state.body, box: state.box, example: state.example };
+    if (!prev.title && !prev.topic && !prev.body && !prev.box) { toast("이미 비어 있어요"); return; }
+    Object.assign(state, { title: "", topic: "", body: "", box: "", example: false });
+    fillForm();
+    persist();
+    schedule();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("글을 다 지웠어요", {
+      label: "되돌리기",
+      run: () => { Object.assign(state, prev); fillForm(); persist(); schedule(); },
+    });
+  });
+
+  /* ---------- save / share ---------- */
+  let downloadsPromise = null;
+  function getDownloads() {
+    if (!downloadsPromise) {
+      downloadsPromise = window.claude && typeof window.claude.use === "function"
+        ? Promise.resolve(window.claude.use("downloads")).catch(() => null)
+        : Promise.resolve(null);
+    }
+    return downloadsPromise;
+  }
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  function shareFilesSupported() {
+    try {
+      return !!(navigator.canShare && navigator.canShare({ files: [new File([new Uint8Array(1)], "t.png", { type: "image/png" })] }));
+    } catch (e) {
+      return false;
+    }
+  }
+  // 클로드 밖(폰 브라우저·홈 화면 앱)의 안드로이드에서는 '공유'로 인스타에 바로 보낼 수 있게
+  getDownloads().then((dl) => { if (!dl && isAndroid && shareFilesSupported()) $("share").hidden = false; });
+
+  function fileName() {
+    const n = new Date();
+    const p = (v) => String(v).padStart(2, "0");
+    return `dripcard_${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}_${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}.png`;
+  }
+  async function makeBlob(d) {
+    await fontsReady(d);
+    const c = document.createElement("canvas");
+    drawCard(c, d, { ratio: state.ratio, size: state.size, avatar, preview: false });
+    const blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), "image/png"));
+    c.width = 0; c.height = 0;
+    return blob;
+  }
+  function saveErrorText(code) {
+    switch (code) {
+      case "rate_limited": return "저장 창이 이미 열려 있어요. 잠깐 뒤에 다시 눌러 주세요";
+      case "too_large": return "이미지가 너무 커서 저장하지 못했어요";
+      case "unavailable": case "not_granted": case "capability_disabled": case "capability_removed":
+        return "이 화면에서는 저장할 수 없어요. 앱을 새로 고친 뒤 다시 해 주세요";
+      default: return "저장하지 못했어요. 다시 해 주세요";
+    }
+  }
+
+  let busy = false;
+  async function exportCard(mode) {
+    if (busy) return;
+    const d = readData();
+    if (isEmpty(d)) { toast("제목이나 본문을 먼저 써 주세요"); return; }
+    busy = true;
+    const btn = $(mode === "share" ? "share" : "save");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "만드는 중…";
+    try {
+      const blob = await makeBlob(d);
+      const name = fileName();
+      const dl = await getDownloads();
+      if (dl) {
+        btn.textContent = "저장 중…";
+        try {
+          await dl.save({ filename: name, data: blob });
+          toast("저장했어요. 인스타에서 이 사진을 올리면 돼요");
+        } catch (e) {
+          const code = e && e.code;
+          toast(code === "declined" ? "저장을 취소했어요" : saveErrorText(code));
+        }
+        return;
+      }
+      // 아이폰: 공유 시트 → '이미지 저장' 또는 인스타그램. 안드로이드: 저장은 바로 내려받기, 공유는 공유 시트
+      const file = new File([blob], name, { type: "image/png" });
+      const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+      if (canShare && (mode === "share" || !isAndroid)) {
+        try {
+          await navigator.share({ files: [file] });
+          return;
+        } catch (e) {
+          if (e && e.name === "AbortError") return;
+          if (mode === "share") { toast("공유하지 못했어요. 저장한 뒤 인스타에서 올려 주세요"); return; }
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      toast(isAndroid ? "저장했어요 · 갤러리의 Download 앨범에 있어요" : "이미지를 내려받았어요");
+    } catch (e) {
+      toast("이미지를 만들지 못했어요. 다시 해 주세요");
+    } finally {
+      busy = false;
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  }
+  $("save").addEventListener("click", () => exportCard("save"));
+  $("share").addEventListener("click", () => exportCard("share"));
+
+  /* ---------- start ---------- */
+  const saved = readDraft();
+  if (saved) {
+    for (const f of TEXT_FIELDS) if (typeof saved[f] === "string") state[f] = saved[f];
+    if (HEIGHTS[saved.ratio]) state.ratio = saved.ratio;
+    if (SIZES[saved.size]) state.size = saved.size;
+    state.example = !!saved.example;
+  } else {
+    Object.assign(state, EXAMPLE, { example: true });
+  }
+  fillForm();
+  try { useAvatar(localStorage.getItem(AVATAR_KEY) || "", false); } catch (e) { useAvatar("", false); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+  render();
+})();
+</script>
+<!-- app:end -->
+</body>
+</html>
