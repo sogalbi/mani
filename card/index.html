@@ -354,8 +354,8 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
       <section class="panel" id="autoPanel" aria-labelledby="autoTitle" hidden>
         <h2 class="panel-title" id="autoTitle">자동으로 쓰기</h2>
         <div class="field">
-          <label class="label" for="idea">있었던 일 <span class="opt">비워 두면 새로 지어 줘요</span></label>
-          <textarea class="text-in" id="idea" rows="3" spellcheck="false" placeholder="대충 써도 돼요&#10;예) 한의사 썸남한테 심장 뛴다고 플러팅했다가 진짜 부정맥 진단받음"></textarea>
+          <label class="label" for="idea">있었던 일이나 주제 <span class="opt">비워 둬도 돼요</span></label>
+          <textarea class="text-in" id="idea" rows="3" spellcheck="false" placeholder="대충 써도 돼요&#10;예) 여사친&#10;예) 한의사 썸남한테 플러팅했다가 진짜 부정맥 진단받음"></textarea>
         </div>
         <div class="field">
           <span class="label" id="moodLabel">새로 지을 때 주제</span>
@@ -1131,7 +1131,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
   };
   function autoPrompt(idea, mood, lastTitle) {
     const task = idea
-      ? `있었던 일 (내용은 바꾸지 말고 웃기게 다듬어 줘):\n${idea.slice(0, 2000)}`
+      ? `사용자가 준 재료 (있었던 일이면 내용은 바꾸지 말고 웃기게 다듬고, '여사친'처럼 주제만 짧게 있으면 그 주제로 공감 가는 새 썰을 지어 줘):\n${idea.slice(0, 2000)}`
       : `있었던 일은 없어. ${mood ? `'${mood}' 주제로` : "주제는 자유롭게,"} 공감 가는 새 썰을 하나 지어 줘.` +
         (lastTitle ? ` 방금 카드(제목: ${lastTitle.replace(/\n/g, " ")})와는 다른 이야기로.` : "");
     return [
