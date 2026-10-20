@@ -272,6 +272,79 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
 .chips input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
 .auto-row { display: flex; gap: 10px; }
 .auto-row .btn-soft { flex: 1; min-width: 0; }
+.stepper { display: flex; align-items: center; gap: 14px; }
+.step {
+  flex: none;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--fg);
+  font: 600 22px/1 var(--f-ui);
+  cursor: pointer;
+}
+.step:disabled { opacity: .4; cursor: default; }
+.step:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.count-out { min-width: 3.2em; text-align: center; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* 캐러셀: 미리보기 아래 작은 카드 줄 */
+.deck { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.deck-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.deck-title { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.deck-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.thumb {
+  position: relative;
+  flex: none;
+  width: 84px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px var(--card-edge);
+  cursor: pointer;
+  scroll-snap-align: center;
+}
+.thumb canvas { display: block; width: 100%; height: auto; }
+.thumb.active { box-shadow: 0 0 0 3px var(--accent); }
+.thumb:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.thumb .num, .thumb .ok {
+  position: absolute;
+  bottom: 4px;
+  min-width: 20px; height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 700; line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.thumb .num { left: 4px; background: var(--fg); color: var(--bg); }
+.thumb .ok { right: 4px; background: var(--accent); color: var(--accent-fg); }
+.deck-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.tool {
+  appearance: none;
+  border: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--fg);
+  font: 600 14px/1 var(--f-ui);
+  cursor: pointer;
+}
+.tool:disabled { opacity: .45; cursor: default; }
+.tool:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.tool-warn { color: var(--warn); }
+.deck-start { align-self: flex-start; }
 .btn:disabled { opacity: .55; cursor: default; }
 .linkish {
   appearance: none; border: 0; background: none; padding: 6px 2px;
@@ -336,23 +409,38 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
 
 <div class="wrap">
   <header class="head">
-    <p class="eyebrow">인스타 게시물 한 장</p>
+    <p class="eyebrow">인스타 게시물 · 캐러셀</p>
     <h1>드립 카드</h1>
-    <p class="lede">제목이랑 글만 쓰면 인스타 피드에 바로 올릴 수 있는 1080px 이미지로 만들어 줘요. 쓴 글은 이 폰에만 남아요.</p>
+    <p class="lede">제목이랑 글만 쓰면 인스타 피드에 바로 올릴 수 있는 1080px 이미지로 만들어 줘요. 캐러셀은 10장까지 한 번에 만들 수 있어요. 쓴 글은 이 폰에만 남아요.</p>
   </header>
 
   <div class="layout">
     <section class="stage" aria-label="카드 미리보기">
+      <div class="deck" id="deck" hidden>
+        <div class="deck-head">
+          <span class="deck-title" id="deckTitle">캐러셀</span>
+          <button class="linkish" type="button" id="deckClose">캐러셀 끝내기</button>
+        </div>
+        <div class="deck-strip" id="deckStrip" role="list" aria-label="캐러셀 카드"></div>
+        <div class="deck-tools">
+          <button class="tool" type="button" id="deckLeft">‹ 앞으로</button>
+          <button class="tool" type="button" id="deckRight">뒤로 ›</button>
+          <button class="tool" type="button" id="deckAdd">+ 빈 장</button>
+          <button class="tool tool-warn" type="button" id="deckRemove">이 장 빼기</button>
+        </div>
+      </div>
       <div class="frame">
         <canvas id="card" width="1080" height="1440" role="img" aria-label="카드 미리보기"></canvas>
         <span class="tag" id="exampleTag" hidden>예시</span>
       </div>
       <p class="stage-note" id="note" aria-live="polite"></p>
+
+      <button class="linkish deck-start" type="button" id="deckStart">+ 장 추가해서 캐러셀 만들기</button>
     </section>
 
     <div class="editor">
       <section class="panel" id="autoPanel" aria-labelledby="autoTitle" hidden>
-        <h2 class="panel-title" id="autoTitle">자동으로 쓰기</h2>
+        <h2 class="panel-title" id="autoTitle">자동으로 만들기</h2>
         <div class="field">
           <label class="label" for="idea">있었던 일이나 주제 <span class="opt">비워 둬도 돼요</span></label>
           <textarea class="text-in" id="idea" rows="3" spellcheck="false" placeholder="대충 써도 돼요&#10;예) 여사친&#10;예) 한의사 썸남한테 플러팅했다가 진짜 부정맥 진단받음"></textarea>
@@ -363,15 +451,29 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
             <label><input type="radio" name="mood" id="moodAny" value="" checked><span>아무거나</span></label>
             <label><input type="radio" name="mood" id="moodLove" value="연애·썸"><span>연애·썸</span></label>
             <label><input type="radio" name="mood" id="moodHome" value="남편·결혼"><span>남편·결혼</span></label>
+            <label><input type="radio" name="mood" id="moodInlaw" value="시댁"><span>시댁</span></label>
             <label><input type="radio" name="mood" id="moodWork" value="회사·직장"><span>회사</span></label>
             <label><input type="radio" name="mood" id="moodDaily" value="일상·친구"><span>일상</span></label>
           </div>
         </div>
+        <div class="field">
+          <span class="label" id="kindLabel">카드 종류 <span class="opt">여러 개 고르면 섞어서 만들어요</span></span>
+          <div class="chips" id="kinds" role="group" aria-labelledby="kindLabel"></div>
+        </div>
+        <div class="field">
+          <span class="label" id="countLabel">장 수</span>
+          <div class="stepper" role="group" aria-labelledby="countLabel">
+            <button class="step" type="button" id="countMinus" aria-label="한 장 줄이기">−</button>
+            <output class="count-out" id="countOut" aria-live="polite">4장</output>
+            <button class="step" type="button" id="countPlus" aria-label="한 장 늘리기">+</button>
+          </div>
+          <p class="hint">1장은 지금 카드를 바꿔요. 2장 이상은 캐러셀을 새로 만들어요 (최대 10장, 10장이면 1~2분).</p>
+        </div>
         <div class="auto-row">
-          <button class="btn btn-soft" type="button" id="autoGo">제목이랑 본문 써 줘</button>
+          <button class="btn btn-soft" type="button" id="autoGo">4장 캐러셀 만들어 줘</button>
           <button class="btn btn-ghost" type="button" id="autoStop" hidden>그만</button>
         </div>
-        <p class="hint" id="autoNote" aria-live="polite">Claude가 큰 제목·주제·본문을 채워 줘요. 마음에 안 들면 한 번 더 누르면 돼요.</p>
+        <p class="hint" id="autoNote" aria-live="polite">Claude가 큰 제목·주제·본문을 채워 줘요. 다 쓴 장부터 위에 바로 나와요.</p>
       </section>
 
       <section class="panel" aria-labelledby="writeTitle">
@@ -449,6 +551,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     <button class="btn btn-ghost" type="button" id="clear">새로 쓰기</button>
     <button class="btn btn-ghost" type="button" id="share" hidden>공유</button>
     <button class="btn btn-primary" type="button" id="save">이미지 저장</button>
+    <button class="btn btn-primary" type="button" id="saveAll" hidden>모두 저장</button>
   </div>
 </div>
 
@@ -500,7 +603,26 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
   // 기본 프로필 사진: 맥도날드 종이봉투 쓴 사진
   const DEFAULT_AVATAR = "data:image/jpeg;base64,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";
 
-  const state = { title: "", handle: "", topic: "", body: "", box: "", ratio: "3:4", size: "m", example: true };
+  // 자동으로 만들기에서 고르는 카드 종류
+  const FORMATS = [
+    { id: "story", label: "반전 썰", guide: "짧은 이야기. 장면이 바뀌면 빈 줄, 끝은 반전이나 펀치라인. 어울리면 마지막에 'ㄴ ' 댓글 한 줄." },
+    { id: "list", label: "특징 모음", guide: "제목은 '○○ 특징 모음'처럼. 본문은 '1. ' 번호 목록 4~5개, 빈 줄 하나, 'ㄴ ' 반전 한 줄." },
+    { id: "translate", label: "말 번역기", guide: "제목은 '○○ 말 번역기'처럼. “겉으로 하는 말” 한 줄, 다음 줄에 '> 속뜻'. 이런 쌍 3~4개를 빈 줄로 나누고 마지막에 'ㄴ ' 한 줄." },
+    { id: "diagnose", label: "자가진단", guide: "제목은 '○○ 자가진단'처럼. 증상 한 줄, 다음 줄에 '> 엉뚱한 병명'(예: 남편이 갑자기 멋있어 보인다 / > 백내장). 4~5쌍을 빈 줄 없이." },
+    { id: "tips", label: "꿀팁", guide: "제목은 '○○ 꿀팁'처럼. '1. ' 번호 팁 4~5개, 빈 줄 하나, 'ㄴ ' 반전 한 줄." },
+    { id: "chat", label: "대화", guide: "카톡처럼 '나: ', '남편: '처럼 말한 사람을 앞에 붙인 대화 4~8줄. 마지막 줄이 펀치라인." },
+  ];
+  const MAX_CARDS = 10;
+  const DECK_KEY = "dripcard:v1:deck";
+  const CARD_FIELDS = ["title", "topic", "body", "box"];
+
+  const state = {
+    title: "", handle: "", topic: "", body: "", box: "", ratio: "3:4", size: "m", example: true,
+    count: 4, kinds: FORMATS.map((f) => f.id),
+  };
+  // 캐러셀: 카드마다 제목·주제·본문·회색 상자. 아이디·비율·글씨 크기·프로필은 모든 장이 같이 써요.
+  const deck = { cards: [], active: 0 };
+  function deckOn() { return deck.cards.length > 0; }
   let avatar = null;      // HTMLImageElement (square)
   let avatarData = "";    // data URL kept in storage
 
@@ -517,6 +639,10 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     clearTimeout(persistTimer);
     persistTimer = setTimeout(() => {
       try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) {}
+      try {
+        if (deckOn()) localStorage.setItem(DECK_KEY, JSON.stringify(deck));
+        else localStorage.removeItem(DECK_KEY);
+      } catch (e) {}
     }, 250);
   }
 
@@ -650,15 +776,17 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     return String(s || "").replace(/\t/g, "  ").replace(/\r/g, "").replace(/^(?:[ 　]*\n)+/, "").replace(/\s+$/, "");
   }
 
-  function readData() {
+  // 카드 한 장(편집 중인 글이나 캐러셀의 한 장)을 그릴 데이터로. 아이디는 모든 장이 같이 써요.
+  function dataOf(src) {
     return {
-      title: cleanBlock(state.title),
+      title: cleanBlock(src.title),
       handle: state.handle.trim(),
-      topic: state.topic.trim(),
-      body: cleanBlock(state.body),
-      box: cleanBlock(state.box),
+      topic: String(src.topic || "").trim(),
+      body: cleanBlock(src.body),
+      box: cleanBlock(src.box),
     };
   }
+  function readData() { return dataOf(state); }
   function isEmpty(d) { return !d.title && !d.body && !d.box; }
 
   /* ---------- layout ---------- */
@@ -890,7 +1018,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
       p.then((faces) => {
         let fresh = false;
         for (const f of faces || []) if (!seenFaces.has(f)) { seenFaces.add(f); fresh = true; }
-        if (fresh) schedule();
+        if (fresh) { schedule(); scheduleThumbs("all"); }
       });
     }
   }
@@ -930,6 +1058,17 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     $(f).addEventListener("input", (e) => {
       state[f] = e.target.value;
       if (f !== "handle") state.example = false;
+      if (deckOn()) {
+        if (f === "handle") {
+          scheduleThumbs("all");
+        } else {
+          const c = deck.cards[deck.active];
+          c[f] = e.target.value;
+          c.saved = false;
+          scheduleThumbs(deck.active);
+          renderDeck();
+        }
+      }
       persist();
       schedule();
     });
@@ -938,8 +1077,11 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     r.addEventListener("change", (e) => {
       if (!e.target.checked) return;
       state[e.target.name] = e.target.value;
+      for (const c of deck.cards) c.saved = false;
       persist();
       schedule();
+      scheduleThumbs("all");
+      renderDeck();
     });
   }
 
@@ -961,9 +1103,9 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
       } catch (e) {}
     }
     showAvatar();
-    if (!avatarData) { schedule(); return; }
+    if (!avatarData) { schedule(); scheduleThumbs("all"); return; }
     const img = new Image();
-    img.onload = () => { if (avatarData === dataUrl) { avatar = img; schedule(); } };
+    img.onload = () => { if (avatarData === dataUrl) { avatar = img; schedule(); scheduleThumbs("all"); } };
     img.src = avatarData;
   }
   $("avatarFile").addEventListener("change", (e) => {
@@ -1021,6 +1163,177 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     });
   });
 
+  /* ---------- 캐러셀 ---------- */
+  function blankCard(topic) { return { title: "", topic: topic || "", body: "", box: "", saved: false }; }
+  function normalizeCard(c) {
+    const s = (v) => (typeof v === "string" ? v : "");
+    return { title: s(c && c.title), topic: s(c && c.topic), body: s(c && c.body), box: s(c && c.box), saved: !!(c && c.saved) };
+  }
+  function snapshot() {
+    const fields = {};
+    for (const f of CARD_FIELDS) fields[f] = state[f];
+    return { cards: deck.cards.map((c) => ({ ...c })), active: deck.active, fields, example: state.example };
+  }
+  function restore(s) {
+    deck.cards = s.cards.map((c) => ({ ...c }));
+    deck.active = s.active;
+    Object.assign(state, s.fields, { example: s.example });
+    fillForm();
+    persist();
+    schedule();
+    $("deckStrip").replaceChildren();
+    renderDeck();
+  }
+
+  // 작은 카드는 큰 캔버스 하나에 그려서 줄여 옮겨요 (폰 메모리 아끼려고)
+  const thumbCanvas = document.createElement("canvas");
+  const dirtyThumbs = new Set();
+  let thumbRaf = 0;
+  function scheduleThumbs(which) {
+    if (!deckOn()) return;
+    if (which === "all") deck.cards.forEach((_, i) => dirtyThumbs.add(i));
+    else dirtyThumbs.add(which);
+    cancelAnimationFrame(thumbRaf);
+    thumbRaf = requestAnimationFrame(drawThumbs);
+  }
+  function drawThumbs() {
+    const strip = $("deckStrip");
+    for (const i of dirtyThumbs) {
+      const b = strip.children[i], card = deck.cards[i];
+      if (!b || !card) continue;
+      const d = dataOf(card);
+      drawCard(thumbCanvas, d, { ratio: state.ratio, size: state.size, avatar, preview: true });
+      requestFonts(d);
+      const c = b.querySelector("canvas");
+      const tw = 216, th = Math.round(tw * thumbCanvas.height / W);
+      if (c.width !== tw) c.width = tw;
+      if (c.height !== th) c.height = th;
+      const x = c.getContext("2d");
+      x.imageSmoothingQuality = "high";
+      x.drawImage(thumbCanvas, 0, 0, tw, th);
+    }
+    dirtyThumbs.clear();
+  }
+  function makeThumb(i) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "thumb";
+    b.setAttribute("role", "listitem");
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = String(i + 1);
+    const ok = document.createElement("span");
+    ok.className = "ok";
+    ok.textContent = "✓";
+    b.append(document.createElement("canvas"), num, ok);
+    b.addEventListener("click", () => selectCard(i));
+    return b;
+  }
+  function renderDeck() {
+    const on = deckOn();
+    $("deck").hidden = !on;
+    $("deckStart").hidden = on;
+    const strip = $("deckStrip");
+    if (!on) {
+      strip.replaceChildren();
+      updateBar();
+      return;
+    }
+    if (strip.children.length > deck.cards.length) strip.replaceChildren();
+    for (let i = strip.children.length; i < deck.cards.length; i++) {
+      strip.append(makeThumb(i));
+      scheduleThumbs(i);
+    }
+    Array.from(strip.children).forEach((b, i) => {
+      const c = deck.cards[i];
+      b.classList.toggle("active", i === deck.active);
+      b.setAttribute("aria-current", i === deck.active ? "true" : "false");
+      b.setAttribute("aria-label", `${i + 1}번 카드${c.saved ? ", 저장함" : ""}`);
+      b.querySelector(".ok").hidden = !c.saved;
+    });
+    const savedN = deck.cards.filter((c) => c.saved).length;
+    $("deckTitle").textContent = `캐러셀 ${deck.cards.length}장 · 지금 ${deck.active + 1}번` + (savedN ? ` · 저장 ${savedN}장` : "");
+    $("deckLeft").disabled = deck.active === 0;
+    $("deckRight").disabled = deck.active === deck.cards.length - 1;
+    $("deckAdd").disabled = deck.cards.length >= MAX_CARDS;
+    updateBar();
+  }
+  function selectCard(i) {
+    if (!deckOn()) return;
+    deck.active = Math.max(0, Math.min(deck.cards.length - 1, i));
+    const c = deck.cards[deck.active];
+    for (const f of CARD_FIELDS) state[f] = c[f] || "";
+    state.example = false;
+    fillForm();
+    persist();
+    schedule();
+    renderDeck();
+    const t = $("deckStrip").children[deck.active];
+    if (t && t.scrollIntoView) t.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }
+  function moveActive(step) {
+    const a = deck.active, b = a + step;
+    if (b < 0 || b >= deck.cards.length) return;
+    [deck.cards[a], deck.cards[b]] = [deck.cards[b], deck.cards[a]];
+    deck.active = b;
+    persist();
+    scheduleThumbs(a);
+    scheduleThumbs(b);
+    renderDeck();
+  }
+  $("deckLeft").addEventListener("click", () => moveActive(-1));
+  $("deckRight").addEventListener("click", () => moveActive(1));
+  $("deckAdd").addEventListener("click", () => {
+    if (deck.cards.length >= MAX_CARDS) return;
+    deck.cards.splice(deck.active + 1, 0, blankCard(state.topic));
+    $("deckStrip").replaceChildren();
+    selectCard(deck.active + 1);
+    $("title").focus({ preventScroll: true });
+    toast(`${deck.active + 1}번에 빈 장을 넣었어요. 아래 칸에 쓰면 돼요`);
+  });
+  $("deckRemove").addEventListener("click", () => {
+    const before = snapshot();
+    const n = deck.active + 1;
+    deck.cards.splice(deck.active, 1);
+    $("deckStrip").replaceChildren();
+    if (deckOn()) selectCard(Math.min(deck.active, deck.cards.length - 1));
+    else { renderDeck(); persist(); }
+    toast(`${n}번 카드를 뺐어요`, { label: "되돌리기", run: () => restore(before) });
+  });
+  $("deckClose").addEventListener("click", () => {
+    const before = snapshot();
+    deck.cards = [];
+    deck.active = 0;
+    persist();
+    renderDeck();
+    toast("캐러셀을 끝냈어요. 지금 카드만 남겨 뒀어요", { label: "되돌리기", run: () => restore(before) });
+  });
+  $("deckStart").addEventListener("click", () => {
+    const first = normalizeCard(state);
+    deck.cards = [first, blankCard(state.topic)];
+    $("deckStrip").replaceChildren();
+    selectCard(1);
+    toast("캐러셀을 만들었어요. 2번 카드를 쓰면 돼요");
+  });
+
+  let shareOK = false;   // 클로드 밖 안드로이드: 공유 시트로 인스타에 바로
+  function updateBar() {
+    const on = deckOn();
+    $("clear").hidden = on;
+    $("saveAll").hidden = !on;
+    $("share").hidden = !shareOK;
+    const save = $("save");
+    if (!save.disabled) save.textContent = on ? "이 장 저장" : "이미지 저장";
+    save.className = "btn " + (on ? "btn-ghost" : "btn-primary");
+    if (on && !$("saveAll").disabled) $("saveAll").textContent = `모두 저장 · ${deck.cards.length}장`;
+  }
+  function markActiveSaved() {
+    if (!deckOn()) return;
+    deck.cards[deck.active].saved = true;
+    persist();
+    renderDeck();
+  }
+
   /* ---------- save / share ---------- */
   let downloadsPromise = null;
   function getDownloads() {
@@ -1040,12 +1353,17 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     }
   }
   // 클로드 밖(폰 브라우저·홈 화면 앱)의 안드로이드에서는 '공유'로 인스타에 바로 보낼 수 있게
-  getDownloads().then((dl) => { if (!dl && isAndroid && shareFilesSupported()) $("share").hidden = false; });
+  getDownloads().then((dl) => { shareOK = !dl && isAndroid && shareFilesSupported(); updateBar(); });
 
-  function fileName() {
+  function stampNow() {
     const n = new Date();
     const p = (v) => String(v).padStart(2, "0");
-    return `dripcard_${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}_${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}.png`;
+    return `${n.getFullYear()}${p(n.getMonth() + 1)}${p(n.getDate())}_${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`;
+  }
+  function fileName() {
+    return deckOn()
+      ? `dripcard_${stampNow()}_${String(deck.active + 1).padStart(2, "0")}.png`
+      : `dripcard_${stampNow()}.png`;
   }
   async function makeBlob(d) {
     await fontsReady(d);
@@ -1083,6 +1401,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
         btn.textContent = "저장 중…";
         try {
           await dl.save({ filename: name, data: blob });
+          markActiveSaved();
           toast("저장했어요. 인스타에서 이 사진을 올리면 돼요");
         } catch (e) {
           const code = e && e.code;
@@ -1096,6 +1415,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
       if (canShare && (mode === "share" || !isAndroid)) {
         try {
           await navigator.share({ files: [file] });
+          markActiveSaved();
           return;
         } catch (e) {
           if (e && e.name === "AbortError") return;
@@ -1110,6 +1430,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
+      markActiveSaved();
       toast(isAndroid ? "저장했어요 · 갤러리의 Download 앨범에 있어요" : "이미지를 내려받았어요");
     } catch (e) {
       toast("이미지를 만들지 못했어요. 다시 해 주세요");
@@ -1117,108 +1438,336 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
       busy = false;
       btn.disabled = false;
       btn.textContent = label;
+      updateBar();
+    }
+  }
+
+  // 캐러셀 모두 저장. 파일 이름 끝 번호(_01, _02…)가 올리는 순서예요.
+  async function exportAll(mode) {
+    if (busy || !deckOn()) return;
+    const items = deck.cards.map((c, i) => ({ c, i, d: dataOf(c) })).filter((x) => !isEmpty(x.d));
+    if (!items.length) { toast("빈 카드뿐이에요. 글을 먼저 써 주세요"); return; }
+    busy = true;
+    const btn = $(mode === "share" ? "share" : "saveAll");
+    const label = btn.textContent;
+    btn.disabled = true;
+    const stamp = stampNow();
+    const nameOf = (i) => `dripcard_${stamp}_${String(i + 1).padStart(2, "0")}.png`;
+    const skipped = deck.cards.length - items.length;
+    try {
+      const dl = await getDownloads();
+      if (dl) {
+        // 저장 창이 한 장씩 떠요. 중간에 멈추면 다음엔 안 저장한 장부터 이어서 해요
+        const todo = items.some((x) => !x.c.saved) ? items.filter((x) => !x.c.saved) : items;
+        let done = 0;
+        for (const x of todo) {
+          btn.textContent = `저장 중 ${done + 1}/${todo.length}`;
+          const blob = await makeBlob(x.d);
+          try {
+            await dl.save({ filename: nameOf(x.i), data: blob });
+          } catch (e) {
+            const code = e && e.code;
+            if (code === "declined") toast(done ? `${done}장 저장하고 멈췄어요. 다시 누르면 남은 장부터 이어서 저장해요` : "저장을 취소했어요");
+            else if (code === "rate_limited") toast(`${done}장 저장했어요. 잠깐 뒤에 다시 누르면 남은 장부터 이어서 저장해요`);
+            else toast(saveErrorText(code));
+            return;
+          }
+          x.c.saved = true;
+          done++;
+          persist();
+          renderDeck();
+        }
+        toast(`${done}장 저장했어요. 인스타에서 1번부터 순서대로 고르면 돼요` + (skipped ? ` (빈 장 ${skipped}개는 뺐어요)` : ""));
+        return;
+      }
+      // 클로드 밖: 아이폰은 공유 시트 한 번에, 안드로이드는 차례로 내려받기
+      btn.textContent = "만드는 중…";
+      const files = [];
+      for (const x of items) files.push(new File([await makeBlob(x.d)], nameOf(x.i), { type: "image/png" }));
+      const canShare = navigator.canShare && navigator.canShare({ files });
+      if (canShare && (mode === "share" || !isAndroid)) {
+        try {
+          await navigator.share({ files });
+          items.forEach((x) => { x.c.saved = true; });
+          persist();
+          renderDeck();
+          return;
+        } catch (e) {
+          if (e && e.name === "AbortError") return;
+          if (mode === "share") { toast("공유하지 못했어요. 저장한 뒤 인스타에서 올려 주세요"); return; }
+        }
+      }
+      for (const [n, f] of files.entries()) {
+        if (n) await new Promise((r) => setTimeout(r, 400));
+        const url = URL.createObjectURL(f);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = f.name;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
+      items.forEach((x) => { x.c.saved = true; });
+      persist();
+      renderDeck();
+      toast(isAndroid ? `${files.length}장 저장했어요 · 갤러리의 Download 앨범에 있어요` : `${files.length}장 내려받았어요`);
+    } catch (e) {
+      toast("이미지를 만들지 못했어요. 다시 해 주세요");
+    } finally {
+      busy = false;
+      btn.disabled = false;
+      btn.textContent = label;
+      updateBar();
     }
   }
   $("save").addEventListener("click", () => exportCard("save"));
-  $("share").addEventListener("click", () => exportCard("share"));
+  $("saveAll").addEventListener("click", () => exportAll("save"));
+  $("share").addEventListener("click", () => (deckOn() ? exportAll("share") : exportCard("share")));
 
-  /* ---------- 자동으로 쓰기: Claude 앱 안에서만 보여요 ---------- */
-  const STYLE_EXAMPLE = {
-    title: "남친 만들려다가\n화타 만났네...",
-    topic: "한의사썸남",
-    body: "한의사 썸남한테\n“오빠만 보면 심장이 너무 빨리 뛰어💕”\n이렇게 플러팅했는데\n\n갑자기 증상을 자세히 물어보더니\n“그거 부정맥 같은데? 병원 가봐.”\n\n근데 진짜 부정맥 진단받음ㅋㅋㅋㅋ\n\n{쪽}팔려서 어떡해",
-    box: "",
-  };
-  function autoPrompt(idea, mood, lastTitle) {
-    const task = idea
-      ? `사용자가 준 재료 (있었던 일이면 내용은 바꾸지 말고 웃기게 다듬고, '여사친'처럼 주제만 짧게 있으면 그 주제로 공감 가는 새 썰을 지어 줘):\n${idea.slice(0, 2000)}`
-      : `있었던 일은 없어. ${mood ? `'${mood}' 주제로` : "주제는 자유롭게,"} 공감 가는 새 썰을 하나 지어 줘.` +
-        (lastTitle ? ` 방금 카드(제목: ${lastTitle.replace(/\n/g, " ")})와는 다른 이야기로.` : "");
-    return [
-      "너는 인스타그램 유머 계정의 '드립 카드' 작가야. 카드는 흰 바탕에 큰 제목이 있고, 그 아래 스레드 글 캡처처럼 [아이디 › 주제]와 짧은 썰이 들어가. 20~40대가 \"아 ㅋㅋ 내 얘기\" 하면서 친구를 태그하고 싶어지는 공감·반전 유머가 목표야.",
+  /* ---------- 자동으로 만들기: Claude 앱 안에서만 보여요 ---------- */
+  // 실제로 올려서 반응 좋았던 카드들. 말투와 형식의 본보기로 같이 보내요.
+  const STYLE_EXAMPLES = [
+    { type: "반전 썰", title: "남친 만들려다가\n화타 만났네...", topic: "한의사썸남", body: "한의사 썸남한테\n“오빠만 보면 심장이 너무 빨리 뛰어💕”\n이렇게 플러팅했는데\n\n갑자기 증상을 자세히 물어보더니\n“그거 부정맥 같은데? 병원 가봐.”\n\n근데 진짜 부정맥 진단받음ㅋㅋㅋㅋ\n\n{쪽}팔려서 어떡해", box: "" },
+    { type: "반전 썰", title: "김장하러 갔더니\n간만 보래", topic: "시댁김장", body: "김장한다고 해서\n각오하고 시댁 갔는데\n시어머니가 고무장갑 대신\n젓가락 주시면서\n“너는 간만 봐”\n\n하루 종일 수육 먹으면서\n간만 봤는데\n\n배추 나르던 남편이\n“엄마 나는 왜 이거 해?”\n\nㄴ 시어머니: “넌 내 아들이잖아”", box: "" },
+    { type: "말 번역기", title: "시어머니 말\n번역기", topic: "시어머니", body: "“아무것도 사 오지 마~”\n> 빈손으로 오면 서운해\n\n“편하게 있다 가~”\n> 설거지는 네 담당\n\n“우리 아들 얼굴이 반쪽이네”\n> 밥 좀 잘 해 먹여라\n\n“나는 괜찮다~”\n> 안 괜찮음\n\nㄴ 남편 말 번역기는 아직 개발 중..", box: "" },
+    { type: "특징 모음", title: "우리 부장님\n특징 모음", topic: "부장님", body: "1. 모든 얘기가 “나 때는 말이야”\n2. 퇴근 10분 전에 “잠깐 얘기 좀”\n3. 카톡 답장은 ‘ㅇㅇ’ 아니면 ‘.’\n4. 점심 메뉴 물어보고 결국 국밥\n5. 엑셀은 몰라도 수정은 제일 많음\n\nㄴ 근데 2차 계산은 늘 부장님ㅠ", box: "" },
+    { type: "꿀팁", title: "명절 시댁\n생존 꿀팁", topic: "명절", body: "1. 도착하자마자 앞치마부터\n2. “제가 할게요”는 세 번까지만\n3. 남편 옆자리 사수하기\n4. 칭찬은 무조건 음식 맛으로\n5. 출발 시간은 미리 정해두기\n\nㄴ 우리 어머니: “앉아 있어~ 넌 손님이야”", box: "" },
+  ];
+  function autoPrompt(idea, mood, kinds, count, avoid) {
+    const fmts = FORMATS.filter((f) => kinds.includes(f.id));
+    const subject = idea
+      ? `재료: ${idea.slice(0, 2000)}\n  (있었던 일이면 ${count > 1 ? "1장은 그 이야기를 내용 그대로 웃기게 다듬고, 나머지는 같은 주제로 다양하게" : "내용은 바꾸지 말고 웃기게 다듬어"}. '여사친'처럼 주제만 짧게 있으면 그 주제로 써.)`
+      : mood ? `주제: ${mood}` : count > 1 ? "주제: 자유. 장마다 연애·썸, 남편·결혼, 시댁, 회사, 일상 중에서 다양하게." : "주제: 자유.";
+    const lines = [
+      "너는 인스타그램 유머 계정의 '드립 카드' 작가야. 카드는 흰 바탕에 큰 제목이 있고, 그 아래 스레드 글 캡처처럼 [아이디 › 주제]와 짧은 글이 들어가. 20~40대가 \"아 ㅋㅋ 내 얘기\" 하면서 친구를 태그하고 싶어지는 공감·반전 유머가 목표야.",
       "",
-      "쓰는 법",
-      "- title(큰 제목): 2줄, 많아야 3줄. 한 줄은 10자 안쪽. 썰의 반전이나 속마음을 혼잣말처럼 한 방에. 줄바꿈은 \\n.",
-      "- topic(주제 태그): 띄어쓰기 없는 2~6자 (예: 한의사썸남, 남편회식, 동거고백).",
-      "- body(본문): 반말 구어체 썰. 한 줄은 20자 안쪽으로 짧게 끊고, 장면이 바뀌면 빈 줄. 전체 5~10줄. 끝은 반전이나 펀치라인. 대사는 “ ”로. ㅋㅋ, .., 이모지는 아껴서. 어울리면 마지막에 'ㄴ '으로 시작하는 댓글 같은 한 줄.",
-      "- 목록으로 쓸 때는 '1. '처럼 번호만 붙이고, [ ] 괄호나 제목을 되풀이하는 머리말 줄은 쓰지 마.",
+      "카드 한 장 쓰는 법",
+      "- title(큰 제목): 2줄, 많아야 3줄. 한 줄은 10자 안쪽. 반전이나 속마음을 혼잣말처럼 한 방에. 줄바꿈은 \\n.",
+      "- topic(주제 태그): 띄어쓰기 없는 2~6자 (예: 한의사썸남, 남편회식, 시댁김장).",
+      "- body(본문): 반말 구어체. 한 줄은 20자 안쪽으로 짧게 끊어. 전체 5~11줄. 대사는 “ ”로. ㅋㅋ, .., 이모지는 아껴서.",
+      "- 목록은 '1. '처럼 번호만. [ ] 괄호나 제목을 되풀이하는 머리말 줄은 쓰지 마.",
       "- box(회색 상자): 거의 항상 \"\". 뉴스 기사 한 줄처럼 쓰는 게 더 웃길 때만 한 문장.",
-      "- 살짝 민망한 단어 하나를 {쪽}처럼 중괄호로 감싸면 카드에서 모자이크돼. 웃길 때만 한 번.",
+      "- 살짝 민망한 단어 하나를 {쪽}처럼 중괄호로 감싸면 카드에서 모자이크돼. 웃길 때만, 캐러셀 전체에서 많아야 두 번.",
       "- 실존 인물이나 브랜드를 비방하거나, 너무 선정적이거나, 누군가를 비하하는 내용은 빼.",
       "",
-      "실제로 올린 카드 예시",
-      JSON.stringify(STYLE_EXAMPLE),
+      "카드 종류 (type에는 아래 이름을 그대로 써)",
+      ...fmts.map((f) => `- ${f.label}: ${f.guide}`),
       "",
-      "이번 카드",
-      task,
+      "이번에 쓸 것",
+      `- 카드 ${count}장${count > 1 ? ". 인스타 캐러셀로 1장부터 순서대로 올릴 거야" : ""}.`,
+      `- ${subject}`,
+    ];
+    if (count > 1) {
+      lines.push(
+        fmts.length > 1 ? "- 위 종류를 골고루 섞고, 같은 종류가 연달아 오지 않게." : `- 모두 '${fmts[0].label}' 종류로.`,
+        kinds.includes("story") && fmts.length > 1 ? "- 1장은 제일 센 반전 썰로 시선을 끌어." : "- 1장은 제일 센 걸로 시선을 끌어.",
+        "- 장마다 다른 상황, 다른 농담으로. 같은 펀치라인을 되풀이하지 마.",
+        "- 마지막 장은 훈훈하거나 제일 웃긴 한 줄로 마무리.",
+      );
+    } else if (fmts.length > 1) {
+      lines.push("- 위 종류 중 이 재료에 제일 어울리는 걸로 하나.");
+    }
+    if (avoid.length) lines.push(`- 이미 쓴 카드와 겹치지 마: ${avoid.slice(0, 12).join(" / ")}`);
+    lines.push(
       "",
-      'JSON 하나로만 답해: {"title": "...", "topic": "...", "body": "...", "box": ""}',
-    ].join("\n");
+      "잘 된 예시 (실제로 올린 카드)",
+      ...STYLE_EXAMPLES.map((x) => JSON.stringify(x)),
+      "",
+      `답하는 형식: 한 줄에 카드 하나씩, JSON 객체만 ${count}줄. 다른 말이나 코드 블록은 쓰지 마.`,
+      '{"type": "...", "title": "...", "topic": "...", "body": "...", "box": ""}',
+    );
+    return lines.join("\n");
   }
   function autoErrorText(code) {
     switch (code) {
       case "rate_limited": return "지금은 너무 자주 불렀어요. 잠깐 뒤에 다시 눌러 주세요";
       case "session_expired": return "Claude에 다시 로그인한 뒤 해 주세요";
-      case "refused": return "이 내용으로는 쓸 수 없대요. 있었던 일을 조금 바꿔서 다시 해 주세요";
+      case "refused": return "이 내용으로는 쓸 수 없대요. 재료를 조금 바꿔서 다시 해 주세요";
       case "invalid_json": case "empty_completion": return "답을 제대로 못 받았어요. 한 번 더 눌러 주세요";
-      case "prompt_too_large": return "있었던 일이 너무 길어요. 조금 줄여서 다시 해 주세요";
+      case "prompt_too_large": return "재료가 너무 길어요. 조금 줄여서 다시 해 주세요";
       default: return "연결이 잠깐 끊겼어요. 한 번 더 눌러 주세요";
     }
   }
-  let sampleFn = null, autoCtl = null, autoDone = false;
+  // 흘러 들어오는 답에서 다 닫힌 { … } 덩어리만 골라내요. 줄바꿈 모양과 상관없이 동작해요.
+  function scanObjects(text, from) {
+    const objs = [];
+    let depth = 0, start = -1, inStr = false, esc = false, next = from;
+    for (let i = from; i < text.length; i++) {
+      const ch = text[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === "\\") esc = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"' && depth > 0) { inStr = true; continue; }
+      if (ch === "{") {
+        if (depth === 0) start = i;
+        depth++;
+      } else if (ch === "}" && depth > 0) {
+        depth--;
+        if (depth === 0) { objs.push(text.slice(start, i + 1)); next = i + 1; }
+      }
+    }
+    return { objs, next };
+  }
+  function toCard(raw) {
+    let o;
+    try { o = JSON.parse(raw); } catch (e) { return null; }
+    if (!o || typeof o !== "object") return null;
+    const pick = (v, max) => (typeof v === "string" ? v.replace(/\r/g, "").replace(/\\n/g, "\n").trim().slice(0, max) : "");
+    const c = { title: pick(o.title, 80), topic: pick(o.topic, 20).replace(/\s+/g, ""), body: pick(o.body, 900), box: pick(o.box, 200), saved: false };
+    return c.title || c.body ? c : null;
+  }
+
+  function buildKinds() {
+    $("kinds").replaceChildren(...FORMATS.map((f) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.name = "kind";
+      input.id = "kind-" + f.id;
+      input.value = f.id;
+      input.checked = state.kinds.includes(f.id);
+      input.addEventListener("change", () => {
+        const on = Array.from(document.querySelectorAll('input[name="kind"]:checked'), (x) => x.value);
+        if (!on.length) { input.checked = true; toast("카드 종류는 하나 이상 골라 주세요"); return; }
+        state.kinds = on;
+        persist();
+      });
+      const span = document.createElement("span");
+      span.textContent = f.label;
+      label.append(input, span);
+      return label;
+    }));
+  }
+  function setCount(n) {
+    state.count = Math.max(1, Math.min(MAX_CARDS, Math.round(n) || 1));
+    $("countOut").textContent = state.count + "장";
+    $("countMinus").disabled = state.count <= 1;
+    $("countPlus").disabled = state.count >= MAX_CARDS;
+    updateGoLabel();
+    persist();
+  }
+  $("countMinus").addEventListener("click", () => setCount(state.count - 1));
+  $("countPlus").addEventListener("click", () => setCount(state.count + 1));
+
+  let sampleFn = null, autoCtl = null;
+  function updateGoLabel() {
+    if (autoCtl) return;
+    $("autoGo").textContent = state.count > 1 ? `${state.count}장 캐러셀 만들어 줘` : deckOn() ? "이 장만 다시 써 줘" : "한 장 써 줘";
+  }
   (window.claude && typeof window.claude.use === "function"
     ? Promise.resolve(window.claude.use("sample")).catch(() => null)
     : Promise.resolve(null)
   ).then((fn) => { sampleFn = fn; $("autoPanel").hidden = !fn; });
+
+  // 한 장: 지금 카드(캐러셀이면 지금 보고 있는 장)를 바꿔요
+  function applySingle(c) {
+    for (const f of CARD_FIELDS) state[f] = c[f];
+    state.example = false;
+    if (deckOn()) {
+      Object.assign(deck.cards[deck.active], c, { saved: false });
+      scheduleThumbs(deck.active);
+      renderDeck();
+    }
+    fillForm();
+    persist();
+    schedule();
+  }
+  // 여러 장: 첫 장이 오면 새 캐러셀을 열고, 다음 장부터는 뒤에 붙여요
+  function addGenerated(c, first) {
+    if (first) {
+      deck.cards = [c];
+      deck.active = 0;
+      $("deckStrip").replaceChildren();
+      selectCard(0);
+    } else {
+      deck.cards.push(c);
+      persist();
+      renderDeck();
+    }
+  }
 
   $("autoGo").addEventListener("click", async () => {
     if (!sampleFn || autoCtl) return;
     const idea = $("idea").value.trim();
     const moodEl = document.querySelector('input[name="mood"]:checked');
     const mood = moodEl ? moodEl.value : "";
+    const count = state.count, kinds = state.kinds.slice();
+    const avoid = [...deck.cards.map((c) => c.title), state.example ? "" : state.title]
+      .map((t) => String(t || "").replace(/\s+/g, " ").replace(/[{}]/g, "").trim())
+      .filter(Boolean);
+    const before = snapshot();
     const go = $("autoGo"), stop = $("autoStop"), note = $("autoNote");
     autoCtl = new AbortController();
     go.disabled = true;
     go.textContent = "쓰는 중…";
     stop.hidden = false;
-    note.textContent = "Claude가 쓰고 있어요. 10~30초쯤 걸려요";
+    note.textContent = count > 1 ? `Claude가 ${count}장을 쓰고 있어요. 다 쓴 장부터 위에 바로 나와요` : "Claude가 쓰고 있어요. 10~30초쯤 걸려요";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    let got = 0, pos = 0;
+    const take = (text) => {
+      const r = scanObjects(text, pos);
+      pos = r.next;
+      for (const raw of r.objs) {
+        if (got >= count) break;
+        const c = toCard(raw);
+        if (!c) continue;
+        got++;
+        if (count === 1) applySingle(c);
+        else {
+          addGenerated(c, got === 1);
+          note.textContent = `${count}장 중 ${got}장 썼어요…`;
+        }
+      }
+    };
+    const undo = { label: "되돌리기", run: () => restore(before) };
     try {
-      const out = await sampleFn.json(autoPrompt(idea, mood, readData().title), { signal: autoCtl.signal, cache: false });
-      const pick = (v, max) => (typeof v === "string" ? v.replace(/\r/g, "").replace(/\\n/g, "\n").trim().slice(0, max) : "");
-      const next = {
-        title: pick(out && out.title, 80),
-        topic: pick(out && out.topic, 20).replace(/\s+/g, ""),
-        body: pick(out && out.body, 800),
-        box: pick(out && out.box, 200),
-      };
-      if (!next.title && !next.body) throw { code: "invalid_json" };
-      const prev = { title: state.title, topic: state.topic, body: state.body, box: state.box, example: state.example };
-      Object.assign(state, next, { example: false });
-      fillForm();
-      persist();
-      schedule();
-      autoDone = true;
-      note.textContent = "다 썼어요. 위 미리보기를 보고, 고칠 곳은 아래 칸에서 바로 고치면 돼요";
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      toast("제목이랑 본문을 채웠어요", {
-        label: "되돌리기",
-        run: () => { Object.assign(state, prev); fillForm(); persist(); schedule(); },
+      const res = await sampleFn(autoPrompt(idea, mood, kinds, count, avoid), {
+        signal: autoCtl.signal,
+        cache: false,
+        onText: ({ text }) => take(text),
       });
+      take(res.text);
+      if (!got) throw { code: "invalid_json" };
+      if (count === 1) {
+        note.textContent = "다 썼어요. 고칠 곳은 아래 칸에서 바로 고치면 돼요";
+        toast("제목이랑 본문을 채웠어요", undo);
+      } else {
+        note.textContent = got < count
+          ? `${got}장만 왔어요. 작은 카드를 눌러 하나씩 보고 고칠 수 있어요`
+          : `${got}장 다 썼어요. 작은 카드를 눌러 하나씩 보고 고칠 수 있어요`;
+        toast(`캐러셀 ${got}장을 만들었어요`, undo);
+      }
     } catch (e) {
       const code = e && e.code;
-      if (code === "cancelled") {
-        note.textContent = "멈췄어요";
-      } else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
-        $("autoPanel").hidden = true;
-        toast("이 화면에서는 자동으로 쓰기를 쓸 수 없어요");
-      } else {
+      if (code === "refused") {
+        if (got) restore(before);
         note.textContent = autoErrorText(code);
+      } else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+        if (got) restore(before);
+        $("autoPanel").hidden = true;
+        toast("이 화면에서는 자동으로 만들기를 쓸 수 없어요");
+      } else {
+        if (e && typeof e.text === "string") take(e.text);
+        if (got && count > 1) {
+          note.textContent = code === "cancelled"
+            ? `멈췄어요. ${got}장까지 남겨 뒀어요`
+            : `${got}장까지 쓰고 끊겼어요. 모자란 장은 '+ 빈 장'으로 넣거나 다시 만들어 주세요`;
+          toast(`캐러셀 ${got}장을 남겨 뒀어요`, undo);
+        } else if (got) {
+          note.textContent = "다 썼어요. 고칠 곳은 아래 칸에서 바로 고치면 돼요";
+        } else {
+          note.textContent = code === "cancelled" ? "멈췄어요" : autoErrorText(code);
+        }
       }
     } finally {
       autoCtl = null;
       go.disabled = false;
-      go.textContent = autoDone ? "다른 버전으로 다시 써 줘" : "제목이랑 본문 써 줘";
       stop.hidden = true;
+      updateGoLabel();
     }
   });
   $("autoStop").addEventListener("click", () => { if (autoCtl) autoCtl.abort(); });
@@ -1230,15 +1779,31 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     if (state.handle === "your.id") state.handle = EXAMPLE.handle; // 예전 예시 아이디가 남아 있으면 바꿔요
     if (HEIGHTS[saved.ratio]) state.ratio = saved.ratio;
     if (SIZES[saved.size]) state.size = saved.size;
+    if (Number.isFinite(saved.count)) state.count = Math.max(1, Math.min(MAX_CARDS, Math.round(saved.count)));
+    if (Array.isArray(saved.kinds)) {
+      const ok = saved.kinds.filter((k) => FORMATS.some((f) => f.id === k));
+      if (ok.length) state.kinds = ok;
+    }
     state.example = !!saved.example;
   } else {
     Object.assign(state, EXAMPLE, { example: true });
   }
+  try {
+    const sd = JSON.parse(localStorage.getItem(DECK_KEY) || "null");
+    if (sd && Array.isArray(sd.cards) && sd.cards.length) {
+      deck.cards = sd.cards.slice(0, MAX_CARDS).map(normalizeCard);
+      deck.active = Math.max(0, Math.min(deck.cards.length - 1, Number(sd.active) || 0));
+    }
+  } catch (e) {}
   fillForm();
+  buildKinds();
+  setCount(state.count);
+  if (deckOn()) selectCard(deck.active);
+  else renderDeck();
   let storedAvatar = null;
   try { storedAvatar = localStorage.getItem(AVATAR_KEY); } catch (e) {}
   useAvatar(storedAvatar === "none" ? "" : storedAvatar || DEFAULT_AVATAR, false);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { schedule(); scheduleThumbs("all"); });
   render();
 })();
 </script>
