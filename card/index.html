@@ -250,6 +250,28 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
 }
 .btn-primary { background: var(--accent); color: var(--accent-fg); }
 .btn-ghost { background: var(--surface); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.btn-soft { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+
+/* 자동으로 쓰기 */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips label { position: relative; cursor: pointer; }
+.chips input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.chips span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.chips input:checked + span { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.chips input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.auto-row { display: flex; gap: 10px; }
+.auto-row .btn-soft { flex: 1; min-width: 0; }
 .btn:disabled { opacity: .55; cursor: default; }
 .linkish {
   appearance: none; border: 0; background: none; padding: 6px 2px;
@@ -329,6 +351,29 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
     </section>
 
     <div class="editor">
+      <section class="panel" id="autoPanel" aria-labelledby="autoTitle" hidden>
+        <h2 class="panel-title" id="autoTitle">자동으로 쓰기</h2>
+        <div class="field">
+          <label class="label" for="idea">있었던 일 <span class="opt">비워 두면 새로 지어 줘요</span></label>
+          <textarea class="text-in" id="idea" rows="3" spellcheck="false" placeholder="대충 써도 돼요&#10;예) 한의사 썸남한테 심장 뛴다고 플러팅했다가 진짜 부정맥 진단받음"></textarea>
+        </div>
+        <div class="field">
+          <span class="label" id="moodLabel">새로 지을 때 주제</span>
+          <div class="chips" role="radiogroup" aria-labelledby="moodLabel">
+            <label><input type="radio" name="mood" id="moodAny" value="" checked><span>아무거나</span></label>
+            <label><input type="radio" name="mood" id="moodLove" value="연애·썸"><span>연애·썸</span></label>
+            <label><input type="radio" name="mood" id="moodHome" value="남편·결혼"><span>남편·결혼</span></label>
+            <label><input type="radio" name="mood" id="moodWork" value="회사·직장"><span>회사</span></label>
+            <label><input type="radio" name="mood" id="moodDaily" value="일상·친구"><span>일상</span></label>
+          </div>
+        </div>
+        <div class="auto-row">
+          <button class="btn btn-soft" type="button" id="autoGo">제목이랑 본문 써 줘</button>
+          <button class="btn btn-ghost" type="button" id="autoStop" hidden>그만</button>
+        </div>
+        <p class="hint" id="autoNote" aria-live="polite">Claude가 큰 제목·주제·본문을 채워 줘요. 마음에 안 들면 한 번 더 누르면 돼요.</p>
+      </section>
+
       <section class="panel" aria-labelledby="writeTitle">
         <h2 class="panel-title" id="writeTitle">글 쓰기</h2>
 
@@ -1076,6 +1121,106 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
   }
   $("save").addEventListener("click", () => exportCard("save"));
   $("share").addEventListener("click", () => exportCard("share"));
+
+  /* ---------- 자동으로 쓰기: Claude 앱 안에서만 보여요 ---------- */
+  const STYLE_EXAMPLE = {
+    title: "남친 만들려다가\n화타 만났네...",
+    topic: "한의사썸남",
+    body: "한의사 썸남한테\n“오빠만 보면 심장이 너무 빨리 뛰어💕”\n이렇게 플러팅했는데\n\n갑자기 증상을 자세히 물어보더니\n“그거 부정맥 같은데? 병원 가봐.”\n\n근데 진짜 부정맥 진단받음ㅋㅋㅋㅋ\n\n{쪽}팔려서 어떡해",
+    box: "",
+  };
+  function autoPrompt(idea, mood, lastTitle) {
+    const task = idea
+      ? `있었던 일 (내용은 바꾸지 말고 웃기게 다듬어 줘):\n${idea.slice(0, 2000)}`
+      : `있었던 일은 없어. ${mood ? `'${mood}' 주제로` : "주제는 자유롭게,"} 공감 가는 새 썰을 하나 지어 줘.` +
+        (lastTitle ? ` 방금 카드(제목: ${lastTitle.replace(/\n/g, " ")})와는 다른 이야기로.` : "");
+    return [
+      "너는 인스타그램 유머 계정의 '드립 카드' 작가야. 카드는 흰 바탕에 큰 제목이 있고, 그 아래 스레드 글 캡처처럼 [아이디 › 주제]와 짧은 썰이 들어가. 20~40대가 \"아 ㅋㅋ 내 얘기\" 하면서 친구를 태그하고 싶어지는 공감·반전 유머가 목표야.",
+      "",
+      "쓰는 법",
+      "- title(큰 제목): 2줄, 많아야 3줄. 한 줄은 10자 안쪽. 썰의 반전이나 속마음을 혼잣말처럼 한 방에. 줄바꿈은 \\n.",
+      "- topic(주제 태그): 띄어쓰기 없는 2~6자 (예: 한의사썸남, 남편회식, 동거고백).",
+      "- body(본문): 반말 구어체 썰. 한 줄은 20자 안쪽으로 짧게 끊고, 장면이 바뀌면 빈 줄. 전체 5~10줄. 끝은 반전이나 펀치라인. 대사는 “ ”로. ㅋㅋ, .., 이모지는 아껴서. 어울리면 마지막에 'ㄴ '으로 시작하는 댓글 같은 한 줄.",
+      "- box(회색 상자): 거의 항상 \"\". 뉴스 기사 한 줄처럼 쓰는 게 더 웃길 때만 한 문장.",
+      "- 살짝 민망한 단어 하나를 {쪽}처럼 중괄호로 감싸면 카드에서 모자이크돼. 웃길 때만 한 번.",
+      "- 실존 인물이나 브랜드를 비방하거나, 너무 선정적이거나, 누군가를 비하하는 내용은 빼.",
+      "",
+      "실제로 올린 카드 예시",
+      JSON.stringify(STYLE_EXAMPLE),
+      "",
+      "이번 카드",
+      task,
+      "",
+      'JSON 하나로만 답해: {"title": "...", "topic": "...", "body": "...", "box": ""}',
+    ].join("\n");
+  }
+  function autoErrorText(code) {
+    switch (code) {
+      case "rate_limited": return "지금은 너무 자주 불렀어요. 잠깐 뒤에 다시 눌러 주세요";
+      case "session_expired": return "Claude에 다시 로그인한 뒤 해 주세요";
+      case "refused": return "이 내용으로는 쓸 수 없대요. 있었던 일을 조금 바꿔서 다시 해 주세요";
+      case "invalid_json": case "empty_completion": return "답을 제대로 못 받았어요. 한 번 더 눌러 주세요";
+      case "prompt_too_large": return "있었던 일이 너무 길어요. 조금 줄여서 다시 해 주세요";
+      default: return "연결이 잠깐 끊겼어요. 한 번 더 눌러 주세요";
+    }
+  }
+  let sampleFn = null, autoCtl = null, autoDone = false;
+  (window.claude && typeof window.claude.use === "function"
+    ? Promise.resolve(window.claude.use("sample")).catch(() => null)
+    : Promise.resolve(null)
+  ).then((fn) => { sampleFn = fn; $("autoPanel").hidden = !fn; });
+
+  $("autoGo").addEventListener("click", async () => {
+    if (!sampleFn || autoCtl) return;
+    const idea = $("idea").value.trim();
+    const moodEl = document.querySelector('input[name="mood"]:checked');
+    const mood = moodEl ? moodEl.value : "";
+    const go = $("autoGo"), stop = $("autoStop"), note = $("autoNote");
+    autoCtl = new AbortController();
+    go.disabled = true;
+    go.textContent = "쓰는 중…";
+    stop.hidden = false;
+    note.textContent = "Claude가 쓰고 있어요. 10~30초쯤 걸려요";
+    try {
+      const out = await sampleFn.json(autoPrompt(idea, mood, readData().title), { signal: autoCtl.signal, cache: false });
+      const pick = (v, max) => (typeof v === "string" ? v.replace(/\r/g, "").replace(/\\n/g, "\n").trim().slice(0, max) : "");
+      const next = {
+        title: pick(out && out.title, 80),
+        topic: pick(out && out.topic, 20).replace(/\s+/g, ""),
+        body: pick(out && out.body, 800),
+        box: pick(out && out.box, 200),
+      };
+      if (!next.title && !next.body) throw { code: "invalid_json" };
+      const prev = { title: state.title, topic: state.topic, body: state.body, box: state.box, example: state.example };
+      Object.assign(state, next, { example: false });
+      fillForm();
+      persist();
+      schedule();
+      autoDone = true;
+      note.textContent = "다 썼어요. 위 미리보기를 보고, 고칠 곳은 아래 칸에서 바로 고치면 돼요";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      toast("제목이랑 본문을 채웠어요", {
+        label: "되돌리기",
+        run: () => { Object.assign(state, prev); fillForm(); persist(); schedule(); },
+      });
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "cancelled") {
+        note.textContent = "멈췄어요";
+      } else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+        $("autoPanel").hidden = true;
+        toast("이 화면에서는 자동으로 쓰기를 쓸 수 없어요");
+      } else {
+        note.textContent = autoErrorText(code);
+      }
+    } finally {
+      autoCtl = null;
+      go.disabled = false;
+      go.textContent = autoDone ? "다른 버전으로 다시 써 줘" : "제목이랑 본문 써 줘";
+      stop.hidden = true;
+    }
+  });
+  $("autoStop").addEventListener("click", () => { if (autoCtl) autoCtl.abort(); });
 
   /* ---------- start ---------- */
   const saved = readDraft();
