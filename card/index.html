@@ -444,7 +444,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
 
   const EXAMPLE = {
     title: "남편이 갑자기\n다정해질 때",
-    handle: "your.id",
+    handle: "kangdrip",
     topic: "남편속마음",
     body: "[ 남편이 갑자기 다정해지는 순간 모음\n\n1. 시키지도 않은 설거지를 한다\n2. 내 폰 충전기를 먼저 꽂아준다\n3. 주말에 장 보러 같이 가자고 한다\n4. 안 물어본 회사 얘기를 한다 ]\n\nㄴ 카드값 나오기 3일 전임ㅋㅋ\nㄴ 4번은 골프 약속 잡아놓은 거야ㅎ",
     box: "",
@@ -993,6 +993,7 @@ textarea.text-in { resize: vertical; field-sizing: content; max-height: 60vh; }
   const saved = readDraft();
   if (saved) {
     for (const f of TEXT_FIELDS) if (typeof saved[f] === "string") state[f] = saved[f];
+    if (state.handle === "your.id") state.handle = EXAMPLE.handle; // 예전 예시 아이디가 남아 있으면 바꿔요
     if (HEIGHTS[saved.ratio]) state.ratio = saved.ratio;
     if (SIZES[saved.size]) state.size = saved.size;
     state.example = !!saved.example;
