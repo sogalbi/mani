@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>멍냥사 — 반려동물과 말없이 같이 앉아 있는 온라인 절</title>
+<meta name="description" content="우리 아이 모습으로 마루에 앉아, 말없이 같이 있다 가는 곳. 무지개다리를 건넌 아이에게는 하얀 연등을, 곁에 있는 아이에게는 색 연등을 달아요.">
+<meta name="theme-color" content="#17142c">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="멍냥사">
+<meta property="og:title" content="멍냥사 — 반려동물을 위한 온라인 절">
+<meta property="og:description" content="우리 아이 모습으로, 말없이 같이 앉아 있다 가요.">
+<meta property="og:image" content="og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="og.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="scene" aria-label="마루 풍경"></canvas>
+
+<header id="topbar" class="topbar" hidden>
+  <button id="room-btn" class="room-btn" type="button" aria-label="마루 옮기기">
+    <span class="brand-sm">멍냥사</span>
+    <span id="room-name" class="room-name">1번 마루</span>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="top-right">
+    <span id="online-pill" class="pill" title="이 마루에 앉아 있는 수"><span class="dot"></span><b id="online-n">1</b><span id="online-unit">명</span></span>
+    <button id="sound-btn" class="icon-btn" type="button" aria-label="소리 켜기" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor"/><path class="wave" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="mute" d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <button id="menu-btn" class="icon-btn" type="button" aria-label="메뉴">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="18.5" cy="12" r="1.8" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<p id="status-line" class="status-line" hidden></p>
+
+<nav id="actions" class="actions" hidden aria-label="할 수 있는 것">
+  <button type="button" data-act="bow">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6" r="2.6" fill="currentColor"/><path d="M5 20c0-4 2.6-7.6 7-7.6s7 3.6 7 7.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 21h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span>절하기</span>
+  </button>
+  <button type="button" data-act="palms">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c-1.6 2.4-2.6 6.2-2.6 9.4V20h5.2v-7.1c0-3.2-1-7-2.6-9.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 6v14" stroke="currentColor" stroke-width="1.4"/><path d="M6.5 9.5l-1.5-1.5M17.5 9.5L19 8M12 1.2v.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>합장</span>
+  </button>
+  <button type="button" data-act="treat">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 9.3a2.3 2.3 0 1 1-1.9-3.6 2.3 2.3 0 1 1 3.6-1.9l6.1 6.1a2.3 2.3 0 1 1 3.6 1.9 2.3 2.3 0 1 1-1.9 3.6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" transform="translate(0 3)"/></svg>
+    <span>간식</span>
+  </button>
+  <button type="button" data-act="lantern" class="accent">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="12" cy="11.5" rx="6.5" ry="6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 5.6c-2 1.8-2.8 3.8-2.8 5.9s.8 4.1 2.8 5.9c2-1.8 2.8-3.8 2.8-5.9S14 7.4 12 5.6z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 17.5V22M10.3 22h3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <span>연등</span>
+    <i class="cool" aria-hidden="true"></i>
+  </button>
+  <button type="button" data-act="beads">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="12" cy="3.6" r="1.6"/><circle cx="17.4" cy="5.9" r="1.6"/><circle cx="19.9" cy="11.2" r="1.6"/><circle cx="18" cy="16.6" r="1.6"/><circle cx="6" cy="16.6" r="1.6"/><circle cx="4.1" cy="11.2" r="1.6"/><circle cx="6.6" cy="5.9" r="1.6"/></g><path d="M12 18.5v3.5M10.6 22h2.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="18.2" r="1.9" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+    <span>염주</span>
+  </button>
+</nav>
+
+<!-- 들어가기 -->
+<section id="entry" class="entry" aria-labelledby="entry-title">
+  <div class="entry-card">
+    <p class="eyebrow">반려동물을 위한 온라인 절</p>
+    <h1 id="entry-title" class="brand">멍냥사</h1>
+    <p class="tagline">말없이 곁에 앉아 있다 가요.<br>오늘은 우리 아이 모습으로.</p>
+    <p id="live-count" class="live" hidden><span class="dot"></span><span>지금 <b id="live-n">0</b>명이 앉아 있어요</span></p>
+
+    <div class="preview-wrap"><canvas id="preview" width="160" height="150" aria-label="우리 아이 미리보기"></canvas></div>
+
+    <form id="entry-form" class="entry-form" autocomplete="off" novalidate>
+      <label class="field">
+        <span class="label">아이 이름</span>
+        <input id="pet-name" name="name" type="text" maxlength="10" placeholder="예) 초코, 나비, 몽실" enterkeyhint="go">
+      </label>
+      <fieldset class="field">
+        <legend class="label">어떤 아이인가요</legend>
+        <div id="species-chips" class="chips" role="radiogroup"></div>
+      </fieldset>
+      <fieldset class="field">
+        <legend class="label">털 색</legend>
+        <div id="color-swatches" class="swatches" role="radiogroup"></div>
+      </fieldset>
+      <fieldset class="field">
+        <legend class="label">지금 이 아이는</legend>
+        <div id="memorial-seg" class="seg" role="radiogroup">
+          <button type="button" role="radio" data-m="0" aria-checked="true">곁에 있어요</button>
+          <button type="button" role="radio" data-m="1" aria-checked="false">무지개다리를 건넜어요</button>
+        </div>
+        <p id="memorial-note" class="note">색 연등을 달고 건강을 빌어요.</p>
+      </fieldset>
+      <p id="entry-err" class="err" role="alert" hidden></p>
+      <button id="enter-btn" class="primary" type="submit">조용히 들어가기</button>
+    </form>
+    <p class="fine">대화 기능은 없어요. 그냥 같이 앉아 있다 가요.<br>달아 둔 연등은 24시간 뒤 내려가요.</p>
+  </div>
+</section>
+
+<div id="backdrop" class="backdrop" hidden></div>
+
+<!-- 연등 달기 -->
+<section id="sheet-lantern" class="sheet" role="dialog" aria-modal="true" aria-labelledby="lantern-title" hidden>
+  <div class="grab"></div>
+  <h2 id="lantern-title">연등 달기</h2>
+  <p id="lantern-sub" class="sub"></p>
+  <div id="wish-chips" class="chips wrap" role="radiogroup"></div>
+  <button id="lantern-go" class="primary" type="button" disabled>연등 달기</button>
+  <p class="fine">이름과 문구는 모든 마루의 ‘오늘의 연등’에 24시간 보여요.</p>
+</section>
+
+<!-- 마루 옮기기 -->
+<section id="sheet-rooms" class="sheet" role="dialog" aria-modal="true" aria-labelledby="rooms-title" hidden>
+  <div class="grab"></div>
+  <h2 id="rooms-title">마루 옮기기</h2>
+  <p id="rooms-sub" class="sub"></p>
+  <div id="room-grid" class="room-grid"></div>
+  <div class="row-btns">
+    <button id="private-room" class="ghost" type="button">우리끼리 마루 만들기</button>
+  </div>
+  <p class="fine">우리끼리 마루는 링크를 받은 사람만 들어와요. 가족, 친구와 같이 앉고 싶을 때 써요.</p>
+</section>
+
+<!-- 오늘의 연등 -->
+<section id="sheet-today" class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="today-title" hidden>
+  <div class="grab"></div>
+  <h2 id="today-title">오늘의 연등</h2>
+  <p id="today-sub" class="sub"></p>
+  <ul id="today-list" class="today-list"></ul>
+</section>
+
+<!-- 메뉴 -->
+<section id="sheet-menu" class="sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title" hidden>
+  <div class="grab"></div>
+  <h2 id="menu-title" class="sr-only">메뉴</h2>
+  <ul class="menu-list">
+    <li><button type="button" data-menu="share">이 마루 링크 보내기</button></li>
+    <li><button type="button" data-menu="today">오늘의 연등 보기</button></li>
+    <li><button type="button" data-menu="rooms">마루 옮기기</button></li>
+    <li><button type="button" data-menu="sound">소리 고르기</button></li>
+    <li><button type="button" data-menu="pet">우리 아이 바꾸기</button></li>
+    <li><button type="button" data-menu="info">멍냥사 안내</button></li>
+  </ul>
+</section>
+
+<!-- 소리 -->
+<section id="sheet-sound" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sound-title" hidden>
+  <div class="grab"></div>
+  <h2 id="sound-title">소리 고르기</h2>
+  <p class="sub">나한테만 들려요. 다른 사람에게는 들리지 않아요.</p>
+  <ul class="toggle-list">
+    <li><label><span>풍경 소리</span><input type="checkbox" data-sound="chimes"><i></i></label></li>
+    <li><label><span>빗소리</span><input type="checkbox" data-sound="rain"><i></i></label></li>
+    <li><label><span>풀벌레 소리</span><input type="checkbox" data-sound="night"><i></i></label></li>
+    <li><label><span>절할 때 싱잉볼</span><input type="checkbox" data-sound="bowl"><i></i></label></li>
+  </ul>
+</section>
+
+<!-- 안내 -->
+<section id="sheet-info" class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="info-title" hidden>
+  <div class="grab"></div>
+  <h2 id="info-title">멍냥사 안내</h2>
+  <div class="prose">
+    <p>멍냥사는 반려동물과 함께 사는 사람, 그리고 아이를 먼저 떠나보낸 사람이 말없이 같이 앉아 있다 가는 온라인 절이에요.</p>
+    <h3>이렇게 써요</h3>
+    <ul>
+      <li>빈 방석을 누르면 그 자리로 옮겨 앉아요.</li>
+      <li><b>절하기·합장</b>은 같은 마루에 있는 사람에게 보여요.</li>
+      <li><b>간식</b>은 상 위 그릇에 쌓여요. 오늘 이 마루에 올라온 간식 수가 보여요.</li>
+      <li><b>연등</b>은 무지개다리를 건넌 아이는 하얀 연등(영가등), 곁에 있는 아이는 색 연등이에요.</li>
+      <li><b>염주·목탁</b>은 나만 보고 나만 들어요.</li>
+      <li>우리 아이를 누르면 꼬리를 흔들어요.</li>
+    </ul>
+    <h3>마음이 많이 힘들 때</h3>
+    <p>아이를 보낸 슬픔이 오래 이어지는 건 자연스러운 일이에요. 혼자 견디기 어렵다면 가까운 사람이나 펫로스 상담 전문가와 이야기해 보세요. 너무 힘들어서 위험한 생각이 든다면 <b>자살예방상담전화 109</b>(24시간)로 연락해 주세요.</p>
+    <h3>저장하는 것</h3>
+    <ul>
+      <li>아이 이름·모습은 이 기기에만 저장돼요.</li>
+      <li>달아 둔 연등(아이 이름, 고른 문구, 종류, 색)은 24시간 동안 서버에 남고 모두에게 보여요.</li>
+      <li>대화, 사진, 연락처는 받지 않아요.</li>
+    </ul>
+    <p class="fine">이상한 연등을 보면 ‘오늘의 연등’에서 신고해 주세요. 신고가 쌓이면 바로 내려가요.</p>
+  </div>
+</section>
+
+<!-- 염주·목탁 (나만 보여요) -->
+<section id="beads" class="beads" role="dialog" aria-modal="true" aria-labelledby="beads-title" hidden>
+  <div class="beads-top">
+    <div class="seg small" role="tablist">
+      <button type="button" role="tab" data-tool="beads" aria-selected="true">염주</button>
+      <button type="button" role="tab" data-tool="moktak" aria-selected="false">목탁</button>
+    </div>
+    <div class="beads-tools">
+    <button id="beads-sound" class="icon-btn" type="button" aria-label="소리 켜기" aria-pressed="false"></button>
+    <button id="beads-close" class="icon-btn" type="button" aria-label="닫기">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    </div>
+  </div>
+  <h2 id="beads-title" class="sr-only">염주와 목탁</h2>
+  <canvas id="beads-canvas" aria-label="눌러서 한 알씩 넘겨요"></canvas>
+  <div class="beads-count"><b id="beads-n">0</b><span id="beads-of"> / 108</span></div>
+  <p id="beads-hint" class="beads-hint">아무 데나 누르면 한 알씩 넘어가요</p>
+  <p id="beads-total" class="fine"></p>
+</section>
+
+<div id="lantern-pop" class="lantern-pop" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

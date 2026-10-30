@@ -1,0 +1,17 @@
+{
+  "name": "멍냥사 — 반려동물을 위한 온라인 절",
+  "short_name": "멍냥사",
+  "description": "우리 아이 모습으로, 말없이 같이 앉아 있다 가요.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17142c",
+  "theme_color": "#17142c",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

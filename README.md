@@ -1,3 +1,12 @@
+# mani
+
+이 저장소에는 두 가지가 있어요.
+
+- **멍냥사** (`petspace/`) — 반려동물과 말없이 같이 앉아 있는 온라인 절. 띄우는 법은 [`petspace/README.md`](petspace/README.md), 조사·사업 계획은 [`docs/sansatemple_analysis.md`](docs/sansatemple_analysis.md).
+- **워터마크 컷** (맨 위 `index.html`) — 아래 설명.
+
+---
+
 # 워터마크 컷
 
 레드노트(小红书)에서 다시 받은 내 사진의 맨 아래 워터마크 줄을 잘라 주는 폰용 웹앱.

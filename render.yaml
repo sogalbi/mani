@@ -1,0 +1,21 @@
+# Render 블루프린트 — Render 대시보드 → New → Blueprint → 이 저장소를 고르면 멍냥사 서버가 만들어져요.
+services:
+  - type: web
+    name: meongnyangsa
+    runtime: node
+    rootDir: petspace
+    plan: free            # 출시 날에는 starter 이상을 권해요 (free는 15분 동안 손님이 없으면 잠들어요)
+    region: singapore     # 한국에서 가장 가까운 Render 지역
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ROOM_CAPACITY
+        value: "24"
+      - key: ADMIN_TOKEN
+        generateValue: true
