@@ -25,6 +25,7 @@
   --accent-fg: #ffffff;
   --accent-soft: #e3e7f6;
   --stage: #1b1c20;
+  --warn: #b3261e;
   --shadow: 0 1px 2px rgba(20, 21, 24, .06), 0 10px 28px rgba(20, 21, 24, .07);
   --f-display: "Nanum Myeongjo", "AppleMyungjo", "Batang", serif;
   --f-body: "IBM Plex Sans KR", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
@@ -41,6 +42,7 @@
     --accent-fg: #0d1230;
     --accent-soft: #252c4a;
     --stage: #08090b;
+    --warn: #ff8a80;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
     color-scheme: dark;
   }
@@ -55,6 +57,7 @@
   --accent-fg: #0d1230;
   --accent-soft: #252c4a;
   --stage: #08090b;
+  --warn: #ff8a80;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
   color-scheme: dark;
 }
@@ -262,7 +265,7 @@ input[type="range"]:focus-visible, .stage:focus-visible {
 .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .field-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .label { font-weight: 600; font-size: 15px; }
-.val { font-family: var(--f-num); font-size: 15px; font-variant-numeric: tabular-nums; color: var(--accent); }
+.val { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); }
 .row-top { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; }
 @media (max-width: 340px) { .row-top { grid-template-columns: 1fr; } }
 
@@ -293,7 +296,23 @@ input[type="range"]:focus-visible, .stage:focus-visible {
 }
 .grid9 input:checked + span { background: var(--surface); box-shadow: var(--shadow); }
 .grid9 input:checked + span::after { width: 9px; height: 18px; border-radius: 2px; background: var(--fg); }
+.grid9 label.other input:not(:checked) + span::after {
+  width: 9px; height: 18px; border-radius: 2px;
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--muted);
+}
 .pos-out { font-size: 13px; font-weight: 600; color: var(--muted); }
+.legend { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.legend i { display: inline-block; width: 7px; height: 12px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; background: var(--fg); }
+.legend i.hollow { background: transparent; box-shadow: inset 0 0 0 2px var(--muted); }
+.warn { color: var(--warn); font-weight: 600; }
+.group-title {
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 13px; font-weight: 600; letter-spacing: .04em;
+  color: var(--muted);
+}
 
 .seg {
   display: grid;
@@ -439,6 +458,23 @@ input[type="range"] { width: 100%; height: 32px; margin: 0; accent-color: var(--
   <section class="panel" aria-labelledby="panelTitle">
     <h2 class="panel-title" id="panelTitle">마크 설정</h2>
 
+    <label class="switch" for="twoMarks">
+      <input type="checkbox" id="twoMarks">
+      <span class="knob" aria-hidden="true"></span>
+      <span class="switch-text">
+        <span class="label">마크 2개 찍기</span>
+        <small>두 군데에 동시에 찍어요. 위치·모양·크기는 마크마다 따로 정해요</small>
+      </span>
+    </label>
+
+    <div class="field" id="editField" hidden>
+      <span class="label" id="editLabel">고칠 마크</span>
+      <div class="seg" role="radiogroup" aria-labelledby="editLabel">
+        <label><input type="radio" name="edit" id="edit-0" value="0"><span>마크 1</span></label>
+        <label><input type="radio" name="edit" id="edit-1" value="1"><span>마크 2</span></label>
+      </div>
+    </div>
+
     <div class="row-top">
       <div class="field">
         <span class="label" id="posLabel">위치</span>
@@ -454,6 +490,7 @@ input[type="range"] { width: 100%; height: 32px; margin: 0; accent-color: var(--
           <label><input type="radio" name="pos" id="pos-br" value="br" aria-label="오른쪽 아래"><span></span></label>
         </div>
         <span class="pos-out" id="posOut"></span>
+        <span class="legend" id="posLegend" hidden><span><i></i>고치는 마크</span><span><i class="hollow"></i>다른 마크</span></span>
       </div>
       <div class="field">
         <span class="label" id="shapeLabel">로고 모양</span>
@@ -467,13 +504,17 @@ input[type="range"] { width: 100%; height: 32px; margin: 0; accent-color: var(--
       </div>
     </div>
 
+    <p class="hint warn" id="samePos" hidden>두 마크가 같은 자리라 겹쳐요. 한쪽 위치를 바꿔 주세요.</p>
+
     <div class="field">
       <div class="field-top">
-        <label class="label" for="size">크기</label>
+        <label class="label" for="size" id="sizeLabel">크기</label>
         <output class="val" id="sizeOut" for="size"></output>
       </div>
       <input type="range" id="size" min="6" max="60" step="1">
     </div>
+
+    <p class="group-title" id="groupTitle" hidden>두 마크 공통</p>
 
     <div class="field">
       <div class="field-top">
@@ -553,33 +594,62 @@ const LOGO_SRC = {
   };
   // 로고 긴 변 = 사진 짧은 변의 몇 %
   const DEFAULT_SIZES = { full: 22, ornament: 20, textH: 28, textV: 20, custom: 22 };
-  const DEFAULTS = { shape: "full", pos: "br", margin: 4, color: "auto", opacity: 90, shadow: false };
+  const SHAPES = ["full", "ornament", "textH", "textV", "custom"];
+  const DEFAULTS = { margin: 4, color: "auto", opacity: 90, shadow: false };
+  // 마크 1은 늘 켜져 있고, 마크 2는 "마크 2개 찍기"를 켤 때만 찍어요
+  function defaultMarks() {
+    return [
+      { on: true, shape: "full", pos: "br", sizes: { ...DEFAULT_SIZES } },
+      { on: false, shape: "full", pos: "tl", sizes: { ...DEFAULT_SIZES }, touched: false },
+    ];
+  }
 
   const state = {
     ...DEFAULTS,
-    sizes: { ...DEFAULT_SIZES },
+    marks: defaultMarks(),
+    edit: 0,          // 지금 고치는 마크 (0 또는 1)
     items: [],
     cur: 0,
   };
 
+  function readMark(src, m) {
+    if (!src) return;
+    if (POS_NAME[src.pos]) m.pos = src.pos;
+    if (SHAPES.includes(src.shape)) m.shape = src.shape;
+    if (src.sizes) for (const k in DEFAULT_SIZES) if (typeof src.sizes[k] === "number") m.sizes[k] = Math.min(60, Math.max(6, src.sizes[k]));
+  }
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
     if (s) {
-      if (POS_NAME[s.pos]) state.pos = s.pos;
-      if (["full", "ornament", "textH", "textV", "custom"].includes(s.shape)) state.shape = s.shape;
+      if (Array.isArray(s.marks)) {
+        readMark(s.marks[0], state.marks[0]);
+        readMark(s.marks[1], state.marks[1]);
+        state.marks[1].on = !!(s.marks[1] && s.marks[1].on);
+        state.marks[1].touched = !!(s.marks[1] && s.marks[1].touched);
+      } else {
+        readMark(s, state.marks[0]); // 예전 저장 형식 (마크 1개)
+      }
       if (typeof s.margin === "number") state.margin = Math.min(15, Math.max(0, s.margin));
       if (["auto", "black", "white"].includes(s.color)) state.color = s.color;
       if (typeof s.opacity === "number") state.opacity = Math.min(100, Math.max(20, s.opacity));
       state.shadow = !!s.shadow;
-      if (s.sizes) for (const k in DEFAULT_SIZES) if (typeof s.sizes[k] === "number") state.sizes[k] = Math.min(60, Math.max(6, s.sizes[k]));
     }
   } catch (e) {}
 
   function persist() {
     try {
-      const { shape, pos, margin, color, opacity, shadow, sizes } = state;
-      localStorage.setItem(STORE_KEY, JSON.stringify({ shape, pos, margin, color, opacity, shadow, sizes }));
+      const { margin, color, opacity, shadow, marks } = state;
+      localStorage.setItem(STORE_KEY, JSON.stringify({ margin, color, opacity, shadow, marks }));
     } catch (e) {}
+  }
+
+  const editMark = () => state.marks[state.edit];
+  const activeMarks = () => (state.marks[1].on ? [0, 1] : [0]);
+  function touch() { if (state.edit === 1) state.marks[1].touched = true; }
+  function posOf(it, i) { return (it.pos && it.pos[i]) || state.marks[i].pos; }
+  function opposite(p) {
+    const o = { t: "b", m: "m", b: "t" }[p[0]] + { l: "r", c: "c", r: "l" }[p[1]];
+    return o === p ? "tc" : o; // 한가운데는 가운데 위로
   }
 
   /* ---------- helpers ---------- */
@@ -618,8 +688,8 @@ const LOGO_SRC = {
   const tintCache = new Map();
   const sizeCache = new Map();
 
-  function activeShape() {
-    return state.shape === "custom" && !logos.custom ? "full" : state.shape;
+  function shapeOf(m) {
+    return m.shape === "custom" && !logos.custom ? "full" : m.shape;
   }
   function clearLogoCaches() { tintCache.clear(); sizeCache.clear(); }
 
@@ -667,16 +737,17 @@ const LOGO_SRC = {
     return [Math.max(1, Math.round(it.w * k)), Math.max(1, Math.round(it.h * k))];
   }
 
-  function layout(it, W, H) {
-    const shape = activeShape();
+  function layout(it, W, H, i) {
+    const mk = state.marks[i];
+    const shape = shapeOf(mk);
     const img = logos[shape];
     const ar = (img.naturalWidth || img.width) / (img.naturalHeight || img.height);
     const s = Math.min(W, H);
-    const long = s * state.sizes[shape] / 100;
+    const long = s * mk.sizes[shape] / 100;
     let lw = ar >= 1 ? long : long * ar;
     let lh = ar >= 1 ? long / ar : long;
     const m = s * state.margin / 100;
-    const pos = it.pos || state.pos;
+    const pos = posOf(it, i);
     const row = pos[0], col = pos[1];
     const x = col === "l" ? m : col === "c" ? (W - lw) / 2 : W - m - lw;
     const y = row === "t" ? m : row === "m" ? (H - lh) / 2 : H - m - lh;
@@ -725,22 +796,26 @@ const LOGO_SRC = {
   function compose(ctx, it, W, H, full) {
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(full ? it.src : (it.view || it.src), 0, 0, W, H);
-    if (!logos[activeShape()]) return null;
-    const L = layout(it, W, H);
-    const color = inkColor(it, L, W, H);
-    const lw = Math.max(1, Math.round(L.lw)), lh = Math.max(1, Math.round(L.lh));
-    const mark = sizedLogo(L.shape, color, lw, lh);
-    ctx.save();
-    ctx.globalAlpha = state.opacity / 100;
-    if (state.shadow) {
-      const s = Math.min(W, H);
-      ctx.shadowColor = color === "white" ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.55)";
-      ctx.shadowBlur = Math.max(1, s * .012);
-      ctx.shadowOffsetY = s * .002;
+    const drawn = [];
+    for (const i of activeMarks()) {
+      if (!logos[shapeOf(state.marks[i])]) continue;
+      const L = layout(it, W, H, i);
+      const color = inkColor(it, L, W, H);
+      const lw = Math.max(1, Math.round(L.lw)), lh = Math.max(1, Math.round(L.lh));
+      const mark = sizedLogo(L.shape, color, lw, lh);
+      ctx.save();
+      ctx.globalAlpha = state.opacity / 100;
+      if (state.shadow) {
+        const s = Math.min(W, H);
+        ctx.shadowColor = color === "white" ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.55)";
+        ctx.shadowBlur = Math.max(1, s * .012);
+        ctx.shadowOffsetY = s * .002;
+      }
+      ctx.drawImage(mark, Math.round(L.x), Math.round(L.y));
+      ctx.restore();
+      drawn.push({ i, L, color });
     }
-    ctx.drawImage(mark, Math.round(L.x), Math.round(L.y));
-    ctx.restore();
-    return { L, color };
+    return drawn;
   }
 
   function currentItem() { return state.items[state.cur] || state.items[0]; }
@@ -759,10 +834,9 @@ const LOGO_SRC = {
     if (c.height !== ch) c.height = ch;
     c.style.width = Math.round(w) + "px";
     c.style.height = Math.round(h) + "px";
-    const r = compose(c.getContext("2d"), it, cw, ch);
-    if (r) {
-      c.setAttribute("aria-label", `${it.name} 미리보기, ${POS_NAME[r.L.pos]}에 ${r.color === "white" ? "흰색" : "검정"} 마크`);
-    }
+    const drawn = compose(c.getContext("2d"), it, cw, ch);
+    c.setAttribute("aria-label", `${it.name} 미리보기, ` +
+      drawn.map((d) => `${POS_NAME[d.L.pos]}에 ${d.color === "white" ? "흰색" : "검정"} 마크`).join(", "));
   }
 
   function drawThumb(it) {
@@ -787,8 +861,15 @@ const LOGO_SRC = {
     $("curName").textContent = it.name;
     const [W, H] = outDims(it);
     $("curDims").textContent = it.sample ? "위에서 내 사진을 고르면 바뀌어요" : (W === it.w ? `${it.w}×${it.h}` : `${it.w}×${it.h} → ${W}×${H}`);
-    $("ownPos").hidden = !it.pos;
-    $("ownPosText").textContent = it.pos ? `이 사진만 ${POS_NAME[it.pos]}` : "";
+    const two = state.marks[1].on;
+    const own = activeMarks().filter((i) => it.pos && it.pos[i]);
+    $("ownPos").hidden = !own.length;
+    $("ownPosText").textContent = own.length
+      ? "이 사진만 " + own.map((i) => (two ? `마크 ${i + 1} ` : "") + POS_NAME[it.pos[i]]).join(" · ")
+      : "";
+    $("stageHint").textContent = two
+      ? `사진을 누르면 이 사진만 ${state.edit ? "마크 2가" : "마크 1이"} 그 자리로 옮겨가요. 어느 마크를 옮길지는 아래 "고칠 마크"에서 골라요.`
+      : "사진을 누르면 이 사진만 로고가 그 자리(9칸 중 하나)로 옮겨가요.";
     $("saveCur").hidden = !!it.sample || user.length < 2;
     $("removeCur").hidden = !!it.sample || user.length < 2;
     $("curSaved").hidden = !it.savedKey || it.savedKey !== blobKey(it);
@@ -798,20 +879,35 @@ const LOGO_SRC = {
     for (const [i, x] of state.items.entries()) {
       if (!x.thumbBtn) continue;
       x.thumbBtn.setAttribute("aria-current", i === state.cur ? "true" : "false");
-      x.thumbDot.hidden = !x.pos;
+      x.thumbDot.hidden = !activeMarks().some((i) => x.pos && x.pos[i]);
     }
   }
 
   function updateControls() {
-    const shape = activeShape();
-    $("pos-" + state.pos).checked = true;
-    $("posOut").textContent = POS_NAME[state.pos];
+    const two = state.marks[1].on;
+    if (!two) state.edit = 0;
+    const mk = editMark();
+    const shape = shapeOf(mk);
+    const name = two ? `마크 ${state.edit + 1} ` : "";
+    $("twoMarks").checked = two;
+    $("editField").hidden = !two;
+    $("edit-" + state.edit).checked = true;
+    $("pos-" + mk.pos).checked = true;
+    const other = two ? state.marks[1 - state.edit].pos : null;
+    for (const k in POS_NAME) $("pos-" + k).parentElement.classList.toggle("other", k === other);
+    $("posLabel").textContent = two ? name + "위치" : "위치";
+    $("shapeLabel").textContent = two ? name + "모양" : "로고 모양";
+    $("sizeLabel").textContent = name + "크기";
+    $("posOut").textContent = POS_NAME[mk.pos];
+    $("posLegend").hidden = !two;
+    $("samePos").hidden = !(two && state.marks[0].pos === state.marks[1].pos);
+    $("groupTitle").hidden = !two;
     $("shape-" + shape).checked = true;
     $("shapeCustomWrap").hidden = !logos.custom;
     $("logoClear").hidden = !logos.custom;
     $("logoFileText").textContent = logos.custom ? "로고 파일 다시 고르기" : "고화질 로고 파일로 바꾸기";
-    $("size").value = String(state.sizes[shape]);
-    $("sizeOut").textContent = `짧은 변의 ${state.sizes[shape]}%`;
+    $("size").value = String(mk.sizes[shape]);
+    $("sizeOut").textContent = `짧은 변의 ${mk.sizes[shape]}%`;
     $("margin").value = String(state.margin);
     $("marginOut").textContent = `${state.margin}%`;
     $("color-" + state.color).checked = true;
@@ -871,12 +967,14 @@ const LOGO_SRC = {
     const row = fy < 1 / 3 ? "t" : fy < 2 / 3 ? "m" : "b";
     const col = fx < 1 / 3 ? "l" : fx < 2 / 3 ? "c" : "r";
     const pos = row + col;
-    it.pos = pos === state.pos ? null : pos;
+    const i = state.edit;
+    if (!it.pos) it.pos = [null, null];
+    it.pos[i] = pos === state.marks[i].pos ? null : pos;
     refresh();
   });
   $("ownPosReset").addEventListener("click", () => {
     const it = currentItem();
-    if (it) { it.pos = null; refresh(); }
+    if (it) { it.pos = [null, null]; refresh(); }
   });
 
   /* ---------- sample (예시) ---------- */
@@ -929,7 +1027,7 @@ const LOGO_SRC = {
     for (const [px, py, r] of [[360, 130, 22], [420, 175, 16], [760, 190, 20], [690, 205, 14], [470, 225, 12]]) {
       x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill();
     }
-    return { id: "sample", name: "예시 사진", type: "image/jpeg", src: c, w: W, h: H, sample: true, luma: lumaGrid(c, W, H) };
+    return { id: "sample", name: "예시 사진", type: "image/jpeg", src: c, w: W, h: H, sample: true, luma: lumaGrid(c, W, H), pos: [null, null] };
   }
 
   /* ---------- export ---------- */
@@ -939,9 +1037,13 @@ const LOGO_SRC = {
   }
 
   function blobKey(it) {
-    const { shape, margin, color, opacity, shadow, sizes, pos } = state;
-    const s = activeShape();
-    return [s, sizes[s], margin, color, opacity, shadow ? 1 : 0, it.pos || pos, logos.customId || ""].join("|");
+    const { margin, color, opacity, shadow } = state;
+    const parts = [margin, color, opacity, shadow ? 1 : 0, logos.customId || ""];
+    for (const i of activeMarks()) {
+      const mk = state.marks[i], s = shapeOf(mk);
+      parts.push(i, s, mk.sizes[s], posOf(it, i));
+    }
+    return parts.join("|");
   }
 
   async function makeBlob(it) {
@@ -1081,7 +1183,7 @@ const LOGO_SRC = {
         const w = img.naturalWidth, h = img.naturalHeight;
         let name = f.name || `사진 ${i + 1}`;
         if (append) name = `붙여넣은 사진 ${++pasteCount}`;
-        next.push({ id: "f" + Date.now() + "_" + i, name, type: f.type, src: img, view: viewCopy(img, w, h), url, w, h, luma: lumaGrid(img, w, h), pos: null });
+        next.push({ id: "f" + Date.now() + "_" + i, name, type: f.type, src: img, view: viewCopy(img, w, h), url, w, h, luma: lumaGrid(img, w, h), pos: [null, null] });
       } catch (e) {
         failed++;
       }
@@ -1217,7 +1319,8 @@ const LOGO_SRC = {
       const url = await logoFromFile(f);
       await useCustomLogo(url);
       try { localStorage.setItem(LOGO_KEY, url); } catch (e) { toast("로고는 바꿨지만 다음에 열 때는 다시 골라야 해요"); }
-      state.shape = "custom";
+      editMark().shape = "custom";
+      touch();
       persist();
       refresh();
       toast("내 로고 파일로 바꿨어요");
@@ -1229,7 +1332,7 @@ const LOGO_SRC = {
     delete logos.custom;
     delete logos.customId;
     try { localStorage.removeItem(LOGO_KEY); } catch (e) {}
-    if (state.shape === "custom") state.shape = "full";
+    for (const mk of state.marks) if (mk.shape === "custom") mk.shape = "full";
     clearLogoCaches();
     persist();
     refresh();
@@ -1237,29 +1340,51 @@ const LOGO_SRC = {
   });
 
   /* ---------- controls ---------- */
+  $("twoMarks").addEventListener("change", (e) => {
+    const [m1, m2] = state.marks;
+    m2.on = e.target.checked;
+    if (m2.on) {
+      // 처음 켤 때는 마크 1과 같은 로고를 반대쪽 모서리에
+      if (!m2.touched) {
+        m2.shape = m1.shape;
+        m2.sizes = { ...m1.sizes };
+        m2.pos = opposite(m1.pos);
+      }
+      state.edit = 1;
+      toast(`마크 2를 ${POS_NAME[m2.pos]}에 찍었어요`);
+    } else {
+      state.edit = 0;
+    }
+    persist(); refresh();
+  });
+  for (const r of document.querySelectorAll('input[name="edit"]')) {
+    r.addEventListener("change", (e) => { if (e.target.checked) { state.edit = Number(e.target.value); refresh(false); } });
+  }
   for (const r of document.querySelectorAll('input[name="pos"]')) {
     r.addEventListener("change", (e) => {
       if (!e.target.checked) return;
-      state.pos = e.target.value;
+      const i = state.edit;
+      state.marks[i].pos = e.target.value;
+      touch();
       // 전체 위치를 바꾸면, 따로 정한 사진 중 같은 자리는 다시 전체 설정을 따라요
-      for (const it of state.items) if (it.pos === state.pos) it.pos = null;
+      for (const it of state.items) if (it.pos && it.pos[i] === state.marks[i].pos) it.pos[i] = null;
       persist(); refresh();
     });
   }
   for (const r of document.querySelectorAll('input[name="shape"]')) {
-    r.addEventListener("change", (e) => { if (e.target.checked) { state.shape = e.target.value; persist(); refresh(); } });
+    r.addEventListener("change", (e) => { if (e.target.checked) { editMark().shape = e.target.value; touch(); persist(); refresh(); } });
   }
   for (const r of document.querySelectorAll('input[name="color"]')) {
     r.addEventListener("change", (e) => { if (e.target.checked) { state.color = e.target.value; persist(); refresh(); } });
   }
-  $("size").addEventListener("input", (e) => { state.sizes[activeShape()] = Number(e.target.value); persist(); refresh(); });
+  $("size").addEventListener("input", (e) => { const mk = editMark(); mk.sizes[shapeOf(mk)] = Number(e.target.value); touch(); persist(); refresh(); });
   $("margin").addEventListener("input", (e) => { state.margin = Number(e.target.value); persist(); refresh(); });
   $("opacity").addEventListener("input", (e) => { state.opacity = Number(e.target.value); persist(); refresh(); });
   $("shadow").addEventListener("change", (e) => { state.shadow = e.target.checked; persist(); refresh(); });
   $("reset").addEventListener("click", () => {
-    Object.assign(state, DEFAULTS, { sizes: { ...DEFAULT_SIZES } });
-    if (logos.custom) state.shape = "custom";
-    for (const it of state.items) it.pos = null;
+    Object.assign(state, DEFAULTS, { marks: defaultMarks(), edit: 0 });
+    if (logos.custom) state.marks[0].shape = "custom";
+    for (const it of state.items) it.pos = [null, null];
     persist();
     refresh();
     toast("기본값으로 돌렸어요");
