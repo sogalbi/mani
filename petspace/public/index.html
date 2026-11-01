@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>꼬리별 추모관 — 반려동물 온라인 추모관</title>
+<meta name="description" content="떠난 아이 사진을 큰 화면에 띄우고, 다른 보호자들과 말없이 같이 기억해요. 우리 아이 모습으로 추모관을 걷고, 국화를 올려요.">
+<meta name="theme-color" content="#f3ece2">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="꼬리별 추모관">
+<meta property="og:title" content="꼬리별 추모관 — 반려동물 온라인 추모관">
+<meta property="og:description" content="떠난 아이 사진을 큰 화면에 띄우고, 같이 기억해요.">
+<meta property="og:image" content="og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="og.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="scene" aria-label="추모관 풍경. 바닥을 누르면 우리 아이가 그쪽으로 걸어가요."></canvas>
+
+<header id="topbar" class="topbar" hidden>
+  <button id="room-btn" class="room-btn" type="button" aria-label="추모실 옮기기">
+    <span class="brand-sm">꼬리별</span>
+    <span id="room-name" class="room-name">1호실</span>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="top-right">
+    <span id="online-pill" class="pill" title="이 추모실에 있는 수"><span class="dot"></span><b id="online-n">1</b><span id="online-unit">명</span></span>
+    <button id="sound-btn" class="icon-btn" type="button" aria-label="소리 켜기" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor"/><path class="wave" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="mute" d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <button id="menu-btn" class="icon-btn" type="button" aria-label="메뉴">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="18.5" cy="12" r="1.8" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<p id="status-line" class="status-line" hidden></p>
+
+<nav id="actions" class="actions" hidden aria-label="할 수 있는 것">
+  <button type="button" data-act="flower" class="accent">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="2.2"/><path d="M12 5.8c-1-2.6 1-3.8 0-3.8s1 1.2 0 3.8M14.2 8c2.6-1 3.8 1 3.8 0s-1.2 1-3.8 0M12 10.2c1 2.6-1 3.8 0 3.8s-1-1.2 0-3.8M9.8 8c-2.6 1-3.8-1-3.8 0s1.2-1 3.8 0" stroke-linejoin="round"/><path d="M10.3 6.3C8.2 4.5 9.6 3.4 8.9 4s-1 1 .9 3M13.7 6.3c2.1-1.8.7-2.9 1.4-2.3s1 1-.9 3M13.7 9.7c2.1 1.8.7 2.9 1.4 2.3s1-1-.9-3M10.3 9.7c-2.1 1.8-.7 2.9-1.4 2.3s-1-1 .9-3"/><path d="M12 14v8M12 18c-2.4-.4-3.6-2-4-3.6 2.2 0 3.6 1.2 4 3.6z" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+    <span>국화</span>
+  </button>
+  <button type="button" data-act="bow">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="2.6" fill="currentColor"/><path d="M6 21c0-4.4 2.4-8.4 6-8.4s6 4 6 8.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 3.5c1-.8 2.2-1.2 3.5-1.2s2.5.4 3.5 1.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    <span>묵념</span>
+  </button>
+  <button type="button" data-act="say">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17H4.5A1.5 1.5 0 0 1 3 15.5V7a1.5 1.5 0 0 1 1.5-1.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 13.6s-3-1.8-3-3.6a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 1.8-3 3.6-3 3.6z" fill="currentColor"/></svg>
+    <span>한마디</span>
+  </button>
+  <button type="button" data-act="mine">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="13" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 21h8M12 17.5V21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9.5" cy="9.5" r="1.5" fill="currentColor"/><path d="M4 16l5-4.5 3.5 3 3-2.5L20 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    <span id="mine-label">우리 아이</span>
+  </button>
+  <button type="button" data-act="wall">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></g></svg>
+    <span>기억의 벽</span>
+  </button>
+</nav>
+
+<!-- 들어가기: 사진과 이름을 올리면 큰 화면에서 소개해요 -->
+<section id="entry" class="entry" aria-labelledby="entry-title">
+  <div class="entry-card">
+    <p class="eyebrow">반려동물 온라인 추모관</p>
+    <h1 id="entry-title" class="brand">꼬리별 추모관</h1>
+    <p class="tagline">떠난 아이 사진을 큰 화면에 띄우고,<br>다른 보호자들과 말없이 같이 기억해요.</p>
+    <p id="live-count" class="live" hidden><span class="dot"></span><span>지금 <b id="live-n">0</b>명이 함께 있어요</span></p>
+
+    <form id="entry-form" class="entry-form" autocomplete="off" novalidate>
+      <div class="field">
+        <span class="label">우리 아이 사진</span>
+        <label id="photo-drop" class="photo-drop">
+          <input id="photo-input" type="file" accept="image/*">
+          <img id="photo-preview" alt="" hidden>
+          <span id="photo-empty" class="photo-empty">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 5l1.5-2h5L16 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <b>사진 고르기</b>
+            <small>큰 화면에 이 사진으로 소개해요</small>
+          </span>
+        </label>
+        <button id="photo-clear" class="link-btn" type="button" hidden>사진 빼기</button>
+      </div>
+
+      <label class="field">
+        <span class="label">아이 이름</span>
+        <input id="pet-name" name="name" type="text" maxlength="10" placeholder="예) 초코, 나비, 몽실" enterkeyhint="next">
+      </label>
+
+      <fieldset class="field" id="message-field">
+        <legend class="label">화면에 띄울 한마디</legend>
+        <div id="message-chips" class="chips wrap" role="radiogroup"></div>
+        <input id="message-custom" type="text" maxlength="40" placeholder="직접 쓰기 (선택)">
+        <p id="message-preview" class="message-preview"></p>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">함께한 해 <small>(선택)</small></legend>
+        <div class="years">
+          <select id="since" aria-label="처음 만난 해"></select>
+          <span aria-hidden="true">–</span>
+          <select id="until" aria-label="떠난 해"></select>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">추모관에서 걸어 다닐 모습</legend>
+        <div class="look">
+          <canvas id="preview" width="120" height="120" aria-label="우리 아이 캐릭터 미리보기"></canvas>
+          <div class="look-pick">
+            <div id="species-chips" class="chips" role="radiogroup"></div>
+            <div id="color-swatches" class="swatches" role="radiogroup"></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <p id="entry-err" class="err" role="alert" hidden></p>
+      <button id="enter-btn" class="primary" type="submit">추모관 들어가기</button>
+      <p id="entry-hint" class="hint">사진 없이 들어가면 다른 아이들을 같이 기억하는 조문만 할 수 있어요.</p>
+    </form>
+    <p class="fine">우리 아이 사진만 올려 주세요. 사진·이름·한마디는 7일 동안 추모관 화면과 기억의 벽에 보여요.<br>대화 기능은 없어요. 이상한 사진은 신고가 쌓이면 바로 내려가요.</p>
+  </div>
+</section>
+
+<div id="backdrop" class="backdrop" hidden></div>
+
+<!-- 한마디 -->
+<section id="sheet-say" class="sheet" role="dialog" aria-modal="true" aria-labelledby="say-title" hidden>
+  <div class="grab"></div>
+  <h2 id="say-title">한마디 띄우기</h2>
+  <p class="sub">우리 아이 머리 위와 큰 화면에 잠깐 떠올라요. 정해진 말만 쓸 수 있어요.</p>
+  <div id="word-chips" class="chips wrap"></div>
+</section>
+
+<!-- 추모 카드 자세히 -->
+<section id="sheet-tribute" class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="tribute-name" hidden>
+  <div class="grab"></div>
+  <div class="tribute">
+    <div class="tribute-photo"><img id="tribute-img" alt=""><span class="ribbon" aria-hidden="true"></span></div>
+    <h2 id="tribute-name"></h2>
+    <p id="tribute-sub" class="sub"></p>
+    <p id="tribute-msg" class="tribute-msg"></p>
+    <p id="tribute-flowers" class="tribute-flowers"></p>
+    <button id="tribute-flower" class="primary" type="button">국화 한 송이 올리기</button>
+    <button id="tribute-report" class="link-btn danger" type="button">이 사진 신고하기</button>
+  </div>
+</section>
+
+<!-- 기억의 벽 -->
+<section id="sheet-wall" class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="wall-title" hidden>
+  <div class="grab"></div>
+  <h2 id="wall-title">기억의 벽</h2>
+  <p id="wall-sub" class="sub"></p>
+  <ul id="wall-grid" class="wall-grid"></ul>
+</section>
+
+<!-- 추모실 옮기기 -->
+<section id="sheet-rooms" class="sheet" role="dialog" aria-modal="true" aria-labelledby="rooms-title" hidden>
+  <div class="grab"></div>
+  <h2 id="rooms-title">추모실 옮기기</h2>
+  <p id="rooms-sub" class="sub"></p>
+  <div id="room-grid" class="room-grid"></div>
+  <div class="row-btns">
+    <button id="private-room" class="ghost" type="button">가족 추모실 만들기</button>
+  </div>
+  <p class="fine">가족 추모실은 링크를 받은 사람만 들어와요. 가족, 친구와 같이 아이를 기억하고 싶을 때 써요.</p>
+</section>
+
+<!-- 메뉴 -->
+<section id="sheet-menu" class="sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title" hidden>
+  <div class="grab"></div>
+  <h2 id="menu-title" class="sr-only">메뉴</h2>
+  <ul class="menu-list">
+    <li><button type="button" data-menu="share">이 추모실 링크 보내기</button></li>
+    <li><button type="button" data-menu="wall">기억의 벽 보기</button></li>
+    <li><button type="button" data-menu="rooms">추모실 옮기기</button></li>
+    <li><button type="button" data-menu="sound">소리 고르기</button></li>
+    <li><button type="button" data-menu="pet">사진·모습 바꾸기</button></li>
+    <li><button type="button" data-menu="info">꼬리별 추모관 안내</button></li>
+  </ul>
+</section>
+
+<!-- 소리 -->
+<section id="sheet-sound" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sound-title" hidden>
+  <div class="grab"></div>
+  <h2 id="sound-title">소리 고르기</h2>
+  <p class="sub">나한테만 들려요. 다른 사람에게는 들리지 않아요.</p>
+  <ul class="toggle-list">
+    <li><label><span>잔잔한 오르골</span><input type="checkbox" data-sound="music"><i></i></label></li>
+    <li><label><span>빗소리</span><input type="checkbox" data-sound="rain"><i></i></label></li>
+    <li><label><span>국화 올릴 때 종소리</span><input type="checkbox" data-sound="bell"><i></i></label></li>
+  </ul>
+</section>
+
+<!-- 안내 -->
+<section id="sheet-info" class="sheet tall" role="dialog" aria-modal="true" aria-labelledby="info-title" hidden>
+  <div class="grab"></div>
+  <h2 id="info-title">꼬리별 추모관 안내</h2>
+  <div class="prose">
+    <p>꼬리별 추모관은 먼저 떠난 아이를 큰 화면에 띄우고, 다른 보호자들과 말없이 같이 기억하는 온라인 추모관이에요. 떠난 아이들은 하늘에서 꼬리별이 되어 우리를 보고 있을 거예요.</p>
+    <h3>이렇게 써요</h3>
+    <ul>
+      <li>바닥을 누르면 우리 아이가 그쪽으로 걸어가요. 우리 아이를 누르면 꼬리를 흔들어요.</li>
+      <li>앞의 큰 화면에는 이 추모실 아이들이 차례로 소개돼요. 새로 들어온 아이는 먼저 소개돼요.</li>
+      <li><b>국화</b>를 누르면 헌화대로 걸어가서, 지금 화면에 있는 아이에게 국화를 올려요.</li>
+      <li><b>묵념</b>은 고개를 숙여요. <b>한마디</b>는 정해진 말을 머리 위와 화면에 잠깐 띄워요.</li>
+      <li><b>우리 아이</b>를 누르면 내 아이를 다시 화면에 띄워요(1분에 한 번).</li>
+      <li><b>기억의 벽</b>에서 최근 올라온 아이들을 모두 볼 수 있어요.</li>
+    </ul>
+    <h3>마음이 많이 힘들 때</h3>
+    <p>아이를 보낸 슬픔이 오래 이어지는 건 자연스러운 일이에요. 혼자 견디기 어렵다면 가까운 사람이나 펫로스 상담 전문가와 이야기해 보세요. 너무 힘들어서 위험한 생각이 든다면 <b>자살예방상담전화 109</b>(24시간)로 연락해 주세요.</p>
+    <h3>저장하는 것</h3>
+    <ul>
+      <li>올린 사진은 기기에서 크기를 줄이고 위치 정보 같은 촬영 정보를 지운 뒤 올라가요.</li>
+      <li>사진·이름·한마디·함께한 해는 7일 동안 서버에 남고 모두에게 보여요.</li>
+      <li>캐릭터 모습과 이름은 이 기기에도 저장돼요. 대화, 연락처는 받지 않아요.</li>
+    </ul>
+    <p class="fine">이상한 사진을 보면 사진을 눌러 신고해 주세요. 신고가 쌓이면 바로 내려가요.</p>
+  </div>
+</section>
+
+<div id="pop" class="pop" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

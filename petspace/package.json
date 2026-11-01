@@ -1,0 +1,18 @@
+{
+  "name": "kkoribyeol",
+  "version": "0.1.0",
+  "private": true,
+  "description": "꼬리별 추모관: 떠난 아이 사진을 큰 화면에 띄우고 반려동물 캐릭터로 같이 걷는 한국식 온라인 추모관 (실시간 서버 + 웹 앱)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
