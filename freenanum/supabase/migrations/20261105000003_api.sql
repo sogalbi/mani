@@ -288,6 +288,26 @@ begin
 end;
 $$;
 
+-- Numbers for the plaza's big screen (public, no personal data).
+create function public.plaza_stats() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object(
+    'open_giveaways', (select count(*) from public.posts p join public.campaigns c on c.id = p.campaign_id and c.status = 'active'
+                        where p.visibility = 'public' and p.kind = 'GIVEAWAY' and private.effective_post_status(p) = 'open'),
+    'open_requests', (select count(*) from public.posts p join public.campaigns c on c.id = p.campaign_id and c.status = 'active'
+                       where p.visibility = 'public' and p.kind = 'REQUEST' and private.effective_post_status(p) = 'open'),
+    'open_swaps', (select count(*) from public.posts p join public.campaigns c on c.id = p.campaign_id and c.status = 'active'
+                    where p.visibility = 'public' and p.kind = 'SWAP' and private.effective_post_status(p) = 'open'),
+    'given_today', (select coalesce(sum(i.quantity), 0) from public.trade_items i join public.trades t on t.id = i.trade_id
+                     where t.kind = 'giveaway' and t.status = 'completed'
+                       and t.completed_at >= (date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul')),
+    'completed_today', (select count(*) from public.trades t
+                         where t.status = 'completed'
+                           and t.completed_at >= (date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul')),
+    'given_total', (select coalesce(sum(i.quantity), 0) from public.trade_items i join public.trades t on t.id = i.trade_id
+                     where t.kind = 'giveaway' and t.status = 'completed'));
+$$;
+
 create function public.my_posts() returns jsonb
 language sql stable security definer set search_path = '' as $$
   select coalesce(jsonb_agg(private.post_card(p) order by p.created_at desc), '[]'::jsonb)

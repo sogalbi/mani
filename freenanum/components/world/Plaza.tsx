@@ -1,13 +1,16 @@
 'use client';
 
-// Lite World (spec §13, option A): a hand-drawn isometric plaza in inline SVG.
-// No 3D engine, no external assets. Every hotspot is also a real button, and the
-// same destinations are listed as plain links below the scene.
+// Live plaza (spec §13 option A + 산사-style presence): a hand-drawn isometric plaza in
+// inline SVG. Other visitors' characters walk around in real time; there is no chat,
+// only fixed emotes. Every hotspot is also a real button, and the same destinations are
+// listed as plain links below the scene.
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Avatar } from '@/components/Avatar';
 import { Sheet } from '@/components/ui';
+import { emoteOf, type Celebration, type EmoteId, type Look, type Peer } from '@/lib/plaza';
+import BigScreen from './BigScreen';
 import s from './world.module.css';
 
 const W = 360;
@@ -130,17 +133,68 @@ function Flowers({ x, y }: Pt) {
   );
 }
 
+function ScreenFrame() {
+  // big screen stand at the back of the plaza; the live content is an HTML overlay (BigScreen)
+  return (
+    <g>
+      <ellipse cx="180" cy="70" rx="70" ry="8" fill="rgba(60,50,30,0.12)" />
+      <rect x="112" y="40" width="6" height="32" rx="2" fill="#9a6b45" />
+      <rect x="242" y="40" width="6" height="32" rx="2" fill="#9a6b45" />
+      <rect x="86" y="3" width="188" height="56" rx="9" fill="#5e4a3a" stroke="#3b2f25" strokeWidth="1.2" />
+      <path d="M80 6 Q180 -14 280 6 L274 8 Q180 -8 86 8Z" fill="#cf7a52" stroke="#6b4a32" strokeWidth="0.8" />
+    </g>
+  );
+}
+
+/* ---------- characters ---------- */
+
+const pct = (p: Pt) => ({ left: `${(p.x / W) * 100}%`, top: `${(p.y / H) * 100}%` });
+
+function Character({ peer, me, walking, flip, emote }: { peer: Look & { i: number; j: number }; me?: boolean; walking?: boolean; flip?: boolean; emote: EmoteId | null }) {
+  const p = iso(peer.i, peer.j);
+  const e = emoteOf(emote);
+  return (
+    <div
+      className={`${s.player} ${me ? s.me : ''} ${flip ? s.flip : ''} ${walking ? s.walking : ''}`}
+      style={{ ...pct(p), zIndex: 10 + Math.round(p.y) }}
+      aria-hidden
+    >
+      {e && (
+        <span className={s.bubble}>
+          <span aria-hidden>{e.emoji}</span> {e.text}
+        </span>
+      )}
+      <span className={s.shadow} />
+      <div>
+        <Avatar level={peer.level} color={peer.color} size={64} label="" />
+      </div>
+      <span className={s.nameTag}>{me ? '나' : peer.name}</span>
+    </div>
+  );
+}
+
 /* ---------- scene ---------- */
 
-export default function Plaza({ spots, level }: { spots: Spot[]; level: number }) {
-  const start = iso(3, 4);
-  const [pos, setPos] = useState<Pt>(start);
+export interface PlazaProps {
+  spots: Spot[];
+  self: Look;
+  pos: { i: number; j: number };
+  peers: Peer[];
+  myEmote: EmoteId | null;
+  celebration: Celebration | null;
+  onMove: (i: number, j: number) => void;
+  onCelebrationDone: () => void;
+}
+
+export default function Plaza({ spots, self, pos, peers, myEmote, celebration, onMove, onCelebrationDone }: PlazaProps) {
   const [walking, setWalking] = useState(false);
   const [flip, setFlip] = useState(false);
   const [open, setOpen] = useState<Spot | null>(null);
   const busy = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reduced = useRef(false);
+  const posRef = useRef(pos);
+  posRef.current = pos;
 
   useEffect(() => {
     reduced.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -149,11 +203,19 @@ export default function Plaza({ spots, level }: { spots: Spot[]; level: number }
     };
   }, []);
 
-  const walkTo = useCallback((to: Pt, then?: () => void) => {
+  useEffect(() => {
+    if (!celebration) return;
+    const t = setTimeout(onCelebrationDone, 5000);
+    return () => clearTimeout(t);
+  }, [celebration, onCelebrationDone]);
+
+  const walkTo = useCallback((i: number, j: number, then?: () => void) => {
     if (busy.current || open) return; // card open or still walking → ignore input
-    const dist = Math.hypot(to.x - pos.x, to.y - pos.y);
-    if (dist > 1) setFlip(to.x < pos.x);
-    setPos(to);
+    const from = iso(posRef.current.i, posRef.current.j);
+    const to = iso(i, j);
+    const dist = Math.hypot(to.x - from.x, to.y - from.y);
+    if (dist > 1) setFlip(to.x < from.x);
+    onMove(i, j);
     if (reduced.current || dist < 1) {
       then?.();
       return;
@@ -165,14 +227,13 @@ export default function Plaza({ spots, level }: { spots: Spot[]; level: number }
       setWalking(false);
       then?.();
     }, 680);
-  }, [open, pos]);
+  }, [open, onMove]);
 
   const tiles: { i: number; j: number; p: Pt }[] = [];
   for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) tiles.push({ i, j, p: iso(i, j) });
 
   const at = (id: Spot['id']) => iso(...(spots.find((x) => x.id === id)?.at ?? [3, 3]));
   const scene: [string, Pt, (p: Pt) => React.ReactNode][] = [
-    ['h1', iso(0, 0), (p) => <House {...p} roof="#f3d27a" />],
     ['h2', iso(0, 6), (p) => <House {...p} roof="#cf7a52" />],
     ['h3', iso(6, 0), (p) => <House {...p} roof="#8fb27e" />],
     ['t1', iso(2, 0), (p) => <Tree {...p} />],
@@ -189,8 +250,6 @@ export default function Plaza({ spots, level }: { spots: Spot[]; level: number }
   // back-to-front so nearer objects overlap farther ones
   const objects = scene.map(([key, p, draw]) => ({ key, y: p.y, el: draw(p) })).sort((a, b) => a.y - b.y);
 
-  const pct = (p: Pt) => ({ left: `${(p.x / W) * 100}%`, top: `${(p.y / H) * 100}%` });
-
   return (
     <>
       <div className={s.stage}>
@@ -203,15 +262,20 @@ export default function Plaza({ spots, level }: { spots: Spot[]; level: number }
               fill={PATH(i, j) ? '#d8e5cc' : GARDEN(i, j) ? '#bcd6a6' : (i + j) % 2 ? '#f6ecd4' : '#f1e4c6'}
               stroke="#e2d3b2"
               strokeWidth="0.8"
-              onClick={() => walkTo(p)}
+              onClick={() => walkTo(i, j)}
             />
           ))}
+          <ScreenFrame />
           {objects.map((o) => (
             <g key={o.key} style={{ pointerEvents: 'none' }}>
               {o.el}
             </g>
           ))}
         </svg>
+
+        <div className={s.screenSlot}>
+          <BigScreen />
+        </div>
 
         {spots.map((sp) => {
           const p = iso(...sp.at);
@@ -222,19 +286,23 @@ export default function Plaza({ spots, level }: { spots: Spot[]; level: number }
               className={s.hot}
               style={pct(p)}
               aria-label={`${sp.name}: ${sp.desc}`}
-              onClick={() => walkTo(iso(...sp.stand), () => setOpen(sp))}
+              onClick={() => walkTo(...sp.stand, () => setOpen(sp))}
             >
               <span className={s.hotLabel}>{sp.name}</span>
             </button>
           );
         })}
 
-        <div className={`${s.player} ${flip ? s.flip : ''} ${walking ? s.walking : ''}`} style={pct(pos)} aria-hidden>
-          <span className={s.shadow} />
-          <div>
-            <Avatar level={level} size={64} label="내 캐릭터" />
+        {peers.map((peer) => (
+          <Character key={peer.key} peer={peer} emote={peer.emoteUntil > Date.now() ? peer.emote : null} />
+        ))}
+        <Character peer={{ ...self, ...pos }} me walking={walking} flip={flip} emote={myEmote} />
+
+        {celebration && (
+          <div className={s.celebrate} role="status" key={celebration.id}>
+            <span aria-hidden>🎉</span> 방금 {celebration.kind === 'swap' ? '교환' : '나눔'}이 완료됐어요! {celebration.summary}
           </div>
-        </div>
+        )}
       </div>
 
       <Sheet open={open !== null} onClose={() => setOpen(null)} title={open ? `${open.emoji} ${open.name}` : ''}>

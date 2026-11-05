@@ -1,8 +1,19 @@
 // Small round fairy-tale character. Decorations unlock with the giving level (1–6).
 // Every level is cute; higher levels only add a decoration.
 
-export function Avatar({ level = 1, size = 72, label }: { level?: number; size?: number; label?: string }) {
+export const BODY_COLORS = {
+  cream: '#f6e3b8',
+  peach: '#f7c9b0',
+  mint: '#cfe6c8',
+  sky: '#cbe2f0',
+  butter: '#f6e09a',
+  lilac: '#ddd0ef',
+} as const;
+export type BodyColor = keyof typeof BODY_COLORS;
+
+export function Avatar({ level = 1, size = 72, label, color = 'cream' }: { level?: number; size?: number; label?: string; color?: BodyColor }) {
   const lv = Math.max(1, Math.min(6, level));
+  const body = BODY_COLORS[color] ?? BODY_COLORS.cream;
   return (
     <svg
       width={size}
@@ -15,7 +26,7 @@ export function Avatar({ level = 1, size = 72, label }: { level?: number; size?:
       {/* cape (Lv5+) */}
       {lv >= 5 && <path d="M24 62 Q50 40 76 62 L82 92 Q50 98 18 92 Z" fill="#8fae7f" opacity="0.9" />}
       {/* body */}
-      <ellipse cx="50" cy="66" rx="27" ry="24" fill="#f6e3b8" stroke="#3b372f" strokeWidth="2.2" />
+      <ellipse cx="50" cy="66" rx="27" ry="24" fill={body} stroke="#3b372f" strokeWidth="2.2" />
       {/* tiny arms and feet */}
       <path d="M24 66 q-7 3 -5 9" fill="none" stroke="#3b372f" strokeWidth="2.2" strokeLinecap="round" />
       <path d="M76 66 q7 3 5 9" fill="none" stroke="#3b372f" strokeWidth="2.2" strokeLinecap="round" />

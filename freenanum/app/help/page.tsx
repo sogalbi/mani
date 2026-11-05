@@ -235,6 +235,10 @@ export default function HelpPage() {
 
       <Section id="credits" title="출처 표기">
         <p className="small">현재 외부 3D 에셋 없음. 나눔 광장은 직접 그린 SVG로 만들었어요.</p>
+        <p className="small">
+          나눔 광장에서는 같은 광장에 있는 사람들에게 내 캐릭터 색·위치·이름표(닉네임 또는 &ldquo;손님&rdquo;)·고른 인사가 실시간으로 보여요.
+          대화 기능은 없고, 광장 위치 정보는 저장하지 않아요.
+        </p>
         <p className="faint">
           나중에 Google Scanned Objects 모델을 쓰면 이렇게 표기해요: &ldquo;[모델 이름] — Google Research, Google Scanned
           Objects, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), 변경: 크기 조정·압축&rdquo;. 실제 상품의 브랜드·로고

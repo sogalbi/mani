@@ -787,3 +787,22 @@ describe('거래 상대 자동 저장', () => {
     assert.equal(me.threads.status, 'verified');
   });
 });
+
+describe('나눔 광장', () => {
+  test('광장 큰 화면 숫자는 비회원도 볼 수 있고, 완료되면 오늘 나눔 장수가 늘어난다', async () => {
+    const before = await db.rpc(null, 'plaza_stats');
+    assert.ok(before.open_giveaways >= 0);
+    const { giver, winner, tradeId } = await db.wonTrade({ quantity: 2 });
+    await db.ready(giver, winner, tradeId);
+    await db.rpc(giver, 'declare_sent', { p_trade_id: tradeId });
+    await db.rpc(winner, 'confirm_receipt', { p_trade_id: tradeId });
+    const after = await db.rpc(null, 'plaza_stats');
+    assert.equal(after.given_today - before.given_today, 2);
+    assert.equal(after.completed_today - before.completed_today, 1);
+    // the completion was broadcast to the plaza without names
+    const msgs = await db.sql(
+      `select payload from realtime.messages where topic = 'plaza:events' and event = 'celebrate' order by inserted_at desc limit 1`);
+    assert.equal(msgs[0].payload.summary, '미션 2장');
+    assert.equal(JSON.stringify(msgs[0].payload).includes('@'), false);
+  });
+});

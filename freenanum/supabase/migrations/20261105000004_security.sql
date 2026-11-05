@@ -37,7 +37,8 @@ grant execute on function
   public.get_bootstrap(),
   public.get_me(),
   public.list_posts(text, text, text, boolean, int, timestamptz),
-  public.get_post(text)
+  public.get_post(text),
+  public.plaza_stats()
 to anon, authenticated;
 
 grant execute on function

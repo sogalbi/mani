@@ -320,6 +320,26 @@ begin
 end;
 $$;
 
+-- Tells everyone in the live plaza that a hand-off finished. No names, only what was shared.
+-- Skipped silently where Supabase Realtime is not installed.
+create function private.plaza_celebrate(p_trade uuid) returns void
+language plpgsql set search_path = '' as $$
+declare
+  t public.trades;
+  summary text;
+begin
+  select * into t from public.trades where id = p_trade;
+  select string_agg(st.name || ' ' || i.quantity || '장', ' + ' order by i.seq) into summary
+    from public.trade_items i join public.sticker_types st on st.id = i.sticker_type_id
+   where i.trade_id = p_trade;
+  begin
+    perform realtime.send(jsonb_build_object('kind', t.kind, 'summary', summary), 'celebrate', 'plaza:events', false);
+  exception when others then
+    null;
+  end;
+end;
+$$;
+
 create function private.on_trade_completed(p_trade uuid) returns void
 language plpgsql set search_path = '' as $$
 declare
@@ -344,6 +364,7 @@ begin
         '양쪽 모두 수령을 확인했어요.', '/trades/' || p_trade);
     end loop;
   end if;
+  perform private.plaza_celebrate(p_trade);
 end;
 $$;
 

@@ -8,6 +8,7 @@ import PostCard from '@/components/PostCard';
 import { Avatar } from '@/components/Avatar';
 import { Empty, ErrorBox, Loading, useLoad } from '@/components/ui';
 import { useApp } from '@/components/Providers';
+import { usePlazaCount } from '@/lib/plaza';
 
 const ACTIONS = [
   { href: '/posts/new?kind=GIVEAWAY', emoji: '🎁', label: '무료 나눔하기', bg: 'var(--sage-soft)' },
@@ -35,6 +36,25 @@ function PostList({ kind, limit, empty }: { kind: 'GIVEAWAY' | 'REQUEST'; limit:
   );
 }
 
+function PlazaDoor() {
+  const count = usePlazaCount();
+  return (
+    <Link href="/world" className="card sage row" style={{ gap: 12 }}>
+      <span aria-hidden style={{ fontSize: '1.9rem' }}>
+        🌳
+      </span>
+      <span className="grow">
+        <strong>나눔 광장 들어가기</strong>
+        <br />
+        <span className="small muted">
+          {count && count > 0 ? `지금 ${count}명이 광장에 같이 있어요. ` : ''}가입 없이 캐릭터로 들어가 말없이 같이 있어요.
+        </span>
+      </span>
+      <span aria-hidden>›</span>
+    </Link>
+  );
+}
+
 export default function Home() {
   const { boot, me } = useApp();
   const c = boot?.campaign;
@@ -51,6 +71,8 @@ export default function Home() {
           <p className="small muted">e-프리퀀시 스티커 무료 나눔과 교환을 이어 주는 작은 마을이에요.</p>
         </div>
       </section>
+
+      <PlazaDoor />
 
       {actions > 0 && (
         <Link href="/trades" className="card terra row-between">
@@ -131,17 +153,6 @@ export default function Home() {
         />
       </section>
 
-      <Link href="/world" className="card sage row" style={{ gap: 12 }}>
-        <span aria-hidden style={{ fontSize: '1.8rem' }}>
-          🏡
-        </span>
-        <span className="grow">
-          <strong>나눔 광장 둘러보기</strong>
-          <br />
-          <span className="small muted">게시판·우체통이 있는 작은 2.5D 마을이에요. 들어가지 않아도 모든 기능을 쓸 수 있어요.</span>
-        </span>
-        <span aria-hidden>›</span>
-      </Link>
     </div>
   );
 }
