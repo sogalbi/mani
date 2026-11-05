@@ -159,7 +159,8 @@ def _render_settings(spec):
     sc.cycles.transparent_max_bounces = 8
     sc.cycles.caustics_reflective = False
     sc.cycles.caustics_refractive = False
-    sc.render.use_persistent_data = True
+    # Persistent data corrupted frames when objects switch visibility mid-shot (S06, first pilot render)
+    sc.render.use_persistent_data = False
     sc.render.resolution_x, sc.render.resolution_y = r["resolution"]
     sc.render.resolution_percentage = 100
     sc.render.image_settings.file_format = "PNG"

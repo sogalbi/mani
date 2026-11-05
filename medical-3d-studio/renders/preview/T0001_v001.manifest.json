@@ -1,0 +1,56 @@
+{
+  "topic_id": "T0001",
+  "quality": "preview",
+  "version": 1,
+  "rendered_at": "2026-11-05T08:41:45+00:00",
+  "spec_hash": "ca2a7e3600ef",
+  "script_hash": "9ab9491dd608",
+  "claims_hash": "3b023017670f",
+  "shots_hash": "9d583b18987c",
+  "captions_sha256": "6b47b810054e5105",
+  "video": "T0001_v001.mp4",
+  "video_sha256": "8acd38afe44ba5305ba3a56859fdb13362032350c927fd86675d272d8518fdef",
+  "video_clean": "T0001_v001_clean.mp4",
+  "video_clean_sha256": "2afc2a9def9ab4591aca998ea2f7675cb087c75d4236cbe426b858df9c6f7e1d",
+  "captions_ass": "T0001_v001.ass",
+  "captions_srt": "T0001_v001.srt",
+  "resolution": [
+    540,
+    960
+  ],
+  "fps": 30,
+  "duration_sec": 43,
+  "audio": "silent (narration not recorded yet)",
+  "engine": "Blender Cycles (CPU) via M3D_BPY_PYTHON",
+  "render_settings": {
+    "resolution": [
+      540,
+      960
+    ],
+    "samples": 16,
+    "noise_threshold": 0.04
+  },
+  "provenance": {
+    "builder_code": "c98a52e6bcad",
+    "font_sha256": "2e91915fab54"
+  },
+  "assets": [
+    "artery_cutaway_v1",
+    "artery_front_v1",
+    "balloon_v1",
+    "blood_cell_v1",
+    "catheter_shaft_v1",
+    "guidewire_v1",
+    "plaque_concept_v1",
+    "stent_generic_v1"
+  ],
+  "blend_file": "blender/scenes/T0001_ca2a7e3600ef.blend",
+  "python": "3.13.18",
+  "qa": {
+    "frames_checked": 1290,
+    "luma_jump_threshold": 6.0,
+    "jumps_within_shots": [],
+    "status": "ok"
+  },
+  "frame_notes": "Frames 982-1110 (shot S06) were re-rendered in a fresh process with the same builder code and spec but with Cycles persistent data turned off. In the first pass, persistent data corrupted them (the vessel's inner wall rendered black after objects switched visibility). Later builder code turns persistent data off for every render."
+}

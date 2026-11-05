@@ -129,9 +129,6 @@ def build_packet(topic, gate, out_dir=None, embed=False):
         body = head + f"<div class='card BLOCK'>아직 검수할 대상이 없어요: {_e(why)}</div>"
     else:
         body = head
-        scope = topic.meta.get("scope", {})
-        body += ("<h2>범위</h2><div class='card small'><b>다룸</b><ul>" + "".join(f"<li>{_e(x)}</li>" for x in scope.get("includes", []))
-                 + "</ul><b>다루지 않음</b><ul>" + "".join(f"<li>{_e(x)}</li>" for x in scope.get("excludes", [])) + "</ul></div>")
         if gate in ("G3", "G4"):
             q = "preview" if gate == "G3" else "final"
             m = topic.latest_manifest(q)
@@ -143,6 +140,9 @@ def build_packet(topic, gate, out_dir=None, embed=False):
             body += (f"<h2>영상</h2><video controls playsinline preload='metadata' src='{_e(src)}'></video>"
                      f"<p class='mute small'>v{m['version']:03d} · {m['resolution'][0]}×{m['resolution'][1]} · {m['fps']}fps · {m['duration_sec']}초 · "
                      f"소리: {_e(m['audio'])} · SHA-256 {m['video_sha256'][:16]}…</p>")
+        scope = topic.meta.get("scope", {})
+        body += ("<h2>범위</h2><div class='card small'><b>다룸</b><ul>" + "".join(f"<li>{_e(x)}</li>" for x in scope.get("includes", []))
+                 + "</ul><b>다루지 않음</b><ul>" + "".join(f"<li>{_e(x)}</li>" for x in scope.get("excludes", [])) + "</ul></div>")
         if gate in ("G1", "G3"):
             body += "<h2>대본</h2>" + _script_html(topic)
         if gate == "G3":
