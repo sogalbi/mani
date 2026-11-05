@@ -112,9 +112,13 @@ def build_vessel(model, mats, name, stages, offset=(0.0, 0.0, 0.0), theta_res=64
 def build_front_wall(model, mats, name, offset=(0.0, 0.0, 0.0), theta_res=64):
     """Front half (removed in the cutaway) – used for the opening reveal."""
     z = _z_samples(model, dense=0.08, coarse=0.3)
-    th = np.linspace(math.pi, 2 * math.pi, theta_res + 1)
+    # a hair larger than the back half and not touching its cut edges:
+    # shared edges made see-through rays leak and draw dark lines during the fade
+    gap = 0.006
+    th = np.linspace(math.pi + gap, 2 * math.pi - gap, theta_res + 1)
     Z, TH = np.meshgrid(z, th, indexing="ij")
-    wi = np.full(Z.shape, model.R)
+    wi = np.full(Z.shape, model.R + gap)
     V = G.shell_verts(z, th, wi, wi + model.W, offset)
     faces, mi = G.shell_topology(len(z), len(th))
-    return G.new_mesh_object(name, V, faces, mi, [mats["front_inner"], mats["front_outer"], mats["front_outer"], mats["front_outer"]])
+    # its cut faces would sit exactly on the back half's cut faces (flicker), so they are invisible
+    return G.new_mesh_object(name, V, faces, mi, [mats["front_inner"], mats["front_outer"], mats["hidden"], mats["hidden"]])

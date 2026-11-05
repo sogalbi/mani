@@ -4,7 +4,7 @@ import math
 import bpy
 
 from . import actions, anatomy, blood, camera, devices, labels, materials
-from .util import Timeline, bake, bake_visibility, bulk_keys, sec_to_frame
+from .util import Timeline, bake, bake_visibility, sec_to_frame
 
 
 def _clear():

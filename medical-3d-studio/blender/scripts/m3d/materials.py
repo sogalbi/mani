@@ -104,6 +104,18 @@ def _emission(name, color, strength=1.0, alpha=1.0):
     return m
 
 
+def _hidden(name):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    for n in list(nt.nodes):
+        nt.nodes.remove(n)
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+    nt.links.new(tr.outputs[0], out.inputs["Surface"])
+    return m
+
+
 def build_materials(style, model):
     c = style["colors"]
     mats = {
@@ -123,6 +135,7 @@ def build_materials(style, model):
         "label_text": _emission("label_text", c["label_text"], strength=1.6),
         "label_plate": _emission("label_plate", c["label_plate"], strength=1.0, alpha=0.72),
         "label_line": _emission("label_line", c["label_text"], strength=1.3),
+        "hidden": _hidden("hidden"),
     }
     _noise_tint(mats["plaque"], c["plaque_2"], scale=7.0)
     _noise_tint(mats["plaque_cut"], c["plaque_cut_2"], scale=9.0)

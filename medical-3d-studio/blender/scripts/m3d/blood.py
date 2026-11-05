@@ -6,7 +6,6 @@ import random
 import bpy
 import numpy as np
 
-from . import geometry as G
 from .util import bulk_keys
 
 
