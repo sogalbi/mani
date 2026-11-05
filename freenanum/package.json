@@ -1,0 +1,26 @@
+{
+  "name": "freenanum",
+  "version": "0.1.0",
+  "private": true,
+  "description": "프리나눔 — 시즌 한정 e-프리퀀시 무료 나눔·스티커 교환 웹서비스",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test:db": "node --test --test-concurrency=1 tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "pg": "8.23.1",
+    "typescript": "5.9.3"
+  }
+}
