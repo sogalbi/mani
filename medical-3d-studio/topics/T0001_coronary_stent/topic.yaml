@@ -1,0 +1,26 @@
+topic_id: T0001
+subject: 관상동맥 스텐트의 원리
+subject_en: How a coronary stent works (principle only)
+status: in_production        # idea | approved | in_production | review | published | on_hold | retired
+risk_level: medium           # low | medium | high  (시술 소개 → 과장·치료 유인 위험이 있어 medium)
+duplicate_score: 0.0         # 기존 영상과 겹치는 정도 0~1 (채널 첫 영상)
+audience: 한국어 일반 시청자
+educational_purpose: >
+  좁아진 관상동맥을 풍선과 스텐트로 넓히는 원리를 3D 단면으로 보여 준다.
+  시술 방법을 가르치거나 치료를 권하지 않는다.
+scope:
+  includes:
+    - 관상동맥이 플라크로 좁아지는 모습 (개념 모델)
+    - 풍선 확장과 함께 스텐트가 펼쳐지고 풍선이 빠지는 순서
+    - 스텐트는 플라크를 없애지 않고 통로를 넓혀 받친다는 점
+  excludes:
+    - 시술 적응증 판단, 환자별 치료 선택
+    - 실제 기구 크기·압력·시간 같은 수행 세부값
+    - 특정 병원·의료인·제품 소개
+    - 약물(항혈소판제 등)·합병증·재협착 상세 설명 (별도 주제)
+required_specialties: [순환기내과, 심장내과, 심장혈관흉부외과, 영상의학과]
+sponsorship: none            # none | disclosed:<내용>  (있으면 G4에 법률 전문가 필요)
+mentions_institution: false  # 특정 병원·의료인 언급 여부
+uses_patient_data: false     # 환자 사진·검사 자료 사용 여부 (true면 개인정보·동의 검토)
+created_at: "2026-11-05"
+notes: 설계 문서 7장 '첫 파일럿'. 40초 계획이었으나 마지막 문장(C08)을 천천히 읽도록 43초로 늘림.

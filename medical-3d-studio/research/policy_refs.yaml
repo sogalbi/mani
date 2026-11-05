@@ -1,0 +1,204 @@
+# 플랫폼 정책·국내 법령 참고처 (Policy & Legal QA 가 게시 전 점검표에 연결하는 근거)
+# 최신 규정은 실제 게시 직전 재확인한다 (config/policy.yaml: policy_recheck_days).
+# 2026-11-05 AI 사전 조사 메모: 작업 환경 네트워크 정책 때문에 support.google.com, law.go.kr,
+#   copyright.or.kr 등 공식 사이트를 열 수 없었다. 아래 항목은 모두 검색 결과로만 찾은 것이라
+#   UNVERIFIED 이다. 사람이 원문을 열어 확인한 뒤 verification: VERIFIED 와 checked_at 을 고쳐야
+#   게시 점검(publish-check)을 통과한다. 요약은 법률 판단이 아니다.
+checked_at: "2026-11-05"
+fetch_status:
+  result: "이번 세션에서 공식 페이지 원문을 하나도 열지 못함 (모든 항목 UNVERIFIED)"
+  blocked_hosts:
+    - "support.google.com"
+    - "blog.youtube"
+    - "www.law.go.kr"
+    - "www.copyright.or.kr"
+    - "www.mohw.go.kr"
+    - "www.ftc.go.kr"
+    - "www.pipc.go.kr"
+  reason: "세션 네트워크 정책이 위 호스트로의 연결을 차단함 (프록시 CONNECT 403 / WebFetch DNS 실패). 우회 시도는 하지 않음."
+  method_used: "웹 검색 도구(2026-11-05)로 각 공식 페이지의 URL·제목이 검색 색인에 존재함을 확인하고, 검색 도구가 제공한 발췌·요약을 바탕으로 summary_ko를 작성함. 검색 요약은 오류·구버전 혼입 가능성이 있음."
+  how_to_upgrade: "환경 설정의 Network access에서 위 도메인을 허용한 뒤 이 파일을 다시 검증하면 verification을 VERIFIED로 올릴 수 있음."
+verification_legend:
+  VERIFIED: "공식 페이지 원문을 직접 열어 읽음 (이번 파일에는 해당 없음)"
+  PARTIAL: "원문 일부만 직접 확인 (이번 파일에는 해당 없음)"
+  UNVERIFIED: "원문 미열람. URL·제목은 검색 색인으로 확인, 요약은 검색 발췌 기반 → 게시 전 원문 대조 필수"
+references:
+
+  - ref_id: P01
+    area: youtube
+    title: "Medical misinformation policy - YouTube Help"
+    url: "https://support.google.com/youtube/answer/13813322?hl=en"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: YouTube는 특정 건강 상태·물질에 관해 현지 보건 당국(LHA) 지침과 모순되어 심각한 위해 위험이 있는 의료 허위정보를 허용하지 않으며, 예방·치료 등 범주로 나뉜다. 보건 당국 예시로 WHO 및 각국 보건 기관이 언급된다. 영상·오디오·제목·설명에 추가 맥락이 있는 경우 허용될 수 있다는 예외가 있고, 정책이 모든 LHA 지침을 포괄하지 않을 수 있다는 단서가 있다."
+    implication_ko: "스텐트 등 치료 관련 설명이 국내 보건 당국·관련 학회 지침과 어긋나지 않는지 감수 의사가 확인하는 절차가 필요해 보입니다. 치료 효과를 과장하거나 '완치' 등 단정적 표현을 쓰지 않는지 점검하십시오."
+    checklist_items:
+      - "치료·효과 관련 주장마다 근거(국내 보건 당국/학회 지침 또는 문헌)를 대본에 기록했다"
+      - "공식 지침과 다른 치료법을 권하거나 효과를 단정하는 표현이 없다"
+      - "감수 의사 검토 완료 및 검토일 기록"
+    notes: "원문 미열람(support.google.com 차단). 관련 공식 페이지(검색 색인 확인): Misinformation policies https://support.google.com/youtube/answer/10834785?hl=en , 블로그 'A long term vision for YouTube's medical misinformation policies' https://blog.youtube/inside-youtube/a-long-term-vision-for-medical-misinformation-policies/ . 검색 요약에 'COVID 전용 정책 폐지', '암 치료 허위정보 포함' 언급이 있었으나 원문 미확인."
+
+  - ref_id: P02
+    area: youtube
+    title: "Disclosing use of GenAI content - Computer - YouTube Help"
+    url: "https://support.google.com/youtube/answer/14328491?hl=en&co=GENIE.Platform%3DDesktop"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 실존 인물이 하지 않은 말·행동을 한 것처럼 보이게 하거나, 실제 사건·장소 영상을 변조하거나, 실제로 일어나지 않은 사실적(realistic) 장면을 생성한 경우 공개(disclosure)가 필요하다. 명백히 비현실적인 콘텐츠, 애니메이션, 특수효과, 제작 보조 목적의 생성형 AI 사용은 공개 대상이 아니라고 안내되며, 완전 애니메이션 영상 속 AI 생성 애니메이션이 '사실적이지 않은' 예시로 제시된다. 공개는 YouTube 스튜디오 업로드 과정에서 설정하며, 지속적으로 공개하지 않으면 라벨 강제 부착, 콘텐츠 삭제, YPP 정지 등의 조치가 있을 수 있다."
+    implication_ko: "Blender 3D 해부·시술 애니메이션은 '명백히 애니메이션'으로 볼 여지가 있으나, 사실적 렌더링 수준과 AI 음성 사용 방식에 따라 판단이 달라질 수 있으므로 원문 예시와 대조하십시오. 특히 AI 내레이션이 실존 인물(예: 감수 의사)의 목소리를 모사하는지 확인이 필요합니다."
+    checklist_items:
+      - "영상에 실사처럼 보이는 AI 생성 장면(실제 환자·병원·인물)이 있는지 확인"
+      - "AI 음성이 실존 인물의 목소리를 복제·모사하지 않는지 확인 (해당 시 공개 설정 검토)"
+      - "업로드 시 스튜디오의 AI/변조 콘텐츠 질문에 판단 근거를 기록하고 응답"
+    notes: "원문 미열람. 검색 색인상 페이지 제목이 'Disclosing use of GenAI content'로 표시됨(과거 'altered or synthetic content' 명칭에서 변경된 것으로 보이나 원문 확인 필요). 관련: 블로그 https://blog.youtube/news-and-events/disclosing-ai-generated-content/ , 'Improving AI labels for viewers and creators' https://blog.youtube/news-and-events/improving-ai-labels-viewers-creators/ , 'How this content was made' 안내 https://support.google.com/youtube/answer/15447836?hl=en . 검색 요약에 '2026년 5월부터 미설정 시 YouTube 시스템이 사실적 AI 사용을 감지하면 자동 라벨 부착', 'Shorts는 오버레이 라벨' 언급이 있으나 원문 미확인. 건강 등 민감 주제에 대한 라벨 강화 여부도 원문에서 확인 필요."
+
+  - ref_id: P03
+    area: youtube
+    title: "Violent or graphic content policies - YouTube Help"
+    url: "https://support.google.com/youtube/answer/2802008?hl=en"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 시청자에게 충격·혐오감을 주려는 의도의 의료 시술 영상, 혈액·구토물 등 체액 영상은 금지 항목에 포함된다. 교육·다큐멘터리·과학·예술(EDSA) 목적이면 일부 허용될 수 있으나, 교육적 맥락은 제목·설명만이 아니라 영상의 이미지나 오디오 안에 있어야 한다고 안내된다. 정책은 준수하지만 모든 연령에 적합하지 않은 콘텐츠는 연령 제한되며, 연령 제한 영상은 18세 미만 또는 로그아웃 사용자에게 표시되지 않는다."
+    implication_ko: "시술 장면은 3D 애니메이션이라도 혈액·절개 묘사 수위에 따라 연령 제한 대상이 될 수 있습니다. 교육적 설명을 영상 안의 자막·내레이션으로 넣는지 확인하십시오."
+    checklist_items:
+      - "혈액·절개·체액 묘사가 설명에 필요한 최소 수준인지 확인"
+      - "교육 목적 설명이 영상 내 자막/내레이션으로 포함됨 (제목·설명란만으로 대체하지 않음)"
+      - "연령 제한 가능성 검토 및 결과 기록"
+    notes: "원문 미열람. 관련 공식 페이지(검색 색인 확인): EDSA 평가 방식 https://support.google.com/youtube/answer/6345162?hl=en , 연령 제한 콘텐츠 https://support.google.com/youtube/answer/2802167?hl=en , 제한 모드 https://support.google.com/youtube/answer/7354993?hl=en . 검색 도구가 일부 결과의 작성 시점이 오래되었을 수 있다고 경고함."
+
+  - ref_id: P04
+    area: youtube
+    title: "Advertiser-friendly content guidelines - YouTube Help"
+    url: "https://support.google.com/youtube/answer/6162278?hl=en"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 충격적 콘텐츠 항목에서 신체 부위·체액·노폐물보다 시술 자체에 초점을 둔 교육적 의료·미용 시술은 광고 수익 가능, 장기가 보이는 수술 장면이 초점인 경우 등은 제한된 광고, 맥락이 있어도 잔혹한 신체·체액 노출이 영상의 큰 비중을 차지하면 광고 수익 불가로 단계가 나뉜다. 검색 요약에는 의료 전문가가 특정 수술 방법을 시연·설명하는 경우가 광고 불가 단계에 예시되어 있다는 언급이 있다."
+    implication_ko: "같은 스텐트 영상이라도 묘사 수위에 따라 수익 등급이 달라질 수 있으므로 업로드 시 자체 인증(self-certification) 응답을 원문 기준과 대조하십시오. '수술 방법 시연'으로 읽힐 수 있는 구성인지 확인이 필요합니다."
+    checklist_items:
+      - "장기·혈액이 화면 중심이 되는 장면 비중 점검"
+      - "'시술 방법 안내(how-to)'가 아닌 '원리 설명' 구성인지 확인"
+      - "자체 인증 응답 내용과 근거 기록"
+    notes: "원문 미열람. 관련(검색 색인 확인): 자체 인증 https://support.google.com/youtube/answer/9194476?hl=en , 광고 가이드라인 변경 내역 https://support.google.com/youtube/answer/9725604?hl=en . 검색 요약에 '2026년 3월 업데이트' 언급이 있으나 내용은 이 채널과 직접 관련 여부 미확인. 원문에서 '의료 전문가의 수술 방법 설명' 예시 문구를 반드시 직접 확인할 것."
+
+  - ref_id: P05
+    area: youtube
+    title: "YouTube channel monetization policies - YouTube Help"
+    url: "https://support.google.com/youtube/answer/1311392?hl=en"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 2025년 7월 '반복적 콘텐츠(repetitious content)' 정책명이 '진정성 없는 콘텐츠(inauthentic content)'로 바뀌었고, 반복적이거나 대량 생산된 콘텐츠가 포함됨을 명확히 했으며 이는 기존에도 수익 창출 불가였다고 안내된다. 템플릿으로 만든 듯하거나 같은 채널 영상을 연속 시청 시 반복적으로 느껴지는 콘텐츠, 창작자의 독창적 통찰 없이 일반 템플릿으로 대량 생산된 AI 생성 콘텐츠가 위반 예시로 언급된다. 재사용 콘텐츠(reused content) 정책은 별개로 유지된다."
+    implication_ko: "300편 템플릿 제작 계획은 이 정책과 직접 맞닿아 있으므로, 편마다 고유한 의학적 설명·구성·시각 자료가 있는지 검토하는 절차가 필요해 보입니다. AI 사용 자체가 결격 사유는 아니라는 안내가 있으나 원문에서 확인하십시오."
+    checklist_items:
+      - "이번 편만의 고유한 설명·장면·감수 의견이 있는지 확인 (템플릿 재사용 비율 점검)"
+      - "연속 5편 시청 시 반복적으로 느껴지는지 내부 시청 테스트"
+      - "인트로/아웃트로·음악·내레이션 구조가 매 편 동일하지 않도록 변주"
+    notes: "원문 미열람. 관련(검색 색인 확인): Shorts 수익 창출 정책 https://support.google.com/youtube/answer/12504220?hl=en , YPP 변경 안내 https://support.google.com/youtube/answer/12843009?hl=en , YPP 정지 이의제기 https://support.google.com/youtube/answer/9564590?hl=en . 검색 요약에 '2027-02-01 시행 YPP 변경(기준·활동 요건)' 언급이 있으나 원문 미확인."
+
+  - ref_id: P06
+    area: youtube
+    title: "Spam Policy - YouTube Help"
+    url: "https://support.google.com/youtube/answer/2801973?hl=en"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 자동화 도구나 AI로 최소한의 변경만 가한 유사 콘텐츠를 대량 생산하는 행위가 스팸 정책에서 다뤄지며, 동일한 음악·이미지에 AI 생성 대본만 바꾼 채널이 예시로 언급된다."
+    implication_ko: "P05가 수익 창출 문제라면 이 정책은 커뮤니티 가이드라인(삭제·경고) 측면입니다. 대량 템플릿 제작 시 두 정책을 함께 점검하십시오."
+    checklist_items:
+      - "같은 배경·음악·구조에 대본만 바꾼 형태가 아닌지 확인"
+      - "제목·설명·태그가 편마다 내용에 맞게 작성됨 (복붙 금지)"
+    notes: "원문 미열람. 검색 색인상 제목은 'Spam Policy - YouTube Help'이며, 정확한 공식 페이지명·해당 문구 위치는 원문에서 확인 필요."
+
+  - ref_id: P07
+    area: youtube
+    title: "YouTube Health 기능의 출처 신청하기 - YouTube 고객센터"
+    url: "https://support.google.com/youtube/answer/12796915?hl=ko"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 이 기준은 미국·영국·독일·브라질·인도네시아·일본·프랑스·대한민국·캐나다·멕시코 기반 의료 제공자에게 적용되며, 신청 국가/지역에서 의사·간호사·심리학자 등 보건 전문직 면허를 보유해야 한다. 조직을 대신해 신청하는 경우 신청자는 면허 보유 전문가여야 하고 조직이 게시하는 콘텐츠를 감독·검토해야 한다. 건강 정보 공유 원칙 준수, 수익 창출 정책 준수, 시청 시간 또는 Shorts 조회수 기준, 건강 정보 중심 채널, 활성 경고 없음 등의 요건이 있으며 승인 시 면허 보유 표시와 건강 출처 노출이 제공된다."
+    implication_ko: "이 채널은 의료기관이 아니므로 신청 가능 여부는 감수 의사의 역할(조직 대신 신청 및 콘텐츠 감독)과 채널 요건 충족 여부를 원문으로 확인해야 합니다. 승인 전에는 YouTube 라벨이 없으므로, 영상 내 자격 표기 방식은 원문과 의료법(P08·P10)을 함께 검토하십시오."
+    checklist_items:
+      - "감수 의사 성명·면허 종류 표기 방식 및 표기 동의 여부 확인"
+      - "YouTube 건강 기능 신청 요건(시청 시간/Shorts 조회수 등) 충족 여부 점검"
+      - "승인 전 'YouTube 인증 의료 채널' 등으로 오인될 표현을 쓰지 않음"
+    notes: "원문 미열람. 수치 요건(검색 요약: 최근 12개월 공개 시청 1,500시간 또는 최근 90일 Shorts 조회 150만 회)은 원문 미확인. 검색 요약에 제약·보험·의료기기 회사 채널 제외 언급이 있으나 원문 미확인. 관련(검색 색인 확인): 한국 확대 블로그 https://blog.youtube/intl/ko-kr/news-and-events/2024_01_health-corpus-expansion-korea/ , 건강 정보 패널 안내 https://support.google.com/youtube/answer/9795167?hl=en , 신청 사이트 https://health.youtube/features-application/ (검색 요약상 프로그램 개편 중이라는 안내가 있다고 함)."
+
+  - ref_id: P08
+    area: kr_law
+    title: "의료법 제56조(의료광고의 금지 등)"
+    url: "https://www.law.go.kr/lsLawLinkInfo.do?lsJoLnkSeq=1000916672&chrClsCd=010202"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 제1항은 의료기관 개설자, 의료기관의 장 또는 의료인(의료인등)이 아닌 자는 의료광고를 하지 못한다고 정하고, 의료광고를 신문·잡지·음성·음향·영상·인터넷·인쇄물·간판 그 밖의 방법으로 의료행위, 의료기관 및 의료인등에 대한 정보를 소비자에게 나타내거나 알리는 행위로 정의한다. 제2항은 의료인등에게도 치료경험담, 거짓·과장 광고, 기사·전문가 의견 형태의 광고, 제57조 심의를 받지 않거나 심의 내용과 다른 광고 등을 금지하며 세부 기준은 시행령 제23조에 위임한다."
+    implication_ko: "비의료기관 채널의 교육 영상이라도 특정 병원·의사·시술을 홍보하거나 내원을 유도하는 요소가 있으면 의료광고 해당 여부가 문제될 수 있으므로 게시 전 점검이 필요합니다. 감수 의사의 소속 병원명 노출 방식도 검토 대상입니다. 판단이 애매하면 법률 전문가 또는 자율심의기구에 문의하십시오."
+    checklist_items:
+      - "특정 병원·의사·제품명, 연락처·위치·예약 안내가 없음"
+      - "치료경험담·전후 비교·'최고/유일' 등 과장 표현이 없음"
+      - "감수 의사 표기가 해당 의료기관 홍보로 읽히지 않는지 검토"
+      - "의료기관·의료기기 업체로부터 대가를 받지 않았음 (받은 경우 별도 법률 검토)"
+    notes: "원문 미열람(law.go.kr 차단). 위 링크는 검색 색인에서 확인한 조문 링크로 특정 시점 판본일 수 있음 → 국가법령정보센터에서 '의료법' 현행 조문을 직접 확인할 것. 검색 요약상 최신 개정 표기가 '법률 제21490호, 2026.3.24. 타법개정, 시행 2026.10.2.'와 '2026년 2월 시행' 두 가지로 엇갈려 현행 판본 미확정. 시행령 제23조(금지 기준)에 수술 장면 노출 관련 기준이 있다는 검색 요약이 있으나 호 번호·문구 미확인. 관련: 개정 이력 https://www.law.go.kr/LSW/lsRvsDocListP.do?chrClsCd=010202&lsId=001788&lsRvsGubun=all , 헌재 결정례 https://www.law.go.kr/LSW/detcInfoP.do?detcSeq=48690&mode=1 ."
+
+  - ref_id: P09
+    area: kr_law
+    title: "의료법 제57조(의료광고의 심의) 및 의료법 시행령 제24조"
+    url: "https://www.law.go.kr/LSW/lsLawLinkInfo.do?lsJoLnkSeq=1000721562&chrClsCd=010202"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 의료인등이 신문·정기간행물, 일부 옥외광고물, 전광판, 대통령령으로 정하는 인터넷 매체(앱 포함) 등을 이용해 의료광고를 하려면 미리 제56조 위반 여부에 관해 보건복지부장관에게 신고한 자율심의기구의 심의를 받아야 한다. 시행령 제24조는 대상 인터넷 매체를 전년도 말 기준 직전 3개월 일평균 이용자 10만 명 이상인 정보통신서비스 제공자의 매체 및 같은 기준의 SNS 광고매체로 정한다. 심의 유효기간은 승인일부터 3년이고 수수료는 자율심의기구가 정한다."
+    implication_ko: "심의 의무 주체는 '의료인등'이며, 이 채널 콘텐츠가 의료광고에 해당하지 않도록 구성하는 것이 1차 관리 포인트로 보입니다. 향후 의료기관·의료인과 협업해 그들을 알리는 콘텐츠를 만들 경우 해당 의료인등이 심의를 받았는지 확인하십시오."
+    checklist_items:
+      - "이 영상이 특정 의료인등을 알리는 콘텐츠인지 판단하고 기록"
+      - "의료인등과 협업 시 의료광고 심의 필요 여부를 그 측에 확인 요청"
+    notes: "원문 미열람. 위 URL은 '제57조(의료광고의 심의)' 검색에서 나온 law.go.kr 링크이나 색인 제목이 '조문정보'로만 표시되어 제57조 현행 조문 링크인지 확정 못함. 시행령 제24조 링크(검색 색인 확인): https://www.law.go.kr/LSW/lsLawLinkInfo.do?chrClsCd=010202&lsJoLnkSeq=1000064012 . 2015년 헌재 위헌 결정(사전검열) 이후 2018년 개정으로 자율심의기구 방식이 도입되었다는 검색 요약 있음(원문 미확인). 자율심의기구(대한의사협회 등) 공식 사이트 URL은 공식 출처로 확인하지 못해 기재하지 않음."
+
+  - ref_id: P10
+    area: kr_guidance
+    title: "치료경험담 등 불법의료광고 286건 적발 (보건복지부 보도자료)"
+    url: "https://www.mohw.go.kr/board.es?mid=a10503010100&bid=0027&act=view&list_no=371102&nPage=140"
+    verification: UNVERIFIED
+    summary_ko: "검색 요약 기준: 보건복지부는 의료광고 주체가 의료인, 의료기관의 장, 의료기관 개설자로 한정되어 비의료인의 의료광고는 의료법 위반이라는 입장을 밝혔고, 광고 성격을 가지면서 전문적 의료행위 내용을 포함하면 비의료인의 의료광고로 볼 수 있다고 설명했다. 인플루언서가 의료기관으로부터 협찬·비용 지원을 받고 올린 후기를 치료경험담 광고로 보았으며, 대가가 명시되지 않아도 위치·연락처 등을 안내하며 내원을 유도하면 위반 소지가 있다고 했다."
+    implication_ko: "교육 목적 채널이라도 광고 성격(특정 기관 유인 등)이 더해지면 비의료인 의료광고 논점이 생길 수 있음을 보여주는 행정 해석 자료로 참고하십시오. 이 자료는 법령이 아니며 구체적 사안 판단은 전문가에게 확인하십시오."
+    checklist_items:
+      - "영상·설명란·고정 댓글에 특정 의료기관 유인 요소(링크·위치·할인)가 없음"
+      - "의료 관련 협찬 제안 수락 전 법률 검토"
+    notes: "원문 미열람(mohw.go.kr 차단). 보도자료 게시일은 검색 요약상 2022년으로 추정되나 미확인. 관련 보도자료(검색 색인 확인): '치료경험담 의료광고는 불법, 인터넷 광고 점검 결과 발표' https://www.mohw.go.kr/board.es?mid=a10503010300&bid=0027&tag=&act=view&list_no=334771&cg_code= , '보건복지부와 의료계, 불법 의료광고 집중 단속' https://www.mohw.go.kr/board.es?mid=a10503000000&bid=0027&list_no=1479210&act=view . YouTube만을 대상으로 한 복지부 가이드라인은 검색에서 찾지 못함."
+
+  - ref_id: P11
+    area: kr_law
+    title: "표시ㆍ광고의 공정화에 관한 법률 제3조(부당한 표시ㆍ광고 행위의 금지)"
+    url: "https://www.law.go.kr/LSW//lsSideInfoP.do?lsiSeq=268659&joNo=0003&joBrNo=00&docCls=jo&urlMode=lsScJoRltInfoR"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 사업자등은 소비자를 속이거나 잘못 알게 할 우려가 있고 공정한 거래질서를 해칠 우려가 있는 거짓·과장, 기만적, 부당하게 비교하는, 비방적 표시·광고를 하거나 다른 사업자등으로 하여금 하게 해서는 안 되며, 구체적 내용은 대통령령으로 정한다."
+    implication_ko: "협찬·광고를 받는 시점부터 이 법과 P12 심사지침의 적용 여부를 검토해야 합니다. 현재 협찬이 없다면 게시물별로 '협찬 없음' 상태를 기록해 두는 것이 관리에 도움이 됩니다."
+    checklist_items:
+      - "이번 영상 관련 금전·제품·할인 등 경제적 대가 수령 여부 기록"
+      - "대가가 있는 경우 P12 표시 방법 적용"
+    notes: "원문 미열람. 검색 요약상 현행 법률은 '2025년 법률 제20712호' 기준으로 표시되나 미확인. 위 링크는 특정 판본(lsiSeq) 기준일 수 있음 → 현행 조문 재확인 필요."
+
+  - ref_id: P12
+    area: kr_guidance
+    title: "추천ㆍ보증 등에 관한 표시ㆍ광고 심사지침 (공정거래위원회 고시)"
+    url: "https://www.law.go.kr/LSW/admRulInfoR.do?admRulSeq=2100000280130"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 광고주와 추천·보증인 사이에 추천·보증 내용이나 신뢰도에 영향을 미칠 수 있는 경제적 이해관계가 있으면 이를 공개해야 한다. 동영상(유튜브 등)은 제목 또는 영상 안에 표시하고 영상 시작과 끝, 그리고 중간에 반복 표시하는 방식이 예시되며, 모바일에서 표시 문구가 잘리는 경우는 부적절한 예로 제시된다. 2026년 6월 1일 시행 개정으로 AI로 생성한 가상인물이 추천·보증하는 경우 가상인물임을 표시하도록 했다(공정위 보도자료)."
+    implication_ko: "협찬이 생기면 표시 위치·반복 방식을 이 지침 원문대로 적용해야 합니다. AI로 만든 가상 의사·해설자 캐릭터가 특정 상품·서비스를 추천하는 형식이 될 경우 2026년 개정 내용(가상인물 표시)을 원문으로 확인하십시오."
+    checklist_items:
+      - "협찬 시: 제목 앞부분 및 영상 시작·끝에 경제적 이해관계 표시"
+      - "협찬 시: 모바일 화면에서 표시 문구가 잘리지 않는지 확인"
+      - "AI 가상인물이 추천·보증하는 장면이 있으면 '가상인물' 표시 여부 확인"
+    notes: "원문 미열람. 위 law.go.kr 행정규칙 링크(admRulSeq)가 2026-06-01 시행 개정본인지 미확인. 2026 개정 보도자료(검색 색인 확인): https://www.korea.kr/briefing/pressReleaseView.do?newsId=156764553 , 공정위 보도자료 게시판 https://www.ftc.go.kr/www/selectBbsNttView.do?bordCd=3&key=12&nttSn=47547&pageIndex=1&pageUnit=10&searchCnd=all&searchCtgry=01%2C02 , 행정예고 https://www.ftc.go.kr/www/selectBbsNttView.do?amp=&amp=&bordCd=105&key=193&nttSn=47345 . 검색 요약상 영상 매체는 가상인물 등장 중 근접 위치에 '가상인물' 등 문구 표시라고 하나 최종 원문 미확인. 공정위 지침 해설서(가이드라인) 보도자료: https://www.korea.kr/briefing/pressReleaseView.do?newsId=156408465 ."
+
+  - ref_id: P13
+    area: kr_guidance
+    title: "AI-저작권 안내서(4종) 모음 (한국저작권위원회 공지)"
+    url: "https://www.copyright.or.kr/notify/notice/view.do?brdctsno=55402"
+    verification: UNVERIFIED
+    summary_ko: "검색 요약 기준: 문화체육관광부와 한국저작권위원회가 생성형 AI 저작권 안내서, 생성형 인공지능 활용 저작물의 저작권 등록 안내서 등 4종을 제공한다. 등록 안내서는 프롬프트만으로 생성된 결과물은 등록이 어렵고, AI 산출물에 대한 인간의 수정·추가·삭제나 선택·배열·구성에 창작성이 있는 경우 그 인간 기여 부분에 한해 등록이 가능하다는 취지로 설명하며, 창작 과정 기록이 중요하다고 안내한다. 안내서는 2025년 6월 기준 법·판례에 근거하며 최종 판단은 법원이 한다고 밝힌다."
+    implication_ko: "Blender 모델링·애니메이션·편집 등 사람이 한 작업과 AI가 생성한 부분(음성·이미지 등)을 구분해 기록해 두면 권리 주장이나 분쟁 대응에 도움이 될 수 있습니다. 저작권 등록을 고려한다면 등록 안내서 원문의 기재 방법을 확인하십시오."
+    checklist_items:
+      - "AI 생성 요소(음성·이미지·대본 초안 등)와 사람 작업 요소를 제작 로그에 구분 기록"
+      - "프로젝트 파일·편집 이력 등 창작 과정 증빙 보관"
+      - "사용한 AI 도구·외부 에셋의 이용약관/라이선스 확인"
+    notes: "원문 미열람(copyright.or.kr 차단). 관련(검색 색인 확인): 영문 'Guide to Copyright Registration for Generative AI-Assisted Works' PDF https://www.copyright.or.kr/eng/doc/etc_pdf/Guide_to_Copyright_Registration_for_Generative_AI-Assisted_Works.pdf , 발간자료 상세 https://www.copyright.or.kr/information-materials/publication/research-report/view.do?brdctsno=54253 (제목 미확인). 4종 각각의 발간일·최신 개정 여부 미확인. 마지막 체크 항목(도구 약관)은 안내서 내용이 아니라 일반 점검 항목임."
+
+  - ref_id: P14
+    area: kr_law
+    title: "개인정보 보호법 제23조(민감정보의 처리 제한)"
+    url: "https://www.law.go.kr/lsLawLinkInfo.do?chrClsCd=010202&lsJoLnkSeq=1000575255"
+    verification: UNVERIFIED
+    summary_ko: "검색 발췌 기준: 개인정보처리자는 사상·신념, 노동조합·정당 가입·탈퇴, 정치적 견해, 건강, 성생활 등에 관한 정보 등 민감정보를 처리해서는 안 되며, 예외는 정보주체에게 법정 사항을 알리고 다른 개인정보 처리 동의와 별도로 동의를 받은 경우와 법령에서 처리를 요구·허용하는 경우이다. 민감정보를 처리하는 경우 제29조에 따른 안전성 확보 조치를 해야 한다."
+    implication_ko: "실제 환자의 영상·검사결과(관상동맥 조영 영상, 심전도 등)는 건강 정보에 해당할 수 있으므로, 사용 전 출처·식별 가능성·동의 범위를 확인해야 합니다. 가능하면 3D 재현 또는 식별 불가능한 자료를 쓰는 방안을 검토하고, 실제 자료 사용 시 개인정보 전문가 검토를 받으십시오."
+    checklist_items:
+      - "실제 환자 이미지·검사결과 사용 여부 확인 (없으면 '해당 없음' 기록)"
+      - "사용 시: 이름·병원·날짜·ID 등 식별 정보가 화면·메타데이터에 남아 있지 않음"
+      - "사용 시: 별도 동의 등 처리 근거 문서 보관 및 전문가 검토"
+    notes: "원문 미열람. 검색 요약상 현행 조문 표기는 '법률 제21445호, 2026.3.10. 일부개정, 시행 2026.9.11.'이나 미확인 → 현행 판본 재확인 필요. 민감정보 범위는 시행령 제18조 참조(검색 요약). 관련 법령해석례(검색 색인 확인): https://www.law.go.kr/LSW/expcInfoP.do?expcSeq=328023 . 개인정보보호위원회(pipc.go.kr) 안내서는 접속 차단으로 확인 못함."

@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "script",
+  "type": "object",
+  "required": [
+    "topic_id",
+    "script_version",
+    "duration_sec",
+    "lines"
+  ],
+  "properties": {
+    "duration_sec": {
+      "type": "number"
+    },
+    "voice": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "TODO",
+            "recorded",
+            "ai_voice"
+          ]
+        },
+        "asset_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "engine": {
+          "type": "string"
+        },
+        "voice_name": {
+          "type": "string"
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0.7,
+          "maximum": 2.0
+        },
+        "max_speed": {
+          "type": "number",
+          "minimum": 0.7,
+          "maximum": 2.0
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "lead_in": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tail": {
+          "type": "number",
+          "minimum": 0
+        },
+        "loudness_lufs": {
+          "type": "number"
+        },
+        "pronunciation": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "line_id",
+          "shot_id",
+          "start",
+          "end",
+          "claim_ids",
+          "narration"
+        ],
+        "properties": {
+          "line_id": {
+            "type": "string"
+          },
+          "start": {
+            "type": "number"
+          },
+          "end": {
+            "type": "number"
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "narration": {
+            "type": "string"
+          },
+          "captions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "start",
+                "end",
+                "text"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

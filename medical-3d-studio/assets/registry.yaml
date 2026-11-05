@@ -1,0 +1,125 @@
+# 자산·권리 레지스트리 (Asset & License Manager)
+# 모든 3D 자산은 이 저장소의 코드로 직접 만든다 → 외부 메시·텍스처 라이선스 문제가 없다.
+# 외부 자산을 추가하면 source_url, license, commercial_use, attribution 을 반드시 채운다.
+# commercial_use 가 true 가 아니면 G2 를 통과할 수 없다.
+# accuracy_status: PENDING_MEDICAL_REVIEW → G3(프리뷰 승인)에서 전문가가 모양·위치를 확인한다.
+assets:
+  - asset_id: artery_cutaway_v1
+    kind: anatomy
+    description: 관상동맥 벽 절반 단면(뒤쪽 반원통). 내막·중막·외막을 색 띠로 단순화.
+    generator: blender/scripts/m3d/anatomy.py#build_vessel
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+    accuracy_notes: 비율 과장 있음(혈구 크기·벽 두께). 교육용 개념도 표시로 보완.
+  - asset_id: artery_front_v1
+    kind: anatomy
+    description: 혈관 앞쪽 절반(도입부에서 사라지며 단면을 드러냄)
+    generator: blender/scripts/m3d/anatomy.py#build_front_wall
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+  - asset_id: plaque_concept_v1
+    kind: pathology
+    description: 비대칭 플라크(개념 모델). 풍선·스텐트에 눌려 얇아지되 사라지지 않음.
+    generator: blender/scripts/m3d/anatomy.py#LesionModel
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+    accuracy_notes: 실제 협착 형태·조성(지질 핵, 섬유막, 석회화)은 표현하지 않음.
+  - asset_id: blood_cell_v1
+    kind: anatomy
+    description: 적혈구 모양 원반(크기·속도는 실제 비율 아님)
+    generator: blender/scripts/m3d/blood.py#cell_mesh
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+  - asset_id: stent_generic_v1
+    kind: device
+    description: 일반화된 지그재그 링 + 연결다리 스텐트. 특정 제조사 디자인 아님.
+    generator: blender/scripts/m3d/devices.py#build_stent
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+  - asset_id: balloon_v1
+    kind: device
+    description: 반투명 풍선(접힘→부풀림→오므림). 접힌 날개 모양은 생략.
+    generator: blender/scripts/m3d/devices.py#build_balloon
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+  - asset_id: catheter_shaft_v1
+    kind: device
+    description: 풍선 카테터 몸통(단순 원통)
+    generator: blender/scripts/m3d/devices.py#build_shaft
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+  - asset_id: guidewire_v1
+    kind: device
+    description: 가이드와이어(가는 철사, 끝이 둥근 원통)
+    generator: blender/scripts/m3d/devices.py#build_wire
+    source_url: null
+    license: self-made (procedural code in this repository)
+    commercial_use: true
+    attribution: none
+    modification_allowed: true
+    version: v1
+    accuracy_status: PENDING_MEDICAL_REVIEW
+  - asset_id: font_pretendard_bold
+    kind: font
+    description: 자막·라벨 글꼴 Pretendard Bold 1.3.9
+    file: assets/fonts/Pretendard-Bold.otf
+    source_url: https://github.com/orioncactus/pretendard (npm pretendard@1.3.9)
+    license: SIL Open Font License 1.1 (assets/fonts/Pretendard-OFL.txt)
+    commercial_use: true
+    attribution: 영상 표시 의무 없음. 글꼴 파일을 함께 배포할 때 라이선스 파일 동봉.
+    modification_allowed: true (예약 글꼴 이름 'Pretendard' 는 수정본에 쓰지 않음)
+    version: 1.3.9
+    accuracy_status: NOT_APPLICABLE
+  - asset_id: voice_supertonic3
+    kind: voice
+    description: AI 내레이션 음성. Supertonic 3(Supertone) 기본 목소리(script.yaml voice.voice_name)를 이 컴퓨터에서 합성. 실존 인물 목소리 복제 아님.
+    generator: studio/narration.py (python -m studio narrate)
+    source_url: https://huggingface.co/Supertone/supertonic-3 (pip supertonic 1.3.1)
+    license: 모델 BigScience OpenRAIL-M, 코드 MIT. 출력물은 라이선스 III-6 "Licensor claims no rights in the Output"
+    commercial_use: true
+    attribution: 표시 의무 없음. 단 Attachment A (e)에 따라 기계 생성 사실을 밝혀야 함 → 설명란에 'AI 음성' 표기
+    modification_allowed: true
+    ai_disclosure_required: true
+    use_restrictions: >-
+      OpenRAIL-M Attachment A 중 이 채널에 해당하는 것: (e) 기계 생성 사실을 밝히지 않고 배포 금지,
+      (g) 타인 사칭 금지, (l) 의료 조언·검사 결과 해석 용도 금지 →
+      영상이 개인 진단·치료 권고가 아닌 일반 교육 내용인지 G2·G4에서 확인
+    rights_note: 2026-11-05 AI가 라이선스 원문(huggingface.co/Supertone/supertonic-3/LICENSE)을 읽고 정리한 초안. 권리 담당이 G2에서 확인.
+    version: supertonic-3 (supertonic 1.3.1)
+    accuracy_status: PENDING_MEDICAL_REVIEW
+    accuracy_notes: 발음·띄어 읽기·속도가 자막과 같은 내용을 전달하는지 G3에서 들어 보고 확인 (M08).
