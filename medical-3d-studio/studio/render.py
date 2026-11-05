@@ -81,6 +81,20 @@ def ffmpeg(args):
     subprocess.run(cmd, check=True)
 
 
+def luma_qa(video, spec, threshold=6.0):
+    """Automatic render check: average brightness per frame. A big jump that is
+    not at a shot cut usually means a broken frame (e.g. a renderer cache bug)."""
+    out = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(video), "-vf",
+                          "signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-", "-f", "null", "-"],
+                         capture_output=True, text=True, check=True).stdout
+    y = [float(line.split("=")[1]) for line in out.splitlines() if "YAVG=" in line]
+    fps = spec["fps"]
+    cuts = {int(round(s["start_sec"] * fps)) + 1 for s in spec["shots"]}
+    jumps = [i + 1 for i in range(1, len(y)) if abs(y[i] - y[i - 1]) > threshold and (i + 1) not in cuts]
+    return {"frames_checked": len(y), "luma_jump_threshold": threshold, "jumps_within_shots": jumps,
+            "status": "ok" if not jumps else "check"}
+
+
 def render(topic, quality="preview", log=print, frames_only=False):
     st = topic.studio
     root = st.root
@@ -126,6 +140,11 @@ def render(topic, quality="preview", log=print, frames_only=False):
     vf = f"subtitles=filename='{ass}':fontsdir='{fonts_dir}'"
     ffmpeg(["-framerate", str(fps), "-i", str(frames / "%04d.png")] + audio + ["-vf", vf] + common + [str(captioned)])
 
+    qa = luma_qa(clean, spec)
+    if qa["jumps_within_shots"]:
+        log(f"[render] ⚠️ 장면 중간에 밝기가 갑자기 바뀌는 프레임: {qa['jumps_within_shots'][:5]} → 해당 프레임을 지우고 다시 렌더하세요")
+    notes = frames / "NOTES.md"
+
     from .gates import content_hashes  # local import: avoid a cycle
     hashes = content_hashes(topic)
     manifest = {
@@ -154,6 +173,8 @@ def render(topic, quality="preview", log=print, frames_only=False):
         "assets": sorted({a for s in topic.shots for a in s.get("assets", [])}),
         "blend_file": str(blend.relative_to(root)),
         "python": sys.version.split()[0],
+        "qa": qa,
+        "frame_notes": notes.read_text(encoding="utf-8").strip() if notes.exists() else None,
     }
     mpath = Path(str(base) + ".manifest.json")
     mpath.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")

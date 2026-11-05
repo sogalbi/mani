@@ -220,3 +220,17 @@ def test_captions_cover_script(root):
 def test_repo_data_matches_schemas():
     from studio.schema import validate_all
     assert validate_all(Studio(REPO)) == []
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg not installed")
+def test_render_qa_flags_brightness_jump_inside_a_shot(tmp_path):
+    import subprocess
+    from studio.render import luma_qa
+    video = tmp_path / "v.mp4"
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=gray:s=64x64:d=1:r=30",
+                    "-f", "lavfi", "-i", "color=c=black:s=64x64:d=1:r=30", "-filter_complex", "[0][1]concat=n=2:v=1",
+                    "-pix_fmt", "yuv420p", str(video)], check=True)
+    one_shot = {"fps": 30, "shots": [{"start_sec": 0}]}
+    assert luma_qa(video, one_shot)["jumps_within_shots"] == [31]
+    cut_at_jump = {"fps": 30, "shots": [{"start_sec": 0}, {"start_sec": 1}]}
+    assert luma_qa(video, cut_at_jump)["status"] == "ok"
