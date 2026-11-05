@@ -331,6 +331,20 @@ create table public.reports (
 create index reports_status_idx on public.reports (status, created_at desc);
 create index reports_reporter_idx on public.reports (reporter_id, created_at desc);
 
+-- Counterparts this user confirmed in a trade, saved automatically by confirm_peer
+-- so the Threads ID is not forgotten. Only the owner can read it; the owner can delete rows.
+-- Barcode numbers are never stored here.
+create table public.saved_contacts (
+  owner_id uuid not null references public.profiles (user_id),
+  contact_id uuid not null references public.profiles (user_id),
+  threads_handle text,
+  last_trade_id uuid references public.trades (id),
+  first_confirmed_at timestamptz not null default now(),
+  last_confirmed_at timestamptz not null default now(),
+  primary key (owner_id, contact_id),
+  check (owner_id <> contact_id)
+);
+
 create table public.notifications (
   id bigint generated always as identity primary key,
   user_id uuid not null references public.profiles (user_id),

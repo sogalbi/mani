@@ -269,3 +269,16 @@ export interface ReportItem {
 export type ReportReason =
   | 'not_sent' | 'not_received' | 'no_response' | 'barcode_misuse' | 'fake_trade'
   | 'abuse' | 'spam' | 'commercial' | 'other';
+
+/** A counterpart saved automatically when I confirmed their Threads ID in a trade. */
+export interface SavedContact {
+  contact_id: string;
+  nickname: string;
+  threads_handle: string | null;
+  first_confirmed_at: string;
+  last_confirmed_at: string;
+  last_trade: { id: string; trade_no: number; status: TradeStatus; kind: 'giveaway' | 'swap'; post_title: string | null } | null;
+  trades_together: number;
+  blocked: boolean;
+  badge: Omit<Badge, 'user_id'>;
+}

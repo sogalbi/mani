@@ -152,7 +152,14 @@ try {
   const [t] = await db.sql('select status from public.trades where post_id = $1', [postId]);
   assert.equal(t.status, 'completed');
 
-  // 9) MY, history, world, help
+  // 9) The counterpart confirmed in step 6 is saved to the giver's account
+  await giver.goto(BASE + '/me/contacts');
+  await giver.getByText(RECEIVER_NICK).first().waitFor();
+  assert.ok(await giver.getByText('@sticker.bear').first().isVisible(), 'saved Threads ID');
+  assert.equal(await giver.getByText(/1234\s?5678/).count(), 0, 'barcode is not saved');
+  await shot(giver, '13a-contacts', false);
+
+  // 10) MY, history, world, help
   await giver.goto(BASE + '/me');
   await giver.getByText(GIVER_NICK).first().waitFor();
   await shot(giver, '13-my');
@@ -165,7 +172,7 @@ try {
   await giver.goto(BASE + '/matches');
   await shot(giver, '17-matches', false);
 
-  // 10) Optional: the receiver links an e-mail, then restores the same records on another device
+  // 11) Optional: the receiver links an e-mail, then restores the same records on another device
   const linkMail = `bear${run}@demo.local`;
   await receiver.goto(BASE + '/settings');
   await receiver.getByLabel('이메일', { exact: true }).fill(linkMail);
@@ -184,7 +191,7 @@ try {
   await otherDevice.waitForURL(/\/me/);
   await otherDevice.getByText(RECEIVER_NICK).first().waitFor();
 
-  // 11) Optional e-mail restore (demo admin) → admin console
+  // 12) Optional e-mail restore (demo admin) → admin console
   const admin = await newVisitor('admin');
   await admin.goto(BASE + '/login?next=/admin');
   await admin.getByLabel('연결해 둔 이메일').fill('admin@demo.local');

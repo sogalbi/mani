@@ -737,3 +737,53 @@ describe('추가 경계', () => {
     assert.equal(gp.giveaway.draw, null);
   });
 });
+
+describe('거래 상대 자동 저장', () => {
+  test('서로 확인을 누르면 상대 닉네임·스레드 아이디가 내 계정에만 저장된다', async () => {
+    const { giver, winner, tradeId } = await db.wonTrade();
+    const stranger = await db.createUser();
+    await db.info(winner, tradeId, { handle: 'winner.first', barcode: '1234567890' });
+    await db.info(giver, tradeId, { handle: 'giver.first' });
+    assert.equal((await db.rpc(giver, 'my_contacts')).length, 0, '확인 전에는 저장되지 않음');
+
+    await db.confirm(giver, tradeId);
+    const giverContacts = await db.rpc(giver, 'my_contacts');
+    assert.equal(giverContacts.length, 1);
+    assert.equal(giverContacts[0].contact_id, winner);
+    assert.equal(giverContacts[0].threads_handle, 'winner.first');
+    assert.equal(giverContacts[0].last_trade.id, tradeId);
+    assert.equal(giverContacts[0].trades_together, 1);
+    assert.equal((await db.rpc(winner, 'my_contacts')).length, 0, '상대가 확인하기 전에는 상대 쪽에 저장 안 됨');
+    assert.equal((await db.rpc(stranger, 'my_contacts')).length, 0);
+    await assert.rejects(db.as(giver, 'select * from public.saved_contacts'), /permission denied/);
+
+    // the receiver changes their Threads ID → confirm again → the saved handle follows
+    await db.info(winner, tradeId, { handle: 'winner.second', barcode: '1234567890' });
+    await db.confirm(giver, tradeId);
+    await db.confirm(winner, tradeId);
+    assert.equal((await db.rpc(giver, 'my_contacts'))[0].threads_handle, 'winner.second');
+    assert.equal((await db.rpc(winner, 'my_contacts'))[0].threads_handle, 'giver.first');
+    assert.equal(JSON.stringify(await db.rpc(giver, 'my_contacts')).includes('1234567890'), false, '바코드는 저장하지 않음');
+
+    await db.rpc(giver, 'delete_contact', { p_contact_id: winner });
+    assert.equal((await db.rpc(giver, 'my_contacts')).length, 0);
+    assert.equal((await db.rpc(winner, 'my_contacts')).length, 1, '내가 지워도 상대 목록은 그대로');
+  });
+
+  test('내 스레드 아이디는 마지막에 쓴 값으로 저장되고, 운영자 확인된 아이디는 바뀌지 않는다', async () => {
+    const { giver, winner, tradeId } = await db.wonTrade();
+    await db.info(giver, tradeId, { handle: 'first.handle' });
+    assert.equal((await db.rpc(giver, 'get_me')).threads.handle, 'first.handle');
+    await db.info(giver, tradeId, { handle: 'second.handle' });
+    assert.equal((await db.rpc(giver, 'get_me')).threads.handle, 'second.handle');
+
+    const admin = await db.createAdmin();
+    await db.rpc(winner, 'set_threads_handle', { p_handle: 'verified.one' });
+    await db.rpc(winner, 'request_threads_verification');
+    await db.rpc(admin, 'admin_decide_threads', { p_user_id: winner, p_approve: true });
+    await db.info(winner, tradeId, { handle: 'other.one', barcode: '1234567890' });
+    const me = await db.rpc(winner, 'get_me');
+    assert.equal(me.threads.handle, 'verified.one');
+    assert.equal(me.threads.status, 'verified');
+  });
+});

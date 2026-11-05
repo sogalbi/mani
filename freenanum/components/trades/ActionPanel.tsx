@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { rpc } from '@/lib/api';
 import { DISPUTE_REASON_LABEL, fmtDateTime, ROLE_LABEL, TRADE_STATUS_LABEL } from '@/lib/format';
@@ -282,6 +283,9 @@ function PeerStep({ t, onChanged }: Props) {
         스레드에서 DM 등으로 서로 맞는 사람인지 확인한 뒤 눌러 주세요. 모두 확인하면 보내는 사람에게 바코드가 열려요.
       </p>
       <p className="faint">이상하면 누르지 말고 문제 신고나 취소를 해 주세요. 바코드 번호는 DM으로 주고받지 마세요.</p>
+      <p className="faint">
+        확인하면 상대 닉네임과 스레드 아이디가 <Link href="/me/contacts">MY › 거래 상대</Link>에 자동 저장돼요.
+      </p>
       <ErrorBox error={error} />
       <button
         className="btn block"
@@ -289,7 +293,7 @@ function PeerStep({ t, onChanged }: Props) {
         onClick={() =>
           run(async () => {
             await rpc('confirm_peer', { p_trade_id: t.id });
-            toast('확인을 남겼어요');
+            toast('확인했어요 · 상대 정보를 MY › 거래 상대에 저장했어요');
             await onChanged();
             void refreshMe();
           })

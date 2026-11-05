@@ -871,8 +871,12 @@ begin
   update public.trade_participants set peer_confirmed_at = null
    where trade_id = p_trade_id and peer_confirmed_at is not null;
 
-  -- remember the handle for next time (never overwrites an existing one)
-  insert into public.threads_profiles (user_id, handle) values (uid, h) on conflict (user_id) do nothing;
+  -- remember my latest handle for next time (an operator-verified handle is kept as is)
+  insert into public.threads_profiles (user_id, handle) values (uid, h)
+  on conflict (user_id) do update
+    set handle = excluded.handle, status = 'unverified', verify_code = null, requested_at = null,
+        decided_at = null, decided_by = null, updated_at = now()
+    where public.threads_profiles.status <> 'verified' and public.threads_profiles.handle <> excluded.handle;
 
   perform private.trade_event(p_trade_id, uid, case when first_time then 'info_submitted' else 'info_updated' end, '{}'::jsonb);
   perform private.notify(tp.user_id, 'trade_info', '상대가 거래 정보를 입력했어요',
@@ -907,6 +911,12 @@ begin
     raise exception 'INVALID_STATE' using errcode = 'P0001';
   end if;
   update public.trade_participants set peer_confirmed_at = now() where trade_id = p_trade_id and user_id = uid;
+  -- save who I confirmed (nickname via profile + their Threads ID) to my account
+  insert into public.saved_contacts (owner_id, contact_id, threads_handle, last_trade_id)
+  select uid, tp.user_id, tp.threads_handle, p_trade_id
+    from public.trade_participants tp where tp.trade_id = p_trade_id and tp.user_id <> uid
+  on conflict (owner_id, contact_id) do update
+    set threads_handle = excluded.threads_handle, last_trade_id = excluded.last_trade_id, last_confirmed_at = now();
   perform private.trade_event(p_trade_id, uid, 'peer_confirmed', '{}'::jsonb, 'peer:' || uid || ':' || (r.me).accepted_at);
   perform private.notify(tp.user_id, 'peer_confirmed', '상대가 나를 확인했어요',
     '나도 상대 스레드 아이디를 확인하면 다음 단계로 넘어가요.', '/trades/' || p_trade_id)
@@ -1308,6 +1318,42 @@ language sql stable security definer set search_path = '' as $$
     'progress_events', (select coalesce(jsonb_agg(jsonb_build_object('kind', pe.event_kind, 'delta', pe.delta, 'at', pe.created_at,
                                                                      'trade_id', pe.source_trade_id, 'note', pe.note) order by pe.id desc), '[]'::jsonb)
                           from public.progress_events pe where pe.user_id = auth.uid()));
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Saved trade contacts (filled automatically when I confirm a counterpart)
+-- ---------------------------------------------------------------------------
+
+create function public.my_contacts() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'contact_id', c.contact_id,
+           'nickname', pr.nickname,
+           'threads_handle', c.threads_handle,
+           'first_confirmed_at', c.first_confirmed_at,
+           'last_confirmed_at', c.last_confirmed_at,
+           'last_trade', (select jsonb_build_object('id', t.id, 'trade_no', t.trade_no, 'status', t.status, 'kind', t.kind,
+                                                    'post_title', (select title from public.posts where id = t.post_id))
+                            from public.trades t where t.id = c.last_trade_id),
+           'trades_together', (select count(*) from public.trade_participants a
+                                 join public.trade_participants b on b.trade_id = a.trade_id and b.user_id = c.contact_id
+                                where a.user_id = c.owner_id),
+           'blocked', private.is_blocked_between(c.owner_id, c.contact_id),
+           'badge', private.member_badge(c.contact_id,
+                      (select id from public.campaigns where status = 'active' order by starts_at desc limit 1)) - 'user_id')
+         order by c.last_confirmed_at desc), '[]'::jsonb)
+  from public.saved_contacts c join public.profiles pr on pr.user_id = c.contact_id
+  where c.owner_id = auth.uid();
+$$;
+
+create function public.delete_contact(p_contact_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  uid uuid := private.current_member(true);
+begin
+  delete from public.saved_contacts where owner_id = uid and contact_id = p_contact_id;
+  return jsonb_build_object('ok', true);
+end;
 $$;
 
 -- ---------------------------------------------------------------------------

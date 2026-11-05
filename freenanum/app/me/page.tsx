@@ -121,6 +121,11 @@ function MeView({ me }: { me: Me }) {
             </Link>
           </li>
           <li>
+            <Link href="/me/contacts">
+              거래 상대 <span className="faint">(자동 저장)</span> <span aria-hidden>›</span>
+            </Link>
+          </li>
+          <li>
             <Link href="/me/rewards">
               캐릭터 장식 <span aria-hidden>›</span>
             </Link>

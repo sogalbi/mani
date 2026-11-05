@@ -70,6 +70,8 @@ grant execute on function
   public.get_trade(uuid),
   public.my_trades(text),
   public.my_summary(),
+  public.my_contacts(),
+  public.delete_contact(uuid),
   public.my_notifications(int),
   public.mark_notifications_read(bigint[]),
   public.set_threads_handle(text),
