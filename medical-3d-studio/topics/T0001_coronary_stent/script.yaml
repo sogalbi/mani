@@ -6,9 +6,16 @@ script_version: v1
 language: ko
 duration_sec: 43
 voice:
-  status: TODO            # TODO | recorded | ai_voice
-  asset_id: null          # 음성 파일을 쓰면 assets/registry.yaml 에 권리 정보와 함께 등록
-  note: 프리뷰는 무음 + 자막. 내레이션 녹음(사람 또는 상업 이용 가능한 AI 음성) 전 G2에서 권리 확인.
+  status: ai_voice        # TODO | recorded | ai_voice
+  asset_id: voice_supertonic3   # assets/registry.yaml 에 권리·조건과 함께 등록 (G2에서 확인)
+  engine: supertonic-3    # 이 컴퓨터에서 합성 (python -m studio narrate)
+  voice_name: F1          # 기본 목소리 10개 F1~F5, M1~M5 (narrate --samples 로 비교)
+  speed: 1.05             # 기본 읽기 속도. 시간 칸보다 긴 줄만 max_speed 까지 빨라짐
+  max_speed: 1.35
+  steps: 10               # 음질 5~12
+  pronunciation:          # 음성에만 적용, 자막은 그대로
+    X선: 엑스선
+  note: 줄마다 자막 시간 칸 안에서 읽음. 발음·속도·자막과 같은 내용인지는 G3에서 전문가가 들어 보고 확인.
 lines:
   - line_id: L01
     shot_id: S01

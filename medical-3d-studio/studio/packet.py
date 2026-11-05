@@ -70,8 +70,15 @@ def _claims_html(topic):
 
 
 def _script_html(topic):
+    from . import narration
+    cfg = narration.settings(topic) if narration.enabled(topic) else None
+
+    def voice_note(ln):
+        spoken = narration.spoken_text(ln, cfg) if cfg else ln["narration"]
+        return f"<br><span class='mute small'>음성은 이렇게 읽어요: {_e(spoken)}</span>" if spoken != ln["narration"] else ""
+
     rows = "".join(f"<tr><td class='mute'>{ln['start']:g}–{ln['end']:g}초<br>{_e(ln.get('shot_id'))}</td><td>{_e(ln['narration'])}"
-                   f"<br><span class='chip'>{' '.join(ln.get('claim_ids') or [])}</span></td></tr>" for ln in topic.lines())
+                   f"{voice_note(ln)}<br><span class='chip'>{' '.join(ln.get('claim_ids') or [])}</span></td></tr>" for ln in topic.lines())
     return f"<table>{rows}</table>"
 
 

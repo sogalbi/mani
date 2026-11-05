@@ -105,3 +105,21 @@ assets:
     modification_allowed: true (예약 글꼴 이름 'Pretendard' 는 수정본에 쓰지 않음)
     version: 1.3.9
     accuracy_status: NOT_APPLICABLE
+  - asset_id: voice_supertonic3
+    kind: voice
+    description: AI 내레이션 음성. Supertonic 3(Supertone) 기본 목소리(script.yaml voice.voice_name)를 이 컴퓨터에서 합성. 실존 인물 목소리 복제 아님.
+    generator: studio/narration.py (python -m studio narrate)
+    source_url: https://huggingface.co/Supertone/supertonic-3 (pip supertonic 1.3.1)
+    license: 모델 BigScience OpenRAIL-M, 코드 MIT. 출력물은 라이선스 III-6 "Licensor claims no rights in the Output"
+    commercial_use: true
+    attribution: 표시 의무 없음. 단 Attachment A (e)에 따라 기계 생성 사실을 밝혀야 함 → 설명란에 'AI 음성' 표기
+    modification_allowed: true
+    ai_disclosure_required: true
+    use_restrictions: >-
+      OpenRAIL-M Attachment A 중 이 채널에 해당하는 것: (e) 기계 생성 사실을 밝히지 않고 배포 금지,
+      (g) 타인 사칭 금지, (l) 의료 조언·검사 결과 해석 용도 금지 →
+      영상이 개인 진단·치료 권고가 아닌 일반 교육 내용인지 G2·G4에서 확인
+    rights_note: 2026-11-05 AI가 라이선스 원문(huggingface.co/Supertone/supertonic-3/LICENSE)을 읽고 정리한 초안. 권리 담당이 G2에서 확인.
+    version: supertonic-3 (supertonic 1.3.1)
+    accuracy_status: PENDING_MEDICAL_REVIEW
+    accuracy_notes: 발음·띄어 읽기·속도가 자막과 같은 내용을 전달하는지 G3에서 들어 보고 확인 (M08).

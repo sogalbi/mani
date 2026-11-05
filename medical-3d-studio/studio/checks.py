@@ -212,6 +212,22 @@ def run(topic, today=None):
             out.append(Finding("INFO", "assets", "ACCURACY_PENDING", "모양·위치 정확도는 G3 프리뷰 검수에서 확인", w))
     if voice.get("status") in (None, "TODO"):
         out.append(Finding("INFO", "assets", "NO_VOICE", "내레이션 음성이 아직 없어요 (프리뷰는 무음 + 자막)", "script.yaml:voice"))
+    elif not voice.get("asset_id"):
+        out.append(Finding("BLOCK", "assets", "NO_VOICE_ASSET", "음성을 쓰는데 voice.asset_id 가 없어요 → 레지스트리에 권리와 함께 등록", "script.yaml:voice"))
+    if voice.get("status") == "ai_voice":
+        from . import narration  # local import: keeps the pre-check free of audio code
+        cfg = narration.settings(topic)
+        for ln in lines:
+            spoken = narration.spoken_text(ln, cfg)
+            if spoken != ln.get("narration"):
+                out.append(Finding("INFO", "script", "VOICE_PRONUNCIATION", f"음성은 자막과 다르게 읽어요: '{spoken}'", f"script.yaml:{ln['line_id']}"))
+        _, plan = narration.current(topic)
+        if not plan:
+            out.append(Finding("INFO", "script", "NARRATION_NOT_BUILT",
+                               f"이 대본·음성 설정의 내레이션 트랙이 이 컴퓨터에 없어요 → python -m studio narrate {topic.id}", "script.yaml:voice"))
+        else:
+            for lid, msg in narration.problems(plan):
+                out.append(Finding("WARN", "script", "NARRATION_TIMING", f"내레이션: {msg}", f"script.yaml:{lid}"))
 
     # ---------------------------------------------------------------- publishing
     pub = topic.publishing
@@ -235,6 +251,13 @@ def run(topic, today=None):
             out.append(Finding("BLOCK", "publishing", "NO_EDU_DISCLAIMER", "설명란에 교육용·개인 진단 아님 안내가 없어요 (L09)", w))
         if topic.meta.get("sponsorship", "none") != "none" and not pub.get("paid_promotion"):
             out.append(Finding("BLOCK", "publishing", "SPONSOR_NOT_DISCLOSED", "협찬이 있는데 유료 광고 표시가 꺼져 있어요", w))
+        if voice.get("status") == "ai_voice":
+            if pub.get("ai_voice_used") is not True:
+                out.append(Finding("BLOCK", "publishing", "AI_VOICE_FLAG", "AI 음성을 쓰는데 ai_voice_used 가 true 가 아니에요", w))
+            va = st.assets.get(voice.get("asset_id")) or {}
+            if va.get("ai_disclosure_required") and "AI 음성" not in str(pub.get("description", "")):
+                out.append(Finding("BLOCK", "publishing", "AI_VOICE_NOT_DISCLOSED",
+                                   f"설명란에 'AI 음성' 표기가 없어요 (음성 모델 라이선스 조건: {voice.get('asset_id')})", w))
 
     # ---------------------------------------------------------------- policy references
     refs = st.policy_refs.get("references", []) or []

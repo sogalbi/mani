@@ -56,13 +56,16 @@ def file_sha256(path):
 
 
 def tree_hash(folder, pattern="*.py"):
-    """Hash of every matching file below folder (path + content)."""
+    """Hash of every matching file below folder (path + content).
+
+    Paths use "/" and line endings are read as LF, so the same code gives the same
+    hash on Windows (backslash paths, git autocrlf checkouts) and Linux/macOS."""
     h = hashlib.sha256()
-    for p in sorted(Path(folder).rglob(pattern)):
+    for p in sorted(Path(folder).rglob(pattern), key=lambda p: p.relative_to(folder).parts):
         if "__pycache__" in p.parts:
             continue
-        h.update(str(p.relative_to(folder)).encode())
-        h.update(p.read_bytes())
+        h.update(p.relative_to(folder).as_posix().encode())
+        h.update(p.read_bytes().replace(b"\r\n", b"\n"))
     return h.hexdigest()[:12]
 
 

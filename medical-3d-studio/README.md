@@ -13,6 +13,7 @@
 | 주제 패키지 `T0001` (범위·주장 8개·대본 43초·장면 7개) | 초안 완료 |
 | 3D 장면 (혈관 단면·플라크·풍선·스텐트·가이드와이어·혈구) | 코드로 자동 조립 완료 |
 | 540×960 프리뷰 렌더 + 자막 | 완료: 영상 파일은 공개 저장소에 올리지 않고, 해시는 `renders/preview/T0001_v001.manifest.json`에 기록 |
+| AI 내레이션 | 완료(v002): Supertonic 3 목소리 F1. 화면은 v001 그대로, 소리만 추가. 해시는 `T0001_v002.manifest.json` |
 | AI 사전 검증 | **보류**: 출처 13개·정책 14개를 원문으로 확인하지 못함 (작업 환경 네트워크 차단) |
 | 의료 전문가 검수 (G1, G3) | 검수자 미정 |
 | 게시 | 불가 (위 단계 미완료) |
@@ -26,6 +27,7 @@ cd medical-3d-studio
 pip install -r requirements.txt
 python -m studio status T0001        # 게이트 G0~G5 상태와 다음 할 일
 python -m studio check T0001         # AI 사전 검증 (BLOCK / WARN / INFO)
+python -m studio narrate T0001       # AI 내레이션 트랙 (pip install supertonic 필요)
 python -m pytest -q                  # 규칙 테스트
 ```
 
@@ -39,6 +41,10 @@ python -m studio render T0001        # 프리뷰 540×960 (CPU로 약 1시간 �
 ```
 
 같은 장면이면 프레임을 다시 렌더하지 않고 자막만 새로 입혀요(몇 초).
+
+이 컴퓨터에 프레임이 없을 때 소리만 바꾸려면 `render T0001 --reuse-video`: 장면(shots.json)과 자막이 이전 렌더와 같으면
+그 화면을 다시 인코딩하지 않고 그대로 쓰고 소리만 바꿔요. 매니페스트에는 화면을 만든 당시의 스펙·코드 해시와
+`video_stream_from`이 남아요.
 
 ## 제작 흐름
 
@@ -62,7 +68,8 @@ Analytics & Correction (studio correction) ─▶ G5 게시 후 감시: 중대 �
 |---|---|
 | `status [주제]` | G0~G5 상태, 무효가 된 이유, 다음 할 일 |
 | `check 주제 [--all]` | 근거 확인 여부, 근거 없는 대본 줄, 과장·단정·치료 유인 표현, "플라크 제거" 같은 오해 표현, 수행 세부값(기압·mm), 자막 길이·읽기 속도, 대본↔장면↔자막 일치, 자산 권리, 게시 문구, 정책 근거 재확인 |
-| `render 주제 [--final]` | 장면 조립 → Cycles 렌더 → H.264 MP4(자막 있음/없음) + ASS/SRT + 매니페스트(해시) |
+| `narrate 주제 [--samples]` | 대본 줄마다 AI 음성을 만들어 그 줄의 자막 시간 안에 맞춘 43초 트랙(-16 LUFS). 칸보다 긴 줄만 `max_speed`까지 빨리 읽고, 넘치면 `check`가 경고. `--samples`는 목소리 10개 비교용 |
+| `render 주제 [--final] [--reuse-video]` | 장면 조립 → Cycles 렌더 → H.264 MP4(자막 있음/없음) + ASS/SRT + 소리(내레이션 또는 무음) + 매니페스트(해시) |
 | `packet 주제 [--gate G1] [--embed]` | 전문가가 폰으로 보는 검수 페이지. 체크리스트를 누르면 운영자에게 보낼 판정 기록이 만들어져요. `--embed`는 영상을 넣은 파일 하나 |
 | `approve 주제 게이트 --reviewer ID --decision PASS --checked all` | 승인 기록. 역할·전문과목·체크리스트·자동 점검 BLOCK·앞 단계 통과를 모두 확인 |
 | `publish-check 주제` | 게시 가능/보류 판정, 설명란 생성(출처 목록 포함) |
@@ -100,12 +107,16 @@ schemas/       데이터 스키마 (topics, sources, claims, assets, shots, appr
 2. **정책 원문 확인**: `research/policy_refs.yaml` 14개 (유튜브 고객센터, 국가법령정보센터, 한국저작권위원회 등). 게시 직전 30일 안에 다시.
 3. **검수자 등록**: `config/reviewers.yaml`에 순환기내과(심장내과) 등 전문의와 편집자·권리·정책 담당을 넣고 `active: true`.
 4. **게시 문구**: `publishing/T0001_coronary_stent.yaml`의 정정 연락처, 검수 표기, 합성 콘텐츠 공개 여부(YES/NO).
-5. **내레이션 음성**: 지금 프리뷰는 무음 + 자막. 녹음하거나 상업 이용 가능한 AI 음성을 쓰면 `assets/registry.yaml`에 권리와 함께 등록.
+5. **내레이션 음성**: AI 음성(Supertonic 3)으로 v002를 만들었어요. 권리 담당이 `assets/registry.yaml`의 `voice_supertonic3`(OpenRAIL-M 조건)를 G2에서 확인하고,
+   전문가가 G3에서 발음·속도를 들어 보세요. 빠르게 읽는 줄(L01 x1.21, L08 x1.30)은 `check`에 WARN으로 나와요. 목소리를 바꾸려면 `narrate --samples`로 들어 보고 `script.yaml`의 `voice.voice_name`을 바꾼 뒤 `narrate` → `render`.
 6. 설계 문서 12장의 결정 사항: 전문가 계약 범위·보수·책임, 의료광고/협찬 수용 여부와 법률 자문, 렌더 비용과 월간 제작량, 정책 점검 주기.
 
 ## 알아 둘 점
 
 - 저장소가 **공개**라서 검수 전 영상(`renders/preview/*.mp4`)과 검수 패킷은 커밋하지 않아요. 영상의 SHA-256은 매니페스트에 남아 승인 기록과 연결됩니다.
+- 내레이션 음성 모델(Supertonic 3, OpenRAIL-M)은 상업 이용이 되지만 조건이 있어요: AI가 만든 음성임을 밝혀야 하고(설명란 'AI 음성' 표기, 빠지면 `check`가 BLOCK),
+  의료 조언 용도로는 쓸 수 없어요(개인 진단·치료 권고가 아닌 일반 교육인지 G2·G4에서 확인). 음성은 영상과 같이 공개 저장소에 올리지 않아요(`build/narration/`, `renders/*/*_narration.wav`).
+- 해시는 운영체제와 상관없이 같아요: 코드 해시는 `/` 경로와 LF 줄바꿈으로 계산하고, 자막 파일은 LF로 써요(Windows의 git autocrlf 체크아웃에서도 클라우드와 같은 값).
 - 승인 기록은 YAML에 남는 내부 기록이에요(전자서명이 아님). 검수자가 직접 커밋하거나 메시지로 받은 판정을 보관하세요.
 - 의료 전문가 검수는 의료광고 심의 면제나 법적 안전을 보장하지 않아요. 협찬·특정 병원 언급·환자 자료가 생기면 G4는 법률 전문가만 승인할 수 있어요.
 - 렌더는 CPU 기준 프레임당 약 4~6초(540×960, 16샘플). 최종 1080×1920은 약 4배 걸려요.

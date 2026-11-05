@@ -3,7 +3,9 @@
   status [TOPIC]                 게이트 G0~G5 상태 (주제 생략 시 전체)
   check TOPIC                    AI 사전 검증 (근거·대본·자막·장면·자산·게시 문구·정책)
   validate                       모든 데이터 파일 스키마 검사
-  render TOPIC [--final]         3D 장면 조립 + 렌더 + 자막 + 매니페스트 (최종본은 G0~G3 PASS 후)
+  narrate TOPIC [--samples]      AI 내레이션 트랙 (대본 줄마다 자막 시간에 맞춤) / 목소리 10개 샘플
+  render TOPIC [--final] [--reuse-video]
+                                 3D 장면 조립 + 렌더 + 자막 + 소리 + 매니페스트 (최종본은 G0~G3 PASS 후)
   packet TOPIC [--gate G1]       전문가 검수용 HTML 패킷 (폰에서 열람)
   approve TOPIC GATE ...         승인 기록 (PASS/REVISE/BLOCK/UNKNOWN)
   publish-check TOPIC            Publishing QA: 게시 가능/보류 판정 + 설명란 생성
@@ -15,7 +17,7 @@
 import argparse
 import sys
 
-from . import checks, gates, packet, render
+from . import checks, gates, narration, packet, render
 from .data import Studio, dump_yaml, load_yaml, now_iso, today
 
 ICON = {"PASS": "✅", "REVISE": "✏️", "BLOCK": "⛔", "UNKNOWN": "❔", "PENDING": "⏳", "STALE": "♻️", "WAITING": "⏸️",
@@ -66,8 +68,25 @@ def cmd_render(st, a):
         if bad:
             print(f"최종 렌더 불가: {', '.join(bad)} 가 아직 PASS가 아니에요 (프리뷰 승인 후 1080×1920 최종 렌더)")
             return 1
-    m = render.render(t, quality)
+    m = render.render(t, quality, reuse_video=a.reuse_video)
     print(f"매니페스트: renders/{quality}/{t.id}_v{m['version']:03d}.manifest.json")
+    return 0
+
+
+def cmd_narrate(st, a):
+    t = st.topic(a.topic)
+    if a.samples:
+        out = narration.samples(t)
+        print(f"목소리 샘플 {len(narration.VOICES)}개: {out.relative_to(st.root)}  → 마음에 드는 목소리를 script.yaml voice.voice_name 에")
+        return 0
+    wav, plan = narration.build(t)
+    print(f"\n내레이션: {wav.relative_to(st.root)}  ({plan['engine']}, 목소리 {plan['voice']['voice_name']})")
+    for ln in plan["lines"]:
+        print(f"  {ln['line_id']} {ln['start']:5.2f}–{ln['end']:5.2f}초 (자막 {ln['window'][0]:g}–{ln['window'][1]:g}초)  x{ln['speed']:.2f}")
+    issues = narration.problems(plan)
+    for lid, msg in issues:
+        print(f"  ⚠️ {lid}: {msg}")
+    print(f"다음: python -m studio render {t.id}   (이 컴퓨터에 3D 프레임이 없으면 --reuse-video 로 이전 화면 + 새 소리)")
     return 0
 
 
@@ -220,7 +239,11 @@ def main(argv=None):
     p = sub.add_parser("status"); p.add_argument("topic", nargs="?"); p.set_defaults(fn=cmd_status)
     p = sub.add_parser("check"); p.add_argument("topic"); p.add_argument("--all", action="store_true"); p.add_argument("--strict", action="store_true"); p.set_defaults(fn=cmd_check)
     p = sub.add_parser("validate"); p.set_defaults(fn=cmd_validate)
-    p = sub.add_parser("render"); p.add_argument("topic"); p.add_argument("--final", action="store_true"); p.set_defaults(fn=cmd_render)
+    p = sub.add_parser("narrate"); p.add_argument("topic")
+    p.add_argument("--samples", action="store_true", help="목소리 10개로 첫 줄을 읽은 비교용 파일"); p.set_defaults(fn=cmd_narrate)
+    p = sub.add_parser("render"); p.add_argument("topic"); p.add_argument("--final", action="store_true")
+    p.add_argument("--reuse-video", action="store_true",
+                   help="프레임이 없을 때, 장면·자막이 같은 이전 렌더의 화면을 그대로 쓰고 소리만 바꿈"); p.set_defaults(fn=cmd_render)
     p = sub.add_parser("packet"); p.add_argument("topic"); p.add_argument("--gate", choices=gates.ORDER)
     p.add_argument("--embed", action="store_true", help="영상을 HTML 안에 넣어 파일 하나로 보낼 수 있게"); p.set_defaults(fn=cmd_packet)
     p = sub.add_parser("approve"); p.add_argument("topic"); p.add_argument("gate", choices=gates.ORDER)

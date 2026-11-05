@@ -13,6 +13,7 @@ description: |
 
   오류 제보·정정 요청: {correction_contact}
   이 영상의 3D 장면은 코드로 만든 컴퓨터 그래픽이며, 대본 초안 작성에 AI를 활용했습니다.
+  내레이션은 AI 음성(Supertonic 3)으로 만들었습니다.
 tags: [관상동맥, 스텐트, 심장, 의학교육, 3D애니메이션]
 category: Education
 made_for_kids: false
@@ -20,7 +21,7 @@ made_for_kids: false
 # 정책 원문 재확인 전까지 결정하지 않는다 (UNKNOWN 은 통과 불가).
 synthetic_content_disclosure: UNDECIDED   # YES | NO | UNDECIDED
 synthetic_content_reason: null
-ai_voice_used: false
+ai_voice_used: true                       # script.yaml voice.status: ai_voice
 paid_promotion: false
 correction_contact: null                  # 예: 이메일 또는 구글 폼 주소 (필수)
 reviewer_display: null                    # 예: "순환기내과 전문의 ○○○ (2026-11-xx, 대본·영상 검수)" — 실제 검수 범위만

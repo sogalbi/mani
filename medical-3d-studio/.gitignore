@@ -10,4 +10,5 @@ __pycache__/
 # 저장소가 공개라서, 전문가 검수 전 초안 영상·검수 패킷은 커밋하지 않는다.
 # 영상의 SHA-256 은 renders/preview/*.manifest.json 에 남아 승인 기록과 연결된다.
 renders/preview/*.mp4
+renders/*/*_narration.wav
 reviews/*/packets/
