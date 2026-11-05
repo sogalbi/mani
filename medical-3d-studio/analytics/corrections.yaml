@@ -1,0 +1,3 @@
+# 정정 티켓 (G5 게시 후 감시). severity: critical | major | minor
+# critical 이 열려 있으면 해당 영상은 HOLD(임시 비공개 검토) 상태가 되고 G1/G3 재검수가 필요하다.
+tickets: []

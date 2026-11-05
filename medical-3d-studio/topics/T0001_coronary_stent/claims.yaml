@@ -1,0 +1,253 @@
+# 주장(claim) 표 — 대본·자막·3D 장면이 말하는 모든 의학적 내용은 여기 있는 주장에 묶여야 한다.
+# confidence: AI 사전 검증 의견(high/moderate/low). 사람 검수 결과는 reviewer_status 와 승인 기록(reviews/)에 남는다.
+# reviewer_status: PENDING / PASS / REVISE / BLOCK / UNKNOWN  (UNKNOWN 은 PASS 가 아니다)
+# evidence.quote 가 비어 있으면 아직 원문 문장을 확인하지 못한 것이다.
+topic_id: T0001
+claims_version: v1
+claims:
+- claim_id: C01
+  statement: 관상동맥은 심장 근육에 혈액(산소)을 공급하는 혈관이다.
+  source_ids:
+  - S001
+  - S006
+  - S010
+  confidence: moderate
+  limitations: 산소 공급 외 기능은 다루지 않음.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S001
+    locator: 'Top section ''What Is Coronary Heart Disease?''. UNCONFIRMED search wording: CHD occurs
+      when the arteries of the heart cannot deliver enough oxygen-rich blood to the heart muscle.'
+    quote: null
+    strength: full
+  - source_id: S006
+    locator: 'Opening description. UNCONFIRMED search wording: angioplasty opens narrowed or blocked blood
+      vessels that supply blood to the heart; ''These blood vessels are called the coronary arteries.'''
+    quote: null
+    strength: full
+  - source_id: S010
+    locator: '협심증 정의 부분. UNCONFIRMED search wording: ''관상 동맥의 폐쇄나 협착에 의해 심장 근육에 충분한 혈액 공급이 이루어지지 않아 생기며''
+      (may be from cntnts_sn=5438 instead).'
+    quote: null
+    strength: partial
+  ai_precheck_note: All three sources (seen via search only) agree that the coronary arteries supply blood
+    (oxygen) to the heart muscle. KDCA says this only by implication, in its definition of angina. The
+    draft wording is accurate and simple. Exact quotes are still needed from the live pages.
+- claim_id: C02
+  statement: 관상동맥 벽에 플라크가 쌓이면 혈관 안쪽 통로(내강)가 좁아져 혈액이 흐를 공간이 줄어든다.
+  source_ids:
+  - S001
+  - S010
+  confidence: moderate
+  limitations: 협착 정도(%) 기준은 말하지 않는다(출처마다 다름). 플라크 파열·혈전 기전은 생략.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S001
+    locator: '''What Is Coronary Heart Disease?'' and the ''Causes'' subpage. UNCONFIRMED search wording:
+      narrowing from the buildup of fatty deposits called plaque; plaque buildup reduces blood flow and
+      makes blood clots more likely.'
+    quote: null
+    strength: full
+  - source_id: S010
+    locator: '원인 부분. UNCONFIRMED search summary: atherosclerosis (cholesterol buildup inside the coronary
+      artery) narrows the lumen and reduces blood flow to the heart.'
+    quote: null
+    strength: full
+  ai_precheck_note: 'Supported. Simplification: plaque builds up within the artery wall (intima) and narrows
+    the lumen. The draft''s ''벽에 플라크가 쌓이면 내강이 좁아져'' is fine. The script leaves out plaque rupture and
+    clotting (the usual mechanism of heart attack), which is acceptable for a principle video. The KDCA
+    pages differ on the degree of narrowing at which flow falls (50% vs 80%), so the script should not
+    give a number.'
+- claim_id: C03
+  statement: 스텐트 시술은 경피적 관상동맥 중재술(PCI)의 한 방법으로, 주로 손목이나 사타구니의 동맥으로 가느다란 관(카테터)을 넣고 의료진이 X선 영상을 보며 진행한다.
+  source_ids:
+  - S006
+  - S002
+  - S011
+  confidence: moderate
+  limitations: PCI는 풍선만 쓰는 시술도 포함하는 더 넓은 개념. 팔 등 다른 진입 부위도 있어 '주로'로 표현. 조영제 설명 생략.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S006
+    locator: '''How the Procedure is Performed''. UNCONFIRMED search wording: a catheter is threaded into
+      an artery, usually through the groin, arm, or wrist, and guided with live x-ray pictures; contrast
+      dye shows blockages.'
+    quote: null
+    strength: full
+  - source_id: S002
+    locator: 'PCI / cardiac catheterization section. UNCONFIRMED search wording: catheter put into a blood
+      vessel in your arm, groin or upper thigh, or neck; live X-rays guide the catheter; contrast dye
+      highlights the blockage.'
+    quote: null
+    strength: partial
+  - source_id: S011
+    locator: 'Vascular access recommendations (search summary only, full text not seen). UNCONFIRMED wording:
+      in ACS patients undergoing PCI, ''a radial approach is indicated in preference to a femoral approach'';
+      in SIHD, radial approach recommended to reduce access-site bleeding and vascular complications.'
+    quote: null
+    strength: partial
+  ai_precheck_note: 'Wrist access: MedlinePlus (per search) names groin, arm or wrist. The NHLBI summary
+    names arm, groin/upper thigh and neck, and does not say ''wrist''. The 2021 guideline prefers radial
+    (wrist) access, especially in ACS, with femoral (groin) access when radial is not possible. ''손목이나
+    사타구니'' is therefore supported as the usual sites, but it is not exhaustive (arm and other sites exist),
+    so ''주로'' is safer. X-ray guidance is supported; sources add contrast dye (angiography). Wording caveat:
+    PCI is broader than stenting (it includes balloon-only angioplasty), so ''스텐트 시술 = PCI'' is a simplification
+    for a doctor to accept or adjust.'
+- claim_id: C04
+  statement: 좁아진 부위에서 풍선을 부풀리면 플라크가 혈관 벽 쪽으로 눌리며 통로가 넓어진다.
+  source_ids:
+  - S008
+  - S007
+  confidence: moderate
+  limitations: 환자 교육용 단순화. 실제로는 혈관 벽이 늘어나고 플라크가 갈라지기도 한다. 3D에서 플라크가 사라지거나 빨려 나가게 표현하지 않는다.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S008
+    locator: 'Procedure description. UNCONFIRMED search excerpt: ''When the balloon is inflated, it pushes
+      the plaque flat against the artery wall.'''
+    quote: null
+    strength: full
+  - source_id: S007
+    locator: 'Summary paragraph (found with a targeted phrase search, not opened). UNCONFIRMED search
+      wording: balloon inflated to push the plaque flat against the artery wall, which widens the artery
+      and improves blood flow.'
+    quote: null
+    strength: full
+  ai_precheck_note: 'Supported by AHA and MedlinePlus patient wording (''pushes the plaque flat against
+    the artery wall''); an NHLBI summary says the balloon can ''push the plaque out of the way and expand
+    the vessel''. Mechanistic caveat for the medical reviewer: balloon dilation also stretches the artery
+    wall and can crack or split the plaque. ''Pressed against the wall'' is the standard patient-education
+    simplification, so the 3D animation should not show the plaque vanishing or being sucked away.'
+- claim_id: C05
+  statement: 스텐트는 작은 그물망 관으로, 풍선이 부풀 때 함께 펼쳐져 혈관 안쪽 벽을 받친다.
+  source_ids:
+  - S003
+  - S004
+  - S009
+  confidence: moderate
+  limitations: 대부분 약물 방출 스텐트라는 점은 생략. 그물 무늬는 특정 제품이 아닌 일반화 모델.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S003
+    locator: 'Opening definition. UNCONFIRMED search wording: a stent is a small mesh tube typically used
+      to hold open passages in the body, such as weak or narrowed arteries; coronary stents are typically
+      metal mesh.'
+    quote: null
+    strength: full
+  - source_id: S004
+    locator: 'Coronary stent placement steps. UNCONFIRMED search wording: the stent is carried on the
+      empty balloon; inflating the balloon opens the stent to hold up the artery walls.'
+    quote: null
+    strength: full
+  - source_id: S009
+    locator: 'Opening definition and placement. UNCONFIRMED search wording: ''A stent is a tiny wire mesh
+      tube that keeps an artery propped open''; balloon inflated, stent expands and locks in place.'
+    quote: null
+    strength: full
+  ai_precheck_note: 'Supported by NHLBI and AHA (search summaries). ''작은 그물망 관'', ''풍선과 함께 펼쳐짐'' and ''혈관
+    벽을 지지'' all match. Optional detail: most coronary stents today are drug-eluting (they release medicine
+    that lowers re-narrowing); this is not needed in a 40-second principle video.'
+- claim_id: C06
+  statement: 풍선은 오므려 카테터·가이드와이어와 함께 빼내고, 스텐트는 혈관 안에 남는다.
+  source_ids:
+  - S004
+  - S009
+  - S006
+  confidence: moderate
+  limitations: 생분해성 스텐트도 있어 '영구'라고 하지 않고 '남는다'로 표현. 시술 후 약물 복용 설명은 생략.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S004
+    locator: 'Coronary stent placement steps. UNCONFIRMED search wording: the balloon is then emptied
+      and removed, the catheter comes out with it, and the stent stays to keep the artery open.'
+    quote: null
+    strength: full
+  - source_id: S009
+    locator: 'Placement and permanence. UNCONFIRMED search wording: the balloon is removed while the stent
+      stays; most stents are permanent; biodegradable stents dissolve over time.'
+    quote: null
+    strength: full
+  - source_id: S006
+    locator: 'Stent placement description. UNCONFIRMED search wording: the stent expands when the balloon
+      is inflated and stays in place to keep the artery open.'
+    quote: null
+    strength: full
+  ai_precheck_note: 'Supported. Caveats: (1) AHA notes that biodegradable (bioresorbable) stents exist
+    and dissolve, so the script should say the stent ''남는다'' (stays), not that every stent is permanent.
+    The draft is fine. (2) The guidewire is also withdrawn. (3) Not in this claim, but the reviewer may
+    want a line elsewhere: after a stent, antiplatelet medicines are usually needed (NHLBI/AHA summaries
+    mention this).'
+- claim_id: C07
+  statement: 스텐트는 플라크를 없애지 않는다. 혈관 벽 쪽으로 밀려난 플라크 위에서 좁아졌던 통로를 넓힌 채로 받쳐 주는 원리다.
+  source_ids:
+  - S008
+  - S006
+  confidence: low
+  limitations: 출처가 직접 '제거하지 않는다'고 쓰지는 않음(눌림·지지 설명에서 추론). 죽종절제술 등 플라크를 깎는 다른 도구가 있어 주장은 스텐트에만 한정.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S008
+    locator: 'Procedure description. UNCONFIRMED search excerpt: ''it pushes the plaque flat against the
+      artery wall'' (implies plaque is displaced, not removed).'
+    quote: null
+    strength: partial
+  - source_id: S006
+    locator: 'Outlook / after-procedure section. UNCONFIRMED search wording: angioplasty does not cure
+      the underlying atherosclerosis or cause of the blockage; lifestyle changes and medicines remain
+      important. A related MedlinePlus discharge page (https://medlineplus.gov/ency/patientinstructions/000091.htm)
+      reportedly says ''Angioplasty does not cure the cause of the blockage in your arteries.'''
+    quote: null
+    strength: partial
+  ai_precheck_note: 'No source found (via search) that says in so many words that a stent does not remove
+    plaque. The claim is inferred from sources that describe the plaque being pushed flat against the
+    wall and the stent propping the artery open, and from MedlinePlus saying the underlying disease is
+    not cured. The inference is sound, but the doctor should confirm it. Scope caveat: other catheter
+    tools (e.g., atherectomy) can cut or remove plaque, so the claim should stay limited to the stent
+    and must not say that ''PCI never removes plaque''. The animation must not show the plaque disappearing.'
+- claim_id: C08
+  statement: 생활습관 개선과 약물 치료가 기본이며, 스텐트나 우회수술은 환자 상태에 따라 의료진과 함께 결정한다. 좁아진 혈관이 모두 스텐트 치료 대상은 아니다.
+  source_ids:
+  - S005
+  - S010
+  - S012
+  - S013
+  confidence: moderate
+  limitations: 적응증·약물 종류·심근경색 응급 상황의 판단은 다루지 않는다. 스텐트를 약물의 대안처럼 표현하지 않는다.
+  reviewer_status: PENDING
+  evidence:
+  - source_id: S005
+    locator: 'Whole page, esp. ''when a stent may not be recommended'' part (existence of this section
+      UNCONFIRMED; search summaries disagreed). UNCONFIRMED search wording: for mild narrowing, doctors
+      often start with monitoring, medicines and lifestyle changes.'
+    quote: null
+    strength: partial
+  - source_id: S010
+    locator: '치료 부분. UNCONFIRMED search excerpt: ''협심증 환자는 증상 조절과 심혈관 사건 예방을 위한 약물 치료가 필요하며, 필요에 따라 스텐트
+      삽입술이나 관상 동맥 우회술과 같은 침습적 치료를 시행할 수 있습니다.'''
+    quote: null
+    strength: full
+  - source_id: S012
+    locator: 'Revascularization section (search summaries / secondary reproductions only). UNCONFIRMED
+      wording: in CCD with lifestyle-limiting angina despite GDMT and stenoses amenable to revascularization,
+      revascularization is recommended to improve symptoms (Class 1); choice of revascularization guided
+      by Heart Team deliberations and shared decision-making.'
+    quote: null
+    strength: full
+  - source_id: S013
+    locator: 'Revascularization recommendations (search summaries only). UNCONFIRMED wording: revascularization
+      (PCI or CABG) for persistent angina despite guideline-directed medical therapy; mainly for symptom
+      relief, with prognostic benefit in some subgroups; decisions consider anatomy, comorbidities, life
+      expectancy.'
+    quote: null
+    strength: full
+  ai_precheck_note: 'The core message is supported: treatment is individualized, and not every narrowing
+    gets a stent. The guidelines put medicines and lifestyle at the base and add revascularization (PCI
+    or bypass) in selected cases, mainly persistent angina despite medicines or high-risk anatomy, decided
+    with a Heart Team and shared decision-making. The 2021 revascularization guideline (S011) also stresses
+    patient-centred, shared decisions (search summary). Issue with the draft: listing ''생활습관·약물·스텐트·우회수술''
+    as parallel options suggests a stent can replace medicines and lifestyle. Per the guidelines and KDCA,
+    medicines and lifestyle are needed in any case, and stent or bypass are added when needed. Safety
+    caveat: in a heart attack (especially STEMI), urgent PCI is standard care, so the video must not suggest
+    that stents are optional in emergencies or discourage seeking care. Consider adding ''가슴 통증이 있으면 바로
+    의료진/119''. Optional extra evidence (not cited here): ISCHEMIA trial (NHLBI news, 2020) for stable
+    disease.'

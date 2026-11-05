@@ -1,0 +1,84 @@
+# 대본·자막 (Script Editor 출력). 모든 줄은 claims.yaml 의 주장 ID에 묶인다.
+# 자막(captions)은 화면에 나오는 글자, narration 은 음성 원고. 두 내용이 같아야 한다(검수 체크리스트 M08).
+# 시간 단위: 초. 줄 사이 빈틈·겹침이 없어야 한다(studio check 가 확인).
+topic_id: T0001
+script_version: v1
+language: ko
+duration_sec: 43
+voice:
+  status: TODO            # TODO | recorded | ai_voice
+  asset_id: null          # 음성 파일을 쓰면 assets/registry.yaml 에 권리 정보와 함께 등록
+  note: 프리뷰는 무음 + 자막. 내레이션 녹음(사람 또는 상업 이용 가능한 AI 음성) 전 G2에서 권리 확인.
+lines:
+  - line_id: L01
+    shot_id: S01
+    start: 0.0
+    end: 3.0
+    type: hook
+    claim_ids: [C01, C02]
+    narration: 심장 근육에 피를 보내는 관상동맥이 좁아지면?
+    captions:
+      - {start: 0.0, end: 3.0, text: "심장 근육에 피를 보내는\n관상동맥이 좁아지면?"}
+  - line_id: L02
+    shot_id: S02
+    start: 3.0
+    end: 9.0
+    claim_ids: [C02]
+    narration: 혈관 벽에 플라크가 쌓이면 혈액이 흐를 공간이 줄어듭니다.
+    captions:
+      - {start: 3.0, end: 6.0, text: "혈관 벽에 플라크가 쌓이면"}
+      - {start: 6.0, end: 9.0, text: "혈액이 흐를 공간이\n줄어듭니다"}
+  - line_id: L03
+    shot_id: S03
+    start: 9.0
+    end: 15.0
+    claim_ids: [C03]
+    narration: 의료진은 X선 영상을 보며, 주로 손목이나 사타구니 혈관으로 가는 관을 넣어 시술합니다.
+    captions:
+      - {start: 9.0, end: 12.0, text: "의료진은 X선 영상을 보며"}
+      - {start: 12.0, end: 15.0, text: "주로 손목이나 사타구니 혈관으로\n가는 관을 넣어 시술합니다"}
+  - line_id: L04
+    shot_id: S04
+    start: 15.0
+    end: 20.0
+    claim_ids: [C04]
+    narration: 좁아진 곳에서 풍선을 부풀리면 플라크가 혈관 벽 쪽으로 눌립니다.
+    captions:
+      - {start: 15.0, end: 17.5, text: "좁아진 곳에서\n풍선을 부풀리면"}
+      - {start: 17.5, end: 20.0, text: "플라크가 혈관 벽 쪽으로\n눌립니다"}
+  - line_id: L05
+    shot_id: S04
+    start: 20.0
+    end: 25.0
+    claim_ids: [C05]
+    narration: 함께 펼쳐진 그물망 관, 스텐트가 혈관 안쪽을 받쳐 줍니다.
+    captions:
+      - {start: 20.0, end: 22.5, text: "함께 펼쳐진 그물망 관,"}
+      - {start: 22.5, end: 25.0, text: "스텐트가 혈관 안쪽을\n받쳐 줍니다"}
+  - line_id: L06
+    shot_id: S05
+    start: 25.0
+    end: 32.0
+    claim_ids: [C06]
+    narration: 풍선은 오므라들어 빠져나오고, 스텐트는 혈관 안에 남습니다.
+    captions:
+      - {start: 25.0, end: 28.5, text: "풍선은 오므라들어\n빠져나오고"}
+      - {start: 28.5, end: 32.0, text: "스텐트는\n혈관 안에 남습니다"}
+  - line_id: L07
+    shot_id: S06
+    start: 32.0
+    end: 37.0
+    claim_ids: [C07]
+    narration: 플라크를 없애는 것이 아니라, 좁아진 통로를 넓혀 받쳐 주는 원리입니다.
+    captions:
+      - {start: 32.0, end: 34.5, text: "플라크를 없애는 것이 아니라"}
+      - {start: 34.5, end: 37.0, text: "좁아진 통로를 넓혀\n받쳐 주는 원리입니다"}
+  - line_id: L08
+    shot_id: S07
+    start: 37.0
+    end: 43.0
+    claim_ids: [C08]
+    narration: 좁아진 혈관이 모두 스텐트 대상은 아닙니다. 치료는 환자 상태에 따라 의료진과 함께 결정합니다.
+    captions:
+      - {start: 37.0, end: 39.8, text: "좁아진 혈관이 모두\n스텐트 대상은 아닙니다"}
+      - {start: 39.8, end: 43.0, text: "치료는 환자 상태에 따라\n의료진과 함께 결정합니다"}

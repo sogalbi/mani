@@ -1,0 +1,13 @@
+# 다시 만들 수 있는 큰 파일은 커밋하지 않는다 (해시는 매니페스트에 남는다)
+build/
+blender/scenes/*.blend
+blender/scenes/*.blend1
+renders/final/*.mp4
+renders/preview/*_clean.mp4
+publishing/out/
+__pycache__/
+.pytest_cache/
+# 저장소가 공개라서, 전문가 검수 전 초안 영상·검수 패킷은 커밋하지 않는다.
+# 영상의 SHA-256 은 renders/preview/*.manifest.json 에 남아 승인 기록과 연결된다.
+renders/preview/*.mp4
+reviews/*/packets/

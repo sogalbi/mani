@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "corrections",
+  "type": "object",
+  "required": [
+    "tickets"
+  ],
+  "properties": {
+    "tickets": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "required": [
+          "ticket_id",
+          "topic_id",
+          "severity",
+          "report",
+          "status",
+          "received_at"
+        ],
+        "properties": {
+          "severity": {
+            "enum": [
+              "critical",
+              "major",
+              "minor"
+            ]
+          },
+          "status": {
+            "enum": [
+              "open",
+              "investigating",
+              "resolved"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

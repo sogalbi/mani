@@ -1,0 +1,32 @@
+# 재질·색 기준 (assets/materials 문서와 같은 값). 시인성: 어두운 배경 + 밝은 구조물
+colors:
+  background: "#0e1626"
+  vessel_inner: "#d9645f"
+  vessel_inner_2: "#c2484a"
+  vessel_outer: "#b04a45"
+  cut_intima: "#f4b3a8"
+  cut_media: "#c9504c"
+  cut_adventitia: "#e6a58e"
+  plaque: "#c98d3a"          # 혈관 안쪽에서 보이는 플라크 표면 (어둡게)
+  plaque_2: "#a8702a"
+  plaque_cut: "#f8df92"      # 잘린 단면 (밝게: 좁아진 모양이 잘 보이도록)
+  plaque_cut_2: "#eec66a"
+  blood: "#b3141f"
+  stent: "#cfd6de"
+  balloon: "#79b8f2"
+  balloon_alpha: 0.32        # 반투명: 뒤쪽 플라크가 보이도록
+  shaft: "#2f6fd1"
+  wire: "#8e98a3"
+  label_text: "#ffffff"
+  label_plate: "#0b1220"
+
+captions:
+  font_file: assets/fonts/Pretendard-Bold.otf
+  font_name: Pretendard
+  size_ratio: 0.045        # 화면 높이 대비 글자 크기
+  outline: 3
+  max_chars_per_line: 18
+  max_lines: 2
+  center_y_ratio: 0.66     # 화면 위에서부터 66% 지점 (쇼츠 하단 UI 위)
+
+disclaimer_overlay: "교육용 3D 개념도 · 실제 크기·혈류와 다름"
