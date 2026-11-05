@@ -1,6 +1,6 @@
 // Local demo data (never run against production).
 //   npx supabase start && node scripts/seed-demo.mjs
-// Creates demo members (login with their e-mail; codes arrive in Mailpit http://127.0.0.1:54324),
+// Creates demo members (restore them on /login with their e-mail; codes arrive in Mailpit http://127.0.0.1:54324),
 // open giveaways of every kind, a request, a swap, and one finished giveaway.
 import { connect } from '../tests/helpers.mjs';
 
@@ -59,8 +59,10 @@ await db.rpc(latte, 'enter_giveaway', { p_post_id: done.id });
 await db.closeGiveaway(done.id);
 await db.rpc(latte, 'draw_giveaway', { p_post_id: done.id });
 const t1 = await db.tradeOf(done.id, latte);
-await db.rpc(latte, 'accept_trade', { p_trade_id: t1, p_risk_ack: true });
-await db.rpc(latte, 'submit_barcode', { p_trade_id: t1, p_barcode: '1234 5678 9012 3456', p_consent: true });
+await db.info(latte, t1, { handle: 'latte.han', barcode: '1234 5678 9012 3456' });
+await db.info(giver, t1, { handle: 'starlight_nanum' });
+await db.confirm(latte, t1);
+await db.confirm(giver, t1);
 await db.rpc(giver, 'reveal_barcode', { p_trade_id: t1 });
 await db.rpc(giver, 'declare_sent', { p_trade_id: t1 });
 await db.rpc(latte, 'confirm_receipt', { p_trade_id: t1 });

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { errorMessage } from '@/lib/api';
 import {
@@ -160,16 +160,16 @@ export function Check({ checked, onChange, children }: { checked: boolean; onCha
   );
 }
 
-/** Shown where an action needs a login. Returns to the current page afterwards. */
-export function LoginRequired({ message = '로그인하면 이용할 수 있어요.' }: { message?: string }) {
-  const pathname = usePathname() ?? '/';
-  const next = typeof window !== 'undefined' ? pathname + window.location.search : pathname;
+/** Shown where an action needs a nickname. No sign-up: opens the quick start sheet. */
+export function LoginRequired({ message = '닉네임만 정하면 바로 이용할 수 있어요.' }: { message?: string }) {
+  const { requireMember } = useApp();
   return (
     <div className="card butter stack" style={{ alignItems: 'flex-start' }}>
       <p>{message}</p>
-      <Link className="btn" href={`/login?next=${encodeURIComponent(next)}`}>
-        로그인 / 시작하기
-      </Link>
+      <button className="btn" onClick={() => void requireMember()}>
+        바로 시작하기
+      </button>
+      <span className="faint">가입 없이 이 기기에서 바로 써요.</span>
     </div>
   );
 }
@@ -178,9 +178,8 @@ export function LoginRequired({ message = '로그인하면 이용할 수 있어�
 export function MemberOnly({ children, message }: { children: React.ReactNode; message?: string }) {
   const { ready, session, me } = useApp();
   if (!ready) return <Loading />;
-  if (!session) return <LoginRequired message={message} />;
+  if (!session || (me && me.needs_profile)) return <LoginRequired message={message} />;
   if (!me) return <Loading />;
-  if (me.needs_profile) return <LoginRequired message="닉네임을 정하면 바로 시작할 수 있어요." />;
   return <>{children}</>;
 }
 

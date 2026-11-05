@@ -5,6 +5,7 @@ import type { Session } from '@supabase/supabase-js';
 import { isConfigured, supabase } from '@/lib/supabase';
 import { rpc } from '@/lib/api';
 import type { Bootstrap, Me } from '@/lib/types';
+import QuickStart from './QuickStart';
 
 interface AppState {
   ready: boolean;
@@ -13,6 +14,8 @@ interface AppState {
   me: Me | null;
   boot: Bootstrap | null;
   refreshMe: () => Promise<Me | null>;
+  /** Opens the no-sign-up quick start if needed. Resolves true once the visitor has a nickname. */
+  requireMember: () => Promise<boolean>;
   signOut: () => Promise<void>;
   toast: (msg: string) => void;
 }
@@ -32,6 +35,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [boot, setBoot] = useState<Bootstrap | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [quickStart, setQuickStart] = useState<((ok: boolean) => void) | null>(null);
+  const meRef = useRef<Me | null>(null);
+  meRef.current = me;
 
   const refreshMe = useCallback(async () => {
     if (!isConfigured) return null;
@@ -81,6 +87,21 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     };
   }, [session, refreshMe]);
 
+  const requireMember = useCallback(async () => {
+    if (!isConfigured) return false;
+    if (meRef.current && !meRef.current.needs_profile) return true;
+    return new Promise<boolean>((resolve) => setQuickStart(() => resolve));
+  }, []);
+
+  const finishQuickStart = useCallback(
+    async (ok: boolean) => {
+      if (ok) await refreshMe();
+      quickStart?.(ok);
+      setQuickStart(null);
+    },
+    [quickStart, refreshMe],
+  );
+
   const signOut = useCallback(async () => {
     if (isConfigured) await supabase().auth.signOut();
     setMe(null);
@@ -94,13 +115,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ ready, configured: isConfigured, session, me, boot, refreshMe, signOut, toast }),
-    [ready, session, me, boot, refreshMe, signOut, toast],
+    () => ({ ready, configured: isConfigured, session, me, boot, refreshMe, requireMember, signOut, toast }),
+    [ready, session, me, boot, refreshMe, requireMember, signOut, toast],
   );
 
   return (
     <Ctx.Provider value={value}>
       {children}
+      {quickStart && (
+        <QuickStart hasSession={Boolean(session)} onDone={() => void finishQuickStart(true)} onCancel={() => void finishQuickStart(false)} />
+      )}
       {toastMsg && (
         <div className="toast" role="status" aria-live="polite">
           {toastMsg}

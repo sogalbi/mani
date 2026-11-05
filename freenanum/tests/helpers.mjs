@@ -107,6 +107,26 @@ export class Db {
     return (await this.sql('select private.process_deadlines() as r'))[0].r;
   }
 
+  // Step 1: enter Threads ID (+ barcode for receivers).
+  async info(userId, tradeId, { handle = nick('th'), barcode = null, consent = true } = {}) {
+    return this.rpc(userId, 'submit_trade_info', {
+      p_trade_id: tradeId, p_threads_handle: handle, p_barcode: barcode, p_consent: consent,
+    });
+  }
+
+  // Step 2: confirm the counterpart's Threads ID.
+  async confirm(userId, tradeId) {
+    return this.rpc(userId, 'confirm_peer', { p_trade_id: tradeId });
+  }
+
+  // Giveaway trade up to "ready" (barcode visible to the giver).
+  async ready(giver, receiver, tradeId, barcode = '1234567890') {
+    await this.info(receiver, tradeId, { barcode });
+    await this.info(giver, tradeId);
+    await this.confirm(receiver, tradeId);
+    await this.confirm(giver, tradeId);
+  }
+
   async trade(userId, tradeId) {
     return this.rpc(userId, 'get_trade', { p_trade_id: tradeId });
   }

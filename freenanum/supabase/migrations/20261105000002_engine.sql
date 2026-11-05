@@ -360,8 +360,8 @@ create function private.recompute_trade(p_trade uuid, p_actor uuid) returns text
 language plpgsql set search_path = '' as $$
 declare
   t public.trades;
-  all_accepted boolean;
-  receivers_ready boolean;
+  all_info boolean;
+  all_confirmed boolean;
   senders_declared boolean;
   any_send_activity boolean;
   receivers_confirmed boolean;
@@ -374,17 +374,20 @@ begin
     return t.status;
   end if;
 
-  select bool_and(accepted_at is not null),
-         coalesce(bool_and(barcode_ready_at is not null) filter (where receives), true),
+  -- proposed: someone still has to enter Threads ID (+ barcode if receiving)
+  -- accepted: everyone entered info, waiting for everyone to confirm each other
+  -- ready:    everyone confirmed → senders may open the barcode
+  select bool_and(accepted_at is not null and threads_handle is not null and (not receives or barcode_ready_at is not null)),
+         bool_and(peer_confirmed_at is not null),
          coalesce(bool_and(sent_declared_at is not null) filter (where sends), true),
          coalesce(bool_or(barcode_opened_at is not null or sent_declared_at is not null) filter (where sends), false),
          coalesce(bool_and(receipt_confirmed_at is not null) filter (where receives), true)
-    into all_accepted, receivers_ready, senders_declared, any_send_activity, receivers_confirmed
+    into all_info, all_confirmed, senders_declared, any_send_activity, receivers_confirmed
     from public.trade_participants where trade_id = p_trade;
 
   new_status := case
-    when not all_accepted then 'proposed'
-    when not receivers_ready then 'accepted'
+    when not all_info then 'proposed'
+    when not all_confirmed then 'accepted'
     when senders_declared and receivers_confirmed then 'completed'
     when senders_declared then 'awaiting_receipt'
     when any_send_activity then 'transfer_in_progress'
@@ -409,8 +412,13 @@ begin
     if new_status = 'completed' then
       perform private.on_trade_completed(p_trade);
     end if;
+    if new_status = 'accepted' then
+      perform private.notify(tp.user_id, 'trade_confirm', '상대 스레드 아이디를 확인해 주세요',
+        '서로 확인하면 보내는 분에게 바코드가 열려요.', '/trades/' || p_trade)
+      from public.trade_participants tp where tp.trade_id = p_trade;
+    end if;
     if new_status = 'ready' then
-      perform private.notify(i.sender_id, 'trade_ready', '바코드가 준비됐어요',
+      perform private.notify(i.sender_id, 'trade_ready', '서로 확인 완료! 바코드가 열렸어요',
         '공식 앱에서 스티커를 선물한 뒤 "보냈어요"를 눌러 주세요.', '/trades/' || p_trade)
       from (select distinct sender_id from public.trade_items where trade_id = p_trade) i;
     end if;
@@ -515,7 +523,7 @@ returns uuid language sql set search_path = '' as $$
   returning id;
 $$;
 
--- Giveaway hand-off: giver → receiver. The giver accepted by publishing.
+-- Giveaway hand-off: giver → receiver. Both enter their Threads ID, then confirm each other.
 create function private.create_giveaway_trade(p_post uuid, p_receiver uuid, p_origin text, p_rank int)
 returns uuid language plpgsql set search_path = '' as $$
 declare
@@ -526,15 +534,18 @@ begin
   select * into p from public.posts where id = p_post;
   select * into ev from public.giveaway_events where post_id = p_post;
   tid := private.create_trade_shell('giveaway', p.campaign_id, p_post, p_origin, ev.claim_hours);
-  insert into public.trade_participants (trade_id, user_id, role, sends, receives, accepted_at)
-  values (tid, p.author_id, 'giver', true, false, now()),
-         (tid, p_receiver, 'receiver', false, true, null);
+  insert into public.trade_participants (trade_id, user_id, role, sends, receives)
+  values (tid, p.author_id, 'giver', true, false),
+         (tid, p_receiver, 'receiver', false, true);
   insert into public.trade_items (trade_id, seq, sender_id, receiver_id, sticker_type_id, quantity)
   values (tid, 1, p.author_id, p_receiver, ev.sticker_type_id, ev.per_winner_quantity);
   perform private.trade_event(tid, null, 'trade_created',
     jsonb_build_object('origin', p_origin, 'rank', p_rank, 'post_code', p.code));
   perform private.notify(p_receiver, 'giveaway_won', '나눔에 당첨됐어요!',
-    format('「%s」 %s시간 안에 수령 의사와 바코드를 입력해 주세요.', p.title, ev.claim_hours),
+    format('「%s」 %s시간 안에 거래 화면에서 스레드 아이디와 바코드를 입력해 주세요.', p.title, ev.claim_hours),
+    '/trades/' || tid);
+  perform private.notify(p.author_id, 'giveaway_trade', '받을 분이 정해졌어요',
+    format('「%s」 거래 화면에서 내 스레드 아이디를 입력하고 서로 확인해 주세요.', p.title),
     '/trades/' || tid);
   return tid;
 end;
@@ -572,7 +583,7 @@ begin
     end if;
   end loop;
   perform private.notify(p.author_id, 'giveaway_drawn', '나눔 추첨이 끝났어요',
-    format('「%s」 당첨자가 수령 의사를 확인하면 바코드가 열려요.', p.title), '/posts/' || p.code);
+    format('「%s」 거래 화면에서 서로 스레드 아이디를 확인하면 바코드가 열려요.', p.title), '/posts/' || p.code);
 end;
 $$;
 
@@ -729,6 +740,8 @@ declare
   n_disputed int := 0;
   n_drawn int := 0;
   any_declared boolean;
+  giver_done boolean;
+  receiver_done boolean;
   pa record;
 begin
   -- 1. automatic draws for closed random/quiz/rps giveaways
@@ -760,10 +773,23 @@ begin
      for update skip locked
   loop
     if t.status in ('proposed', 'accepted') then
+      -- who still had something to do in this stage?
+      select coalesce(bool_and(case when t.status = 'proposed' then accepted_at is not null else peer_confirmed_at is not null end)
+                        filter (where role = 'giver'), false),
+             coalesce(bool_and(case when t.status = 'proposed' then accepted_at is not null else peer_confirmed_at is not null end)
+                        filter (where role = 'receiver'), false)
+        into giver_done, receiver_done
+        from public.trade_participants where trade_id = t.id;
       perform private.trade_event(t.id, null, 'deadline_passed', jsonb_build_object('stage', t.status));
+      if t.kind = 'giveaway' and receiver_done and not giver_done then
+        perform private.trade_event(t.id, null, 'unfulfilled_by_sender',
+          jsonb_build_object('user_id', (select user_id from public.trade_participants where trade_id = t.id and role = 'giver'),
+                             'stage', t.status));
+      end if;
+      -- a winner who did not respond gives the slot to the next reserve
       perform private.close_trade(t.id, 'expired', null,
-        case when t.kind = 'giveaway' then '수령 의사 확인 기한이 지났어요' else '응답 기한이 지났어요' end,
-        t.kind = 'giveaway');
+        case when t.status = 'proposed' then '정보 입력 기한이 지났어요' else '서로 확인 기한이 지났어요' end,
+        t.kind = 'giveaway' and not receiver_done);
       n_expired := n_expired + 1;
     elsif t.status in ('ready', 'transfer_in_progress') then
       select coalesce(bool_or(sent_declared_at is not null), false) into any_declared

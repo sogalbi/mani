@@ -1,0 +1,90 @@
+.action {
+  border: 2px solid var(--butter);
+}
+.todo {
+  background: var(--butter-soft);
+}
+.items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.dir {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  font-weight: 700;
+}
+.barcode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 14px 8px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 2px dashed var(--sage);
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+.stepLabels {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-3);
+  text-align: center;
+}
+.stepLabels .on {
+  color: var(--text);
+  font-weight: 700;
+}
+.flowItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+}
+.person {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.flag {
+  font-size: 0.72rem;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--gray-soft);
+  color: var(--text-3);
+}
+.flagOn {
+  background: var(--sage-soft);
+  color: var(--sage-deep);
+  font-weight: 700;
+}
+.radio {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  min-height: 48px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+.radio input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--sage-deep);
+  flex: none;
+}

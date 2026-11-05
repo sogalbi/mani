@@ -243,7 +243,12 @@ create table public.trade_participants (
   role text not null check (role in ('giver', 'receiver', 'swapper')),
   sends boolean not null,
   receives boolean not null,
+  -- Threads ID given for this trade (shown only to the other participant and admins)
+  threads_handle text check (threads_handle ~ '^[A-Za-z0-9_.]{1,30}$'),
+  -- accepted_at: entered trade info (Threads ID, barcode if receiving) and agreed to the risk notice
   accepted_at timestamptz,
+  -- peer_confirmed_at: checked the counterpart's Threads ID. Barcodes open only after everyone confirmed.
+  peer_confirmed_at timestamptz,
   barcode_ready_at timestamptz,
   barcode_opened_at timestamptz,
   sent_declared_at timestamptz,

@@ -310,16 +310,28 @@ describe('바코드/교환', () => {
   const BARCODE = '9876 5432 1012 3456';
   const DIGITS = '9876543210123456';
 
-  test('승인 전에는 바코드에 접근할 수 없고, 거래 당사자가 아니면 볼 수 없다', async () => {
+  test('서로 스레드 아이디를 확인하기 전에는 바코드가 열리지 않고, 거래 당사자가 아니면 볼 수 없다', async () => {
     const { giver, winner, tradeId } = await db.wonTrade();
     const stranger = await db.createUser();
-    const r0 = await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId });
-    assert.deepEqual(r0, { ok: false, error: 'BARCODE_NOT_READY' });
-    await assert.rejects(db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true }), /ACCEPT_FIRST/);
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await assert.rejects(db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: false }), /CONSENT_REQUIRED/);
-    await assert.rejects(db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: '12ab', p_consent: true }), /INVALID_BARCODE/);
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true });
+    const notReady = async () => assert.deepEqual(await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId }), { ok: false, error: 'BARCODE_NOT_READY' });
+    await notReady();
+    await assert.rejects(db.info(winner, tradeId, { barcode: BARCODE, consent: false }), /CONSENT_REQUIRED/);
+    await assert.rejects(db.info(winner, tradeId, { barcode: '12ab' }), /INVALID_BARCODE/);
+    await assert.rejects(db.info(winner, tradeId, { barcode: null }), /INVALID_BARCODE/);
+    await assert.rejects(db.info(winner, tradeId, { handle: 'bad handle!', barcode: BARCODE }), /INVALID_HANDLE/);
+    await assert.rejects(db.confirm(winner, tradeId), /INVALID_STATE/);
+    await db.info(winner, tradeId, { handle: '@winner.th', barcode: BARCODE });
+    assert.equal((await db.trade(giver, tradeId)).status, 'proposed');
+    await notReady();
+    await db.info(giver, tradeId, { handle: 'giver_th' });
+    const both = await db.trade(winner, tradeId);
+    assert.equal(both.status, 'accepted');
+    assert.deepEqual(both.participants.map((p) => p.threads_handle).sort(), ['giver_th', 'winner.th']);
+    assert.equal(both.can.confirm_peer, true);
+    await db.confirm(winner, tradeId);
+    await notReady();
+    await db.confirm(giver, tradeId);
+    assert.equal((await db.trade(giver, tradeId)).status, 'ready');
 
     await assert.rejects(db.trade(stranger, tradeId), /NOT_FOUND/);
     const rs = await db.rpc(stranger, 'reveal_barcode', { p_trade_id: tradeId });
@@ -332,14 +344,31 @@ describe('바코드/교환', () => {
     assert.equal(ok.barcode, DIGITS);
 
     const logs = await db.sql('select accessor_id, result from private.barcode_access_logs where trade_id = $1 order by id', [tradeId]);
-    assert.deepEqual(logs.map((l) => l.result), ['denied:not_ready', 'denied:not_sender', 'denied:not_sender', 'shown']);
+    assert.deepEqual(logs.map((l) => l.result), [
+      'denied:not_ready', 'denied:not_ready', 'denied:not_ready', 'denied:not_sender', 'denied:not_sender', 'shown']);
+  });
+
+  test('한쪽이 정보를 고치면 서로 확인을 처음부터 다시 해야 한다', async () => {
+    const { giver, winner, tradeId } = await db.wonTrade();
+    await db.info(winner, tradeId, { barcode: BARCODE });
+    await db.info(giver, tradeId);
+    await db.confirm(winner, tradeId);
+    await db.info(giver, tradeId, { handle: 'changed_handle' });
+    const t = await db.trade(winner, tradeId);
+    assert.equal(t.status, 'accepted');
+    assert.ok(t.participants.every((p) => p.peer_confirmed_at === null));
+    assert.ok(t.events.some((e) => e.type === 'info_updated'));
+    await db.confirm(winner, tradeId);
+    await db.confirm(giver, tradeId);
+    assert.equal((await db.trade(giver, tradeId)).status, 'ready');
+    await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId });
+    await assert.rejects(db.info(winner, tradeId, { barcode: '1111111111' }), /INVALID_STATE/);
   });
 
   test('운영자 화면과 공개 데이터 어디에도 바코드 원문이 없다', async () => {
     const { giver, winner, tradeId, post } = await db.wonTrade();
     const admin = await db.createAdmin();
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true });
+    await db.ready(giver, winner, tradeId, BARCODE);
     await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId });
     await db.rpc(winner, 'report_trade', { p_trade_id: tradeId, p_reason: 'other', p_detail: '확인 부탁해요' });
 
@@ -372,8 +401,7 @@ describe('바코드/교환', () => {
 
   test("전송 신고만으로는 완료가 아니고, 수령 확인 후 완료 · 성장 점수는 1회만", async () => {
     const { giver, winner, tradeId } = await db.wonTrade({ quantity: 2 });
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true });
+    await db.ready(giver, winner, tradeId, BARCODE);
     assert.equal((await db.trade(giver, tradeId)).status, 'ready');
     await assert.rejects(db.rpc(winner, 'confirm_receipt', { p_trade_id: tradeId }), /INVALID_STATE|SENDER_NOT_DECLARED/);
     await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId });
@@ -405,8 +433,7 @@ describe('바코드/교환', () => {
 
   test('나눔자가 전송 신고 후 받는 사람이 응답이 없으면 자동 완료/취소가 아니라 분쟁', async () => {
     const { giver, winner, tradeId } = await db.wonTrade();
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true });
+    await db.ready(giver, winner, tradeId, BARCODE);
     await db.rpc(giver, 'declare_sent', { p_trade_id: tradeId });
     await db.expireTrade(tradeId);
     await db.runJobs();
@@ -428,15 +455,17 @@ describe('바코드/교환', () => {
     const { trade_id } = await db.rpc(proposer, 'propose_swap', { p_post_id: s.id, p_risk_ack: true });
     const t0 = await db.trade(author, trade_id);
     assert.equal(t0.status, 'proposed');
-    assert.equal(t0.can.accept, true);
+    assert.equal(t0.can.submit_info, true);
     const mine = t0.items.find((i) => i.sender === t0.participants.find((p) => p.is_me).nickname);
     assert.equal(mine.code, 'GENERAL');
     assert.equal(mine.quantity, 2);
 
-    await db.rpc(author, 'accept_trade', { p_trade_id: trade_id, p_risk_ack: true });
-    await db.rpc(author, 'submit_barcode', { p_trade_id: trade_id, p_barcode: '1111222233334444', p_consent: true });
+    await db.info(author, trade_id, { barcode: '1111222233334444' });
+    assert.equal((await db.trade(author, trade_id)).status, 'proposed');
+    await db.info(proposer, trade_id, { barcode: '5555666677778888' });
     assert.equal((await db.trade(author, trade_id)).status, 'accepted');
-    await db.rpc(proposer, 'submit_barcode', { p_trade_id: trade_id, p_barcode: '5555666677778888', p_consent: true });
+    await db.confirm(author, trade_id);
+    await db.confirm(proposer, trade_id);
     assert.equal((await db.trade(author, trade_id)).status, 'ready');
 
     // each side only sees the other's number
@@ -465,11 +494,12 @@ describe('바코드/교환', () => {
     });
     const a = await db.rpc(p1, 'propose_swap', { p_post_id: s.id, p_risk_ack: true });
     const b = await db.rpc(p2, 'propose_swap', { p_post_id: s.id, p_risk_ack: true });
-    await db.rpc(author, 'accept_trade', { p_trade_id: a.trade_id, p_risk_ack: true });
+    await db.info(author, a.trade_id, { barcode: '1234567890' });
     assert.equal((await db.trade(p2, b.trade_id)).status, 'rejected');
 
-    await db.rpc(author, 'submit_barcode', { p_trade_id: a.trade_id, p_barcode: '1234567890', p_consent: true });
-    await db.rpc(p1, 'submit_barcode', { p_trade_id: a.trade_id, p_barcode: '0987654321', p_consent: true });
+    await db.info(p1, a.trade_id, { barcode: '0987654321' });
+    await db.confirm(author, a.trade_id);
+    await db.confirm(p1, a.trade_id);
     await db.rpc(author, 'declare_sent', { p_trade_id: a.trade_id });
     await db.rpc(p1, 'declare_sent', { p_trade_id: a.trade_id });
     assert.equal((await db.trade(p1, a.trade_id)).status, 'awaiting_receipt');
@@ -486,25 +516,23 @@ describe('바코드/교환', () => {
   });
 
   test('거래 위험 고지와 바코드 제공 동의가 정책 버전과 함께 기록된다', async () => {
-    const { winner, tradeId } = await db.wonTrade();
-    await assert.rejects(db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: false }), /CONSENT_REQUIRED/);
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true });
+    const { giver, winner, tradeId } = await db.wonTrade();
+    await assert.rejects(db.info(winner, tradeId, { barcode: BARCODE, consent: false }), /CONSENT_REQUIRED/);
+    await db.ready(giver, winner, tradeId, BARCODE);
     const rows = await db.sql(
       'select consent_type, policy_version from public.consent_records where user_id = $1 and trade_id = $2 order by id', [winner, tradeId]);
     assert.deepEqual(rows, [
-      { consent_type: 'trade_risk', policy_version: 'draft-2026-11' },
       { consent_type: 'barcode_provision', policy_version: 'draft-2026-11' },
+      { consent_type: 'trade_risk', policy_version: 'draft-2026-11' },
     ]);
   });
 
   test('바코드 열람 횟수 제한, 열람 후에는 바코드를 바꿀 수 없음', async () => {
     const { giver, winner, tradeId } = await db.wonTrade();
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true });
+    await db.ready(giver, winner, tradeId, BARCODE);
     for (let i = 0; i < 5; i++) assert.equal((await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId })).ok, true);
     assert.deepEqual(await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId }), { ok: false, error: 'BARCODE_VIEW_LIMIT' });
-    await assert.rejects(db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: '1111111111', p_consent: true }), /INVALID_STATE|BARCODE_LOCKED/);
+    await assert.rejects(db.info(winner, tradeId, { barcode: '1111111111' }), /INVALID_STATE/);
     const t = await db.trade(winner, tradeId);
     assert.equal(t.my_barcode.view_count, 5);
     assert.equal(t.my_barcode.last4, '3456');
@@ -512,8 +540,7 @@ describe('바코드/교환', () => {
 
   test('아무도 보내지 않고 기한이 지나면 만료, 나눔자 미이행 기록이 남는다', async () => {
     const { giver, winner, tradeId } = await db.wonTrade();
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: BARCODE, p_consent: true });
+    await db.ready(giver, winner, tradeId, BARCODE);
     await db.expireTrade(tradeId);
     await db.runJobs();
     const t = await db.trade(winner, tradeId);
@@ -532,7 +559,7 @@ describe('바코드/교환', () => {
     await assert.rejects(db.rpc(giver, 'offer_to_request', { p_post_id: r.id, p_quantity: 1 }), /ALREADY_OFFERED/);
     const t = await db.trade(requester, trade_id);
     assert.equal(t.kind, 'giveaway');
-    assert.equal(t.can.accept, true);
+    assert.equal(t.can.submit_info, true);
     assert.equal(t.me.role, 'receiver');
   });
 });
@@ -540,8 +567,7 @@ describe('바코드/교환', () => {
 describe('이력/등급', () => {
   test('나눔자·수령자 모두 MY에 기록이 남고, 게시글을 숨겨도 거래 기록은 남는다', async () => {
     const { giver, winner, tradeId, post } = await db.wonTrade();
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: '1234567890', p_consent: true });
+    await db.ready(giver, winner, tradeId, '1234567890');
     await db.rpc(giver, 'declare_sent', { p_trade_id: tradeId });
     await db.rpc(winner, 'confirm_receipt', { p_trade_id: tradeId });
 
@@ -555,7 +581,7 @@ describe('이력/등급', () => {
     const detail = await db.trade(winner, tradeId);
     assert.deepEqual(detail.items.map((i) => [i.code, i.quantity]), [['MISSION', 1]]);
     const types = detail.events.map((e) => e.type);
-    for (const ev of ['trade_created', 'terms_accepted', 'barcode_submitted', 'sent_declared', 'receipt_confirmed']) {
+    for (const ev of ['trade_created', 'info_submitted', 'peer_confirmed', 'sent_declared', 'receipt_confirmed']) {
       assert.ok(types.includes(ev), ev);
     }
     await assert.rejects(db.sql('update public.trade_events set event_type = $1 where trade_id = $2', ['x', tradeId]), /APPEND_ONLY/);
@@ -571,8 +597,7 @@ describe('이력/등급', () => {
     await db.closeGiveaway(g.id);
     await db.rpc(winner, 'draw_giveaway', { p_post_id: g.id });
     const tradeId = await db.tradeOf(g.id, winner);
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: '1234567890', p_consent: true });
+    await db.ready(giver, winner, tradeId, '1234567890');
     await db.rpc(giver, 'declare_sent', { p_trade_id: tradeId });
     await db.rpc(winner, 'confirm_receipt', { p_trade_id: tradeId });
 
@@ -596,8 +621,7 @@ describe('운영', () => {
   test('신고 접수 → 분쟁 전환 → 운영자 처리 → 신고자 확인, 모두 기록', async () => {
     const { giver, winner, tradeId } = await db.wonTrade();
     const admin = await db.createAdmin();
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: '1234567890', p_consent: true });
+    await db.ready(giver, winner, tradeId, '1234567890');
     const rep = await db.rpc(winner, 'report_trade', { p_trade_id: tradeId, p_reason: 'not_sent', p_detail: '연락이 없어요' });
     assert.equal(rep.status, 'disputed');
 
@@ -624,8 +648,8 @@ describe('운영', () => {
     await db.rpc(admin, 'admin_set_account_status', { p_user_id: winner, p_status: 'restricted', p_until: null, p_reason: '반복 미응답' });
     const other = await db.giveaway(giver);
     await assert.rejects(db.rpc(winner, 'enter_giveaway', { p_post_id: other.id }), /ACCOUNT_RESTRICTED/);
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    assert.equal((await db.trade(winner, tradeId)).status, 'accepted');
+    await db.info(winner, tradeId, { barcode: '1234567890' });
+    assert.equal((await db.trade(winner, tradeId)).me.accepted_at !== null, true);
   });
 
   test('종료된 시즌에는 새 글을 만들 수 없다', async () => {
@@ -648,8 +672,7 @@ describe('운영', () => {
 describe('추가 경계', () => {
   test('바코드를 연 뒤(전송 중)에는 기한 전까지 취소할 수 없다', async () => {
     const { giver, winner, tradeId } = await db.wonTrade();
-    await db.rpc(winner, 'accept_trade', { p_trade_id: tradeId, p_risk_ack: true });
-    await db.rpc(winner, 'submit_barcode', { p_trade_id: tradeId, p_barcode: '1234567890', p_consent: true });
+    await db.ready(giver, winner, tradeId, '1234567890');
     await db.rpc(giver, 'reveal_barcode', { p_trade_id: tradeId });
     await assert.rejects(db.rpc(winner, 'cancel_trade', { p_trade_id: tradeId }), /CANNOT_CANCEL_NOW/);
     await assert.rejects(db.rpc(giver, 'cancel_trade', { p_trade_id: tradeId }), /CANNOT_CANCEL_NOW/);

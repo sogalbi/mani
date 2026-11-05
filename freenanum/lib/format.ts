@@ -67,8 +67,8 @@ export const METHOD_HELP: Record<Method, string> = {
 };
 
 export const TRADE_STATUS_LABEL: Record<TradeStatus, string> = {
-  proposed: '수락 대기',
-  accepted: '바코드 대기',
+  proposed: '정보 입력 대기',
+  accepted: '서로 확인 대기',
   ready: '전송 대기',
   transfer_in_progress: '전송 중',
   awaiting_receipt: '수령 확인 대기',
@@ -117,8 +117,9 @@ export const DISPUTE_REASON_LABEL: Record<string, string> = {
 
 export const EVENT_LABEL: Record<string, string> = {
   trade_created: '거래가 만들어졌어요',
-  terms_accepted: '조건 수락',
-  barcode_submitted: '바코드 입력(암호화 저장)',
+  info_submitted: '스레드 아이디 입력 (받는 분 바코드는 암호화 저장)',
+  info_updated: '거래 정보 수정 (서로 확인 다시)',
+  peer_confirmed: '상대 스레드 아이디 확인',
   barcode_opened: '보내는 사람이 바코드를 열람',
   sent_declared: '보냈다고 신고',
   receipt_confirmed: '받았다고 확인',

@@ -47,6 +47,7 @@ create function private.post_card(p public.posts) returns jsonb
 language sql stable set search_path = '' as $$
   select jsonb_build_object(
     'id', p.id, 'code', p.code, 'kind', p.kind, 'title', p.title,
+    'is_mine', auth.uid() is not null and p.author_id = auth.uid(),
     'status', private.effective_post_status(p), 'visibility', p.visibility,
     'closes_at', p.closes_at, 'created_at', p.created_at,
     'author', jsonb_build_object('nickname', pr.nickname,
@@ -110,7 +111,7 @@ begin
     'action_needed', (select count(*) from public.trades t join public.trade_participants tp on tp.trade_id = t.id
                        where tp.user_id = v and (
                          (t.status = 'proposed' and tp.accepted_at is null)
-                         or (t.status in ('proposed', 'accepted') and tp.receives and tp.accepted_at is not null and tp.barcode_ready_at is null)
+                         or (t.status = 'accepted' and tp.peer_confirmed_at is null)
                          or (t.status in ('ready', 'transfer_in_progress') and tp.sends and tp.sent_declared_at is null)
                          or (t.status in ('transfer_in_progress', 'awaiting_receipt') and tp.receives and tp.receipt_confirmed_at is null
                              and not exists (select 1 from public.trade_items i join public.trade_participants s
@@ -742,14 +743,14 @@ begin
   end if;
 
   tid := private.create_trade_shell('giveaway', p.campaign_id, p.id, 'request_offer', private.setting_int('claim_hours', 24));
-  insert into public.trade_participants (trade_id, user_id, role, sends, receives, accepted_at)
-  values (tid, uid, 'giver', true, false, now()), (tid, p.author_id, 'receiver', false, true, null);
+  insert into public.trade_participants (trade_id, user_id, role, sends, receives)
+  values (tid, uid, 'giver', true, false), (tid, p.author_id, 'receiver', false, true);
   insert into public.trade_items (trade_id, seq, sender_id, receiver_id, sticker_type_id, quantity)
   values (tid, 1, uid, p.author_id, want.sticker_type_id, p_quantity);
   perform private.trade_event(tid, uid, 'trade_created', jsonb_build_object('origin', 'request_offer', 'post_code', p.code));
   perform private.record_consent(uid, 'trade_risk', tid);
   perform private.notify(p.author_id, 'request_offer', '나눔 제안이 왔어요',
-    format('%s님이 「%s」에 %s장을 나눠 주고 싶어 해요.', private.nickname(uid), p.title, p_quantity), '/trades/' || tid);
+    format('%s님이 「%s」에 %s장을 나눠 주고 싶어 해요. 거래 화면에서 스레드 아이디와 바코드를 입력해 주세요.', private.nickname(uid), p.title, p_quantity), '/trades/' || tid);
   return jsonb_build_object('trade_id', tid);
 end;
 $$;
@@ -790,8 +791,8 @@ begin
   end if;
 
   tid := private.create_trade_shell('swap', p.campaign_id, p.id, 'swap_proposal', private.setting_int('swap_accept_hours', 24));
-  insert into public.trade_participants (trade_id, user_id, role, sends, receives, accepted_at)
-  values (tid, uid, 'swapper', true, true, now()), (tid, p.author_id, 'swapper', true, true, null);
+  insert into public.trade_participants (trade_id, user_id, role, sends, receives)
+  values (tid, uid, 'swapper', true, true), (tid, p.author_id, 'swapper', true, true);
   for it in select * from public.post_items where post_id = p.id order by direction, sticker_type_id loop
     seq := seq + 1;
     insert into public.trade_items (trade_id, seq, sender_id, receiver_id, sticker_type_id, quantity)
@@ -801,7 +802,6 @@ begin
             it.sticker_type_id, it.quantity);
   end loop;
   perform private.trade_event(tid, uid, 'trade_created', jsonb_build_object('origin', 'swap_proposal', 'post_code', p.code));
-  perform private.trade_event(tid, uid, 'terms_accepted', '{}'::jsonb, 'accept:' || uid);
   perform private.record_consent(uid, 'trade_risk', tid);
   perform private.notify(p.author_id, 'swap_proposed', '교환 제안이 왔어요',
     format('%s님이 「%s」 조건으로 교환하고 싶어 해요.', private.nickname(uid), p.title), '/trades/' || tid);
@@ -827,32 +827,62 @@ begin
 end;
 $$;
 
-create function public.accept_trade(p_trade_id uuid, p_risk_ack boolean) returns jsonb
+-- Step 1: every participant enters a Threads ID; receivers also enter their barcode number.
+-- Changing it later resets everyone's confirmation.
+create function public.submit_trade_info(p_trade_id uuid, p_threads_handle text, p_barcode text, p_consent boolean) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
   uid uuid := private.current_member(true);
   r record;
+  h text := regexp_replace(btrim(coalesce(p_threads_handle, '')), '^@', '');
+  digits text := regexp_replace(coalesce(p_barcode, ''), '[\s-]', '', 'g');
+  first_time boolean;
   other record;
 begin
   r := private.lock_participant(p_trade_id, uid);
-  if (r.me).accepted_at is not null then
-    return jsonb_build_object('status', (r.t).status);
-  end if;
-  if (r.t).status <> 'proposed' then
+  if (r.t).status not in ('proposed', 'accepted') then
     raise exception 'INVALID_STATE' using errcode = 'P0001';
   end if;
-  if not coalesce(p_risk_ack, false) then
+  if not coalesce(p_consent, false) then
     raise exception 'CONSENT_REQUIRED' using errcode = 'P0001';
   end if;
-  update public.trade_participants set accepted_at = now() where trade_id = p_trade_id and user_id = uid;
+  if h !~ '^[A-Za-z0-9_.]{1,30}$' then
+    raise exception 'INVALID_HANDLE' using errcode = 'P0001';
+  end if;
+  if (r.me).receives and digits !~ '^[0-9]{8,24}$' then
+    raise exception 'INVALID_BARCODE' using errcode = 'P0001';
+  end if;
+  first_time := (r.me).accepted_at is null;
+
+  if (r.me).receives then
+    insert into private.barcode_secrets (trade_id, owner_id, ciphertext, last4)
+    values (p_trade_id, uid, extensions.pgp_sym_encrypt(digits, private.barcode_key()), right(digits, 4))
+    on conflict (trade_id, owner_id) do update
+      set ciphertext = excluded.ciphertext, last4 = excluded.last4, created_at = now(), purged_at = null, view_count = 0;
+    perform private.record_consent(uid, 'barcode_provision', p_trade_id);
+  end if;
   perform private.record_consent(uid, 'trade_risk', p_trade_id);
-  perform private.trade_event(p_trade_id, uid, 'terms_accepted', '{}'::jsonb, 'accept:' || uid);
-  perform private.notify(tp.user_id, 'trade_accepted', '상대가 거래 조건을 수락했어요',
-    '다음 단계를 확인해 주세요.', '/trades/' || p_trade_id)
+
+  update public.trade_participants
+     set threads_handle = h,
+         accepted_at = coalesce(accepted_at, now()),
+         barcode_ready_at = case when receives then now() else barcode_ready_at end
+   where trade_id = p_trade_id and user_id = uid;
+  update public.trade_participants set peer_confirmed_at = null
+   where trade_id = p_trade_id and peer_confirmed_at is not null;
+
+  -- remember the handle for next time (never overwrites an existing one)
+  insert into public.threads_profiles (user_id, handle) values (uid, h) on conflict (user_id) do nothing;
+
+  perform private.trade_event(p_trade_id, uid, case when first_time then 'info_submitted' else 'info_updated' end, '{}'::jsonb);
+  perform private.notify(tp.user_id, 'trade_info', '상대가 거래 정보를 입력했어요',
+    case when first_time then '스레드 아이디를 확인해 주세요.' else '상대가 정보를 고쳤어요. 다시 확인해 주세요.' end,
+    '/trades/' || p_trade_id)
     from public.trade_participants tp where tp.trade_id = p_trade_id and tp.user_id <> uid;
 
-  -- a swap post can only be fulfilled once: other pending proposals are declined
-  if (r.t).kind = 'swap' then
+  -- a swap post is fulfilled once: when its author joins one proposal, the other pending ones are declined
+  if (r.t).kind = 'swap' and first_time
+     and exists (select 1 from public.posts where id = (r.t).post_id and author_id = uid) then
     for other in select t.id from public.trades t
                   where t.post_id = (r.t).post_id and t.id <> p_trade_id and t.status = 'proposed' loop
       perform private.close_trade(other.id, 'rejected', null, '게시자가 다른 제안을 수락했어요', false);
@@ -862,41 +892,26 @@ begin
 end;
 $$;
 
-create function public.submit_barcode(p_trade_id uuid, p_barcode text, p_consent boolean) returns jsonb
+-- Step 2: after checking the counterpart's Threads ID. When everyone confirmed, barcodes open to senders.
+create function public.confirm_peer(p_trade_id uuid) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
   uid uuid := private.current_member(true);
   r record;
-  digits text := regexp_replace(coalesce(p_barcode, ''), '[\s-]', '', 'g');
-  existing private.barcode_secrets;
 begin
   r := private.lock_participant(p_trade_id, uid);
-  if not (r.me).receives then
-    raise exception 'NOT_RECEIVER' using errcode = 'P0001';
+  if (r.me).peer_confirmed_at is not null then
+    return jsonb_build_object('status', (r.t).status);
   end if;
-  if (r.me).accepted_at is null then
-    raise exception 'ACCEPT_FIRST' using errcode = 'P0001';
-  end if;
-  if (r.t).status not in ('proposed', 'accepted', 'ready') then
+  if (r.t).status <> 'accepted' then
     raise exception 'INVALID_STATE' using errcode = 'P0001';
   end if;
-  if not coalesce(p_consent, false) then
-    raise exception 'CONSENT_REQUIRED' using errcode = 'P0001';
-  end if;
-  if digits !~ '^[0-9]{8,24}$' then
-    raise exception 'INVALID_BARCODE' using errcode = 'P0001';
-  end if;
-  select * into existing from private.barcode_secrets where trade_id = p_trade_id and owner_id = uid for update;
-  if found and existing.view_count > 0 then
-    raise exception 'BARCODE_LOCKED' using errcode = 'P0001';
-  end if;
-  insert into private.barcode_secrets (trade_id, owner_id, ciphertext, last4)
-  values (p_trade_id, uid, extensions.pgp_sym_encrypt(digits, private.barcode_key()), right(digits, 4))
-  on conflict (trade_id, owner_id) do update
-    set ciphertext = excluded.ciphertext, last4 = excluded.last4, created_at = now(), purged_at = null;
-  update public.trade_participants set barcode_ready_at = now() where trade_id = p_trade_id and user_id = uid;
-  perform private.record_consent(uid, 'barcode_provision', p_trade_id);
-  perform private.trade_event(p_trade_id, uid, 'barcode_submitted', '{}'::jsonb);
+  update public.trade_participants set peer_confirmed_at = now() where trade_id = p_trade_id and user_id = uid;
+  perform private.trade_event(p_trade_id, uid, 'peer_confirmed', '{}'::jsonb, 'peer:' || uid || ':' || (r.me).accepted_at);
+  perform private.notify(tp.user_id, 'peer_confirmed', '상대가 나를 확인했어요',
+    '나도 상대 스레드 아이디를 확인하면 다음 단계로 넘어가요.', '/trades/' || p_trade_id)
+    from public.trade_participants tp
+   where tp.trade_id = p_trade_id and tp.user_id <> uid and tp.peer_confirmed_at is null;
   return jsonb_build_object('status', private.recompute_trade(p_trade_id, uid));
 end;
 $$;
@@ -1196,11 +1211,13 @@ begin
     'post', (select jsonb_build_object('code', p.code, 'title', p.title, 'kind', p.kind) from public.posts p where p.id = t.post_id),
     'me', case when me.trade_id is null then null else jsonb_build_object(
       'role', me.role, 'sends', me.sends, 'receives', me.receives, 'accepted_at', me.accepted_at,
+      'threads_handle', me.threads_handle, 'peer_confirmed_at', me.peer_confirmed_at,
       'barcode_ready_at', me.barcode_ready_at, 'barcode_opened_at', me.barcode_opened_at,
       'sent_declared_at', me.sent_declared_at, 'receipt_confirmed_at', me.receipt_confirmed_at) end,
     'participants', (select jsonb_agg(jsonb_build_object(
         'user_id', tp.user_id, 'nickname', pr.nickname, 'role', tp.role, 'sends', tp.sends, 'receives', tp.receives,
         'is_me', tp.user_id = uid, 'accepted_at', tp.accepted_at, 'barcode_ready_at', tp.barcode_ready_at,
+        'threads_handle', tp.threads_handle, 'peer_confirmed_at', tp.peer_confirmed_at,
         'barcode_opened_at', tp.barcode_opened_at, 'sent_declared_at', tp.sent_declared_at,
         'receipt_confirmed_at', tp.receipt_confirmed_at,
         'badge', private.member_badge(tp.user_id, t.campaign_id)) order by tp.role, pr.nickname)
@@ -1223,9 +1240,8 @@ begin
                             where trade_id = t.id and owner_id = uid and result = 'shown')) end,
     'barcode_view_limit', private.setting_int('barcode_view_limit', 5),
     'can', case when me.trade_id is null then '{}'::jsonb else jsonb_build_object(
-      'accept', t.status = 'proposed' and me.accepted_at is null,
-      'submit_barcode', me.receives and me.accepted_at is not null and t.status in ('proposed', 'accepted', 'ready')
-                        and coalesce(my_bc.view_count, 0) = 0,
+      'submit_info', t.status in ('proposed', 'accepted'),
+      'confirm_peer', t.status = 'accepted' and me.peer_confirmed_at is null,
       'reveal_barcode', me.sends and t.status in ('ready', 'transfer_in_progress') and me.sent_declared_at is null,
       'declare_sent', me.sends and t.status in ('ready', 'transfer_in_progress') and me.sent_declared_at is null,
       'confirm_receipt', me.receives and t.status in ('transfer_in_progress', 'awaiting_receipt')
@@ -1253,7 +1269,7 @@ language sql stable security definer set search_path = '' as $$
                   from public.trade_items i join public.sticker_types st on st.id = i.sticker_type_id where i.trade_id = t.id),
       'needs_action',
         (t.status = 'proposed' and tp.accepted_at is null)
-        or (t.status in ('proposed', 'accepted') and tp.receives and tp.accepted_at is not null and tp.barcode_ready_at is null)
+        or (t.status = 'accepted' and tp.peer_confirmed_at is null)
         or (t.status in ('ready', 'transfer_in_progress') and tp.sends and tp.sent_declared_at is null)
         or (t.status in ('transfer_in_progress', 'awaiting_receipt') and tp.receives and tp.receipt_confirmed_at is null
             and not exists (select 1 from public.trade_items i join public.trade_participants s
@@ -1386,6 +1402,7 @@ begin
       'reporter', (select nickname from public.profiles where user_id = r.reporter_id),
       'target_user', (select nickname from public.profiles where user_id = r.target_user_id),
       'trade_id', r.trade_id, 'trade_status', (select status from public.trades where id = r.trade_id),
+      'post_id', r.post_id,
       'post_code', (select code from public.posts where id = r.post_id)) order by r.created_at desc), '[]'::jsonb)
     from public.reports r
     where p_status is null or r.status = p_status

@@ -73,6 +73,7 @@ export interface PostItem {
 export interface PostCard {
   id: string;
   code: string;
+  is_mine?: boolean;
   kind: PostKind;
   title: string;
   status: PostStatus;
@@ -165,7 +166,9 @@ export interface TradeParticipant {
   sends: boolean;
   receives: boolean;
   is_me: boolean;
+  threads_handle: string | null;
   accepted_at: string | null;
+  peer_confirmed_at: string | null;
   barcode_ready_at: string | null;
   barcode_opened_at: string | null;
   sent_declared_at: string | null;
@@ -200,7 +203,9 @@ export interface TradeDetail {
     role: 'giver' | 'receiver' | 'swapper';
     sends: boolean;
     receives: boolean;
+    threads_handle: string | null;
     accepted_at: string | null;
+    peer_confirmed_at: string | null;
     barcode_ready_at: string | null;
     barcode_opened_at: string | null;
     sent_declared_at: string | null;
@@ -211,7 +216,7 @@ export interface TradeDetail {
   events: TradeEvent[];
   my_barcode: { submitted: boolean; last4: string | null; view_count: number; purged: boolean; last_viewed_at: string | null } | null;
   barcode_view_limit: number;
-  can: Partial<Record<'accept' | 'submit_barcode' | 'reveal_barcode' | 'declare_sent' | 'confirm_receipt' | 'cancel' | 'report', boolean>>;
+  can: Partial<Record<'submit_info' | 'confirm_peer' | 'reveal_barcode' | 'declare_sent' | 'confirm_receipt' | 'cancel' | 'report', boolean>>;
 }
 
 export interface TradeListItem {
