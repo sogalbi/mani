@@ -52,3 +52,14 @@
 - 채운 부분은 파란색, 아직 빈 칸은 노란색 `[ ]`로 보여요. "프롬프트 복사"를 누르면 채운 그대로 복사돼서 ChatGPT·Claude에 붙여넣으면 돼요.
 - 적은 내용은 이 폰에만 저장돼요(서버 없음).
 - 4번 프롬프트는 캡처에 담기지 않아서 비어 있어요. 원문을 카드에 붙여넣으면 저장해 두고 똑같이 쓸 수 있어요.
+
+---
+
+# AI 숏드라마 전자책 (`ebook/`)
+
+〈NOT YOUR MUSE〉 1화를 Claude 세션과 Higgsfield로 만든 기록을 바탕으로 쓴 제작 가이드 전자책. 초안 v0.1. 주소: `https://sogalbi.github.io/mani/ebook/`
+
+- `ebook/index.html` 한 벌이 책 전체예요. 14장 구성(왜·무엇을 → 얼굴과 공간 고정 → 대본에서 영상으로 → 완성 → 시스템 → 부록).
+- 노란 📌 상자는 아직 넣을 자료(스틸, 캡처, 숫자)가 필요한 자리, 초록 상자는 각 장 끝의 "Claude 세션에 이렇게" 프롬프트 틀, 보라 상자는 제작에서 나온 교훈이에요.
+- PDF로 뽑기: `node ebook/build_pdf.js` → `ebook/ai-short-drama-ebook.pdf` (Playwright + Chromium 필요).
+- 사실 관계는 제작 로그(STATUS_CHECKLIST, VIDEO_TEST_LOG, EP01_SCENE_PLAN 등) 기준이고, 크레딧 숫자는 근사치예요.
