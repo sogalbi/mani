@@ -1,0 +1,17 @@
+{
+  "name": "릴스 프롬프트",
+  "short_name": "릴스 프롬프트",
+  "description": "인스타그램 릴스 기획 프롬프트 7개를 내 계정에 맞게 채워 복사하는 앱",
+  "lang": "ko",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef0f3",
+  "theme_color": "#141518",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
