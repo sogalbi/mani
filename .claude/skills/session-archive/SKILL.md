@@ -50,7 +50,7 @@ Claude 대화 보관함/
 
 1. `search_files`: `title = 'Claude 대화 보관함' and mimeType = 'application/vnd.google-apps.folder' and trashed = false` (excludeContentSnippets=true).
 2. 없으면 만든다: `create_file(title='Claude 대화 보관함', contentMimeType='application/vnd.google-apps.folder')`, 그 안에 `create_file(title='세션별 대화', contentMimeType='application/vnd.google-apps.folder', parentId=<보관함 id>)`.
-3. 있으면 `search_files`로 `parentId = '<보관함 id>' and trashed = false`를 찾아 `세션별 대화` 폴더 id와 `_보관상태.json` id를 얻고, `_보관상태.json`을 `read_file_content`로 읽는다(내용은 스크립트가 기록에서 꺼낸다).
+3. 있으면 `search_files`로 `parentId = '<보관함 id>' and trashed = false`를 찾아 `세션별 대화` 폴더 id와 `_보관상태.json` id를 얻고, `_보관상태.json`을 **`download_file_content`**로 받는다(`read_file_content`는 이 파일을 빈 내용으로 돌려준다. 받은 파일은 스크립트가 기록에서 찾아 쓴다).
 4. `python3 $S init --work $W --folder-id <보관함 id> --sessions-folder-id <세션별 대화 id>`
    - `state_from`이 `drive`면 이어서 하기, `new`면 처음. 보관함이 있는데 `new`가 나오면 상태 파일 읽기가 실패한 것이니 3을 다시 한다(그냥 진행하면 전부 중복으로 올라간다).
 

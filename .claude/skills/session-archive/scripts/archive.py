@@ -54,7 +54,7 @@ def transcript_files(extra_roots):
     return sorted(out, key=os.path.getmtime)
 
 
-SAVED_RE = re.compile(r"Output has been saved to (\S+?\.txt)")
+SAVED_RE = re.compile(r"saved to (/[^\s{]+?\.txt)")
 
 
 def result_text(content):
@@ -675,6 +675,8 @@ def cmd_index(args):
     for first, sid, s, docs in rows:
         if first[:7] != month:
             month = first[:7]
+            if L[-1] != "":
+                L.append("")
             L += ["## %s" % (month or "날짜 모름"), ""]
         title = s.get("title") or docs[0]["title"]
         more = "".join(" · [이어서 %d](%s)" % (i, doc_url(d["id"])) for i, d in enumerate(docs[1:], 1))
@@ -704,7 +706,7 @@ def cmd_index(args):
             D.append("- Claude 마지막: %s" % m["digest"]["last"])
         D.append("")
     digest_path = os.path.join(out_dir(args.work), "digest.md")
-    write_text(digest_path, redact("\n".join(D)))
+    write_text(digest_path, drive_safe(redact("\n".join(D))))
     print(json.dumps({"index": index_path, "index_ref": file_ref(index_path), "sessions_in_index": len(rows),
                       "digest": digest_path, "digest_chars": os.path.getsize(digest_path)}, ensure_ascii=False))
 
