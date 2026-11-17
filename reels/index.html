@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#141518">
+<title>릴스 프롬프트</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="릴스 프롬프트">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;600&family=Nanum+Myeongjo:wght@800&display=swap">
+<style>
+/* Layout: one phone-width column. "내 계정" card on top holds the values every prompt shares; below it one card per prompt with its own extra fields, the prompt text with the blanks filled in live, and a copy button. Same ink-on-paper look as the mark app. */
+:root {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --fg: #141518;
+  --muted: #5b606d;
+  --line: #d5d8df;
+  --accent: #2b3f94;
+  --accent-fg: #ffffff;
+  --accent-soft: #e3e7f6;
+  --blank: #fff3cd;
+  --blank-fg: #6b4e00;
+  --warn: #b3261e;
+  --shadow: 0 1px 2px rgba(20, 21, 24, .06), 0 10px 28px rgba(20, 21, 24, .07);
+  --f-display: "Nanum Myeongjo", "AppleMyungjo", "Batang", serif;
+  --f-body: "IBM Plex Sans KR", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317;
+    --surface: #1b1e24;
+    --fg: #e6e8ee;
+    --muted: #9aa0ae;
+    --line: #2d313a;
+    --accent: #9aabff;
+    --accent-fg: #0d1230;
+    --accent-soft: #252c4a;
+    --blank: #3a3217;
+    --blank-fg: #ffd978;
+    --warn: #ff8a80;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317;
+  --surface: #1b1e24;
+  --fg: #e6e8ee;
+  --muted: #9aa0ae;
+  --line: #2d313a;
+  --accent: #9aabff;
+  --accent-fg: #0d1230;
+  --accent-soft: #252c4a;
+  --blank: #3a3217;
+  --blank-fg: #ffd978;
+  --warn: #ff8a80;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: max(24px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(40px, env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* header */
+.head { display: flex; flex-direction: column; gap: 4px; }
+.eyebrow {
+  margin: 0;
+  font-family: var(--f-num);
+  font-size: 12px;
+  letter-spacing: .14em;
+  color: var(--accent);
+}
+h1 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 34px;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.lede { margin: 2px 0 0; color: var(--muted); font-size: 15px; max-width: 34em; }
+.lede a { color: inherit; }
+
+/* cards */
+.card {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.card-head { display: flex; flex-direction: column; gap: 2px; }
+.num {
+  font-family: var(--f-num);
+  font-size: 12px;
+  letter-spacing: .12em;
+  color: var(--accent);
+}
+h2 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.when { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+/* fields */
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field.wide { grid-column: 1 / -1; }
+.field label { font-size: 13px; color: var(--muted); }
+.field label b { color: var(--fg); font-weight: 600; }
+.field input, .field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.4 var(--f-body);
+  outline: none;
+}
+.field textarea { min-height: 96px; resize: vertical; }
+.field input:focus-visible, .field textarea:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+/* prompt body */
+.prompt {
+  margin: 0;
+  padding: 14px 14px 14px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg);
+  border-radius: 0 12px 12px 0;
+  font: 400 15px/1.65 var(--f-body);
+  white-space: pre-wrap;
+}
+.prompt .blank {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--blank);
+  color: var(--blank-fg);
+  font-weight: 600;
+}
+.prompt .filled {
+  display: inline;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* buttons */
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.btn {
+  appearance: none;
+  border: 0;
+  border-radius: 12px;
+  font: 600 16px/1 var(--f-body);
+  min-height: 48px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  flex: 1;
+}
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-ghost { background: var(--surface); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); flex: none; }
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.hint { margin: 0; color: var(--muted); font-size: 13px; }
+.linkish {
+  appearance: none; border: 0; background: none; padding: 0;
+  color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 12px);
+  background: var(--fg);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  max-width: calc(100vw - 32px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 10;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <p class="eyebrow">K.ASRAI · INSTAGRAM REELS</p>
+    <h1>릴스 프롬프트</h1>
+    <p class="lede">릴스 소재 찾기부터 7일 테스트 계획까지, 7단계 프롬프트를 내 계정에 맞게 채워서 복사해요. 적은 내용은 이 폰에만 저장돼요. 원문은 Threads의 aialnam 님 글이에요.</p>
+  </header>
+
+  <section class="card" aria-labelledby="meTitle">
+    <div class="card-head">
+      <p class="num">공통</p>
+      <h2 id="meTitle">내 계정</h2>
+      <p class="when">여기 적은 값은 아래 프롬프트의 같은 칸에 한꺼번에 들어가요.</p>
+    </div>
+    <div class="fields" id="sharedFields"></div>
+  </section>
+
+  <div id="cards"></div>
+
+  <p class="hint" style="text-align:center">
+    <button class="linkish" type="button" id="reset">적은 내용 모두 지우기</button>
+  </p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const STORE = "reels-prompts-v1";
+
+  // Shared blanks. key = text inside the brackets in the original prompt.
+  const SHARED = [
+    { key: "분야", label: "내 분야", ph: "예: 홈카페 레시피" },
+    { key: "대상", label: "타깃", ph: "예: 집에서 커피 내리는 30대" },
+    { key: "명수", label: "팔로워 수", ph: "예: 1,200명" },
+    { key: "목표", label: "목표", ph: "도달 / 팔로워 / 매출", aliases: ["도달/팔로워/매출"] },
+  ];
+
+  const PROMPTS = [
+    {
+      n: 1, title: "일주일 동안 테스트할 소재 찾기",
+      when: "뭘 찍을지 막막할 때. 한 주 동안 돌려 볼 아이디어 7개를 받아요.",
+      fields: [],
+      text: `너는 내 인스타그램 릴스 전략가야.
+
+내 분야는 [분야], 타깃은 [대상], 팔로워는 [명수]이고 목표는 [도달/팔로워/매출]이야.
+
+앞으로 7일 동안 현실적으로 테스트할 수 있는 릴스 아이디어 7개를 제안해줘.
+
+각 아이디어마다 아래 내용을 정리해줘.
+
+* 타깃의 고민이나 욕구
+* 주제를 풀어낼 관점
+* 도입부 후킹 아이디어
+* 영상 형식
+* 끝까지 봤을 때 얻는 정보나 재미
+* 내 분야에 적합한 이유
+
+뻔한 유행보다 타깃이 실제로 궁금해하는 내용과 새로운 관점을 우선해줘.`
+    },
+    {
+      n: 2, title: "첫 3초에 시선 붙잡기",
+      when: "주제는 정했는데 첫마디가 안 떠오를 때. 후킹 문구 20개 중 상위 5개를 골라 줘요.",
+      fields: [{ key: "주제", label: "릴스 주제", ph: "예: 집에서 라떼 거품 내는 법", wide: true }],
+      text: `릴스 주제는 [주제], 타깃은 [대상]이야.
+
+첫 1~3초에 사용할 도입부 후킹 문구 20개를 만들어줘.
+
+호기심, 의외의 대비, 구체적인 고민, 흔한 실수, 전후 변화, 강한 의견, 이야기의 긴장감, 실질적인 이익 등 다양한 방식으로 써줘.
+
+내용과 맞지 않는 낚시나 알맹이 없는 표현은 빼줘.
+
+명확성, 궁금증, 타깃과의 관련성, 계속 보고 싶게 만드는 힘을 기준으로 상위 5개를 뽑고 이유도 설명해줘.`
+    },
+    {
+      n: 3, title: "끝까지 보게 만드는 대본 짜기",
+      when: "아이디어 하나를 장면·대사·자막·시간까지 있는 대본으로 만들 때.",
+      fields: [{ key: "아이디어", label: "릴스 아이디어", ph: "한두 문장으로 적어요", wide: true, multiline: true }],
+      text: `이 릴스 아이디어를 사람들이 끝까지 보고 싶게 구성해줘: [아이디어]
+
+첫 후킹, 장면별 구성, 실제 말할 대사, 화면 자막, 화면 변화, 핵심 정보나 반전, 마무리를 만들어줘. 각 구간의 예상 시간도 표시해줘.
+
+불필요한 내용은 덜어내고, 유용한 내용은 빠르게 전달해줘.
+
+궁금증을 만들었다면 영상 안에서 반드시 해소해줘. 모든 장면에는 들어가야 할 이유가 있어야 해.
+
+AI가 쓴 티가 나지 않도록 실제 사람이 말하는 자연스러운 대사로 써줘.`
+    },
+    {
+      n: 4, title: "(원문이 스크린샷에 없어요)",
+      when: "4번 프롬프트는 캡처에 담기지 않았어요. 원문을 아래에 붙여넣으면 이 폰에 저장해 두고 똑같이 채워서 복사할 수 있어요. [분야]처럼 대괄호로 쓴 부분은 위의 값으로 채워져요.",
+      custom: true,
+      fields: [{ key: "__custom4", label: "4번 프롬프트 원문", ph: "Threads 글에서 4번 프롬프트를 복사해 붙여넣으세요", wide: true, multiline: true }],
+      text: ""
+    },
+    {
+      n: 5, title: "이미 올린 릴스 개선하기",
+      when: "올린 릴스의 인사이트를 보고 다음 편에서 뭘 먼저 고칠지 정할 때.",
+      fields: [{ key: "콘텐츠와 성과 데이터", label: "콘텐츠와 성과 데이터", ph: "대본·캡션과 조회, 평균 시청 시간, 저장, 공유, 팔로우 수 등을 붙여넣어요", wide: true, multiline: true }],
+      text: `내 릴스의 내용, 대본, 캡션, 성과 데이터를 전달할게: [콘텐츠와 성과 데이터]
+
+제공한 자료를 근거로 잘된 부분과 부족한 부분을 분석해줘.
+
+확인 가능한 범위에서 도입부, 주제, 전달력, 전개 속도, 시청 유지율, 공유, 저장, 댓글, 프로필 방문, 구매·문의 같은 전환 신호를 살펴봐.
+
+확실하게 판단할 수 있는 내용과 자료만으로 알 수 없는 내용을 구분해줘.
+
+다음 릴스에서 가장 먼저 바꿔야 할 3가지를 우선순위대로 제안하고, 분석 결과를 반영해 대본을 다시 써줘.`
+    },
+    {
+      n: 6, title: "유행을 내 콘텐츠로 바꾸기",
+      when: "요즘 도는 형식을 베끼지 않고 내 분야로 가져올 때.",
+      fields: [{ key: "트렌드", label: "참고할 유행이나 영상 형식", ph: "예: 하루 루틴 POV, 전후 비교", wide: true }],
+      text: `참고하고 싶은 유행이나 영상 형식은 [트렌드], 내 분야는 [분야]야.
+
+각 트렌드가 사람들의 관심을 끄는 원리를 분석하고, 다른 크리에이터의 콘텐츠를 복제하지 않으면서 내 타깃에 맞게 활용하는 방법을 알려줘.
+
+내 전문성, 경험담, 사례, 관점을 활용한 독창적인 아이디어 10개를 제안해줘.
+
+내 경험과 관점에 관한 정보가 부족하면 먼저 질문해줘.
+
+억지스럽거나, 이미 너무 많이 쓰였거나, 원본을 지나치게 따라 한 아이디어는 따로 표시해줘.`
+    },
+    {
+      n: 7, title: "7일 테스트 일정 만들기",
+      when: "한 주 치 업로드 계획을 가설·지표까지 표로 받을 때.",
+      fields: [
+        { key: "개수", label: "하루에 올릴 수 있는 릴스", ph: "예: 1개" },
+        { key: "형식", label: "제작 가능한 형식", ph: "예: 말하기, 자막+B롤" },
+      ],
+      text: `[분야] 계정의 7일 릴스 테스트 계획을 세워줘.
+
+목표는 [목표], 하루에 올릴 수 있는 릴스는 [개수], 제작 가능한 형식은 [형식]이야.
+
+각 릴스마다 아래 내용을 정리해줘.
+
+* 테스트할 가설
+* 주제
+* 도입부 후킹
+* 영상 형식
+* 시청자가 얻는 정보나 재미
+* 행동 유도 문구
+* 확인할 핵심 성과 지표
+
+같은 아이디어를 반복하지 말고, 어떤 주제·도입부·형식·관점이 더 좋은 반응을 얻는지 비교할 수 있게 설계해줘.`
+    },
+  ];
+
+  // ---- state ----
+  let values = {};
+  try { values = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { values = {}; }
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(values)); } catch (e) { /* 저장 못 해도 화면은 동작 */ } }
+
+  // Which stored key does a bracketed blank read from?
+  const ALIAS = {};
+  for (const f of SHARED) for (const a of f.aliases || []) ALIAS[a] = f.key;
+  const lookup = (name) => (values[ALIAS[name] || name] || "").trim();
+
+  // ---- render ----
+  let toastTimer = 0;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  function makeField(f, scopeId) {
+    const wrap = document.createElement("div");
+    wrap.className = "field" + (f.wide ? " wide" : "");
+    const id = `${scopeId}-${f.key}`;
+    const label = document.createElement("label");
+    label.htmlFor = id;
+    label.innerHTML = `<b>${f.label}</b>`;
+    const input = document.createElement(f.multiline ? "textarea" : "input");
+    if (!f.multiline) input.type = "text";
+    input.id = id;
+    input.placeholder = f.ph || "";
+    input.value = values[f.key] || "";
+    input.autocomplete = "off";
+    input.addEventListener("input", () => {
+      values[f.key] = input.value;
+      save();
+      renderAll();
+    });
+    wrap.append(label, input);
+    return wrap;
+  }
+
+  function renderPrompt(el, text) {
+    el.textContent = "";
+    const re = /\[([^\[\]\n]{1,40})\]/g;
+    let last = 0, m;
+    while ((m = re.exec(text))) {
+      el.append(text.slice(last, m.index));
+      const v = lookup(m[1]);
+      const span = document.createElement("span");
+      span.className = v ? "filled" : "blank";
+      span.textContent = v || `[${m[1]}]`;
+      el.append(span);
+      last = re.lastIndex;
+    }
+    el.append(text.slice(last));
+  }
+
+  function fill(text) {
+    return text.replace(/\[([^\[\]\n]{1,40})\]/g, (all, name) => lookup(name) || all);
+  }
+
+  const promptEls = new Map();
+  function sourceText(p) { return p.custom ? (values.__custom4 || "") : p.text; }
+  function renderAll() {
+    for (const p of PROMPTS) {
+      const el = promptEls.get(p.n);
+      if (!el) continue;
+      const text = sourceText(p);
+      el.hidden = !text.trim();
+      renderPrompt(el, text);
+    }
+  }
+
+  async function copy(p, btn) {
+    const text = fill(sourceText(p));
+    if (!text.trim()) { toast("먼저 4번 프롬프트 원문을 붙여넣어 주세요"); return; }
+    const blanks = (text.match(/\[([^\[\]\n]{1,40})\]/g) || []).length;
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.left = "-9999px";
+      document.body.append(ta); ta.select();
+      try { ok = document.execCommand("copy"); } catch (e2) { ok = false; }
+      ta.remove();
+    }
+    if (!ok) { toast("복사가 안 됐어요. 글을 길게 눌러 직접 복사해 주세요"); return; }
+    toast(blanks ? `복사했어요 · 아직 안 채운 칸 ${blanks}개는 [ ]로 남아 있어요` : "복사했어요");
+    btn.textContent = "복사됨";
+    setTimeout(() => { btn.textContent = "프롬프트 복사"; }, 1600);
+  }
+
+  // shared fields
+  const shared = $("sharedFields");
+  for (const f of SHARED) shared.append(makeField(f, "s"));
+
+  // prompt cards
+  const cards = $("cards");
+  cards.style.display = "flex"; cards.style.flexDirection = "column"; cards.style.gap = "18px";
+  for (const p of PROMPTS) {
+    const card = document.createElement("section");
+    card.className = "card";
+    card.setAttribute("aria-labelledby", `t${p.n}`);
+    const head = document.createElement("div");
+    head.className = "card-head";
+    head.innerHTML = `<p class="num">${String(p.n).padStart(2, "0")} / 07</p><h2 id="t${p.n}">${p.title}</h2><p class="when">${p.when}</p>`;
+    card.append(head);
+    if (p.fields.length) {
+      const fs = document.createElement("div");
+      fs.className = "fields";
+      for (const f of p.fields) fs.append(makeField(f, `p${p.n}`));
+      card.append(fs);
+    }
+    const pre = document.createElement("pre");
+    pre.className = "prompt";
+    pre.setAttribute("aria-label", `${p.n}번 프롬프트`);
+    promptEls.set(p.n, pre);
+    card.append(pre);
+    const row = document.createElement("div");
+    row.className = "row";
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "btn btn-primary"; btn.textContent = "프롬프트 복사";
+    btn.addEventListener("click", () => copy(p, btn));
+    row.append(btn);
+    card.append(row);
+    cards.append(card);
+  }
+  renderAll();
+
+  $("reset").addEventListener("click", () => {
+    if (!confirm("적은 내용을 모두 지울까요? 4번 프롬프트 원문도 같이 지워져요.")) return;
+    values = {}; save();
+    document.querySelectorAll(".field input, .field textarea").forEach((i) => { i.value = ""; });
+    renderAll();
+    toast("모두 지웠어요");
+  });
+})();
+</script>
+</body>
+</html>
