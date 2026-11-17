@@ -1,0 +1,18 @@
+# AD CLONE STUDIO - pinned runtime + test dependencies (Python 3.11)
+# Resolved and tested on 2026-11-17 (Linux x86_64, CPython 3.11.18). Same versions publish Windows wheels,
+# but this exact set has not been installed on Windows yet - see README "검증 범위와 한계".
+#   pip install -r requirements.lock
+PySide6==6.12.0
+PySide6-Essentials==6.12.0
+PySide6-Addons==6.12.0
+shiboken6==6.12.0
+scenedetect==0.7.3
+opencv-python==5.0.0.93
+numpy==2.4.6
+click==8.5.1
+platformdirs==4.14.5
+tqdm==4.70.1
+# Windows-only transitive dependency of click/tqdm/pytest (not resolved on Linux, so not pinned)
+colorama>=0.4.6; sys_platform == "win32"
+# tests
+pytest==9.2.0
