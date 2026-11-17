@@ -1,0 +1,16 @@
+{
+  "name": "드립 카드",
+  "short_name": "드립 카드",
+  "description": "제목과 글을 인스타 게시물용 이미지 한 장으로 만들어 주는 앱",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1eff4",
+  "theme_color": "#c2185b",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
