@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+# 생성된 샘플/프로젝트는 저장소에 넣지 않는다
+samples/
+projects/
+*.mp4
+*.mov
