@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl, Signal
+from PySide6.QtCore import Qt, QTimer, QUrl, Signal
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import (
@@ -29,6 +29,7 @@ class VideoPlayer(QWidget):
         self._frame_ms = 1000 / 30
         self._duration = 0
         self._pending_seek: int | None = None
+        self._show_first_frame = False  # load() 직후 한 번만 첫 프레임을 띄운다
 
         self._player = QMediaPlayer(self)
         self._audio = QAudioOutput(self)
@@ -85,12 +86,15 @@ class VideoPlayer(QWidget):
         self._duration = duration_ms
         self._message.hide()
         self._slider.setRange(0, duration_ms)
+        self._show_first_frame = True
         self._player.setSource(QUrl.fromLocalFile(str(path)))
         self._set_enabled(True)
         self._update_time(0)
 
     def unload(self) -> None:
         """파일 핸들을 놓는다 (Windows에서 원본 교체 전에 필요)."""
+        self._show_first_frame = False
+        self._pending_seek = None
         self._player.stop()
         self._player.setSource(QUrl())
         self._set_enabled(False)
@@ -151,14 +155,23 @@ class VideoPlayer(QWidget):
 
     def _on_media_status(self, status: QMediaPlayer.MediaStatus) -> None:
         if status == QMediaPlayer.MediaStatus.LoadedMedia:
-            # 첫 프레임을 보여 주기 위해 일시정지 상태로 전환
-            if self._player.playbackState() == QMediaPlayer.PlaybackState.StoppedState:
-                self._player.pause()
-            if self._pending_seek is not None:
-                self._player.setPosition(self._pending_seek)
-                self._pending_seek = None
+            # stop()/setSource() 도중에도 이 신호가 온다. 그 안에서 플레이어를 다시 호출하면
+            # Qt 백엔드가 교착될 수 있으므로, 새로 불러온 직후에만 이벤트 루프로 미뤄서 처리한다.
+            if self._show_first_frame:
+                self._show_first_frame = False
+                QTimer.singleShot(0, self._present_first_frame)
         elif status == QMediaPlayer.MediaStatus.InvalidMedia:
             self._show_error("이 영상을 재생할 수 없습니다 (코덱 미지원). 분석과 썸네일은 계속 사용할 수 있습니다.")
+
+    def _present_first_frame(self) -> None:
+        """첫 프레임을 보여 주기 위해 일시정지 상태로 전환하고 대기 중인 탐색을 적용한다."""
+        if self._player.source().isEmpty():
+            return  # 그 사이 unload됨
+        if self._player.playbackState() == QMediaPlayer.PlaybackState.StoppedState:
+            self._player.pause()
+        if self._pending_seek is not None:
+            self._player.setPosition(self._pending_seek)
+            self._pending_seek = None
 
     def _on_error(self, error: QMediaPlayer.Error, text: str) -> None:
         if error != QMediaPlayer.Error.NoError:

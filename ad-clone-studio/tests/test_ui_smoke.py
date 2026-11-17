@@ -291,3 +291,48 @@ def test_diagnostics_and_folder_names(tmp_path):
     assert safe_folder_name("...") == "project"
     (tmp_path / "x").mkdir()
     assert unique_dir(tmp_path, "x").name == "x_2"
+
+
+_PLAYER_CYCLE = """
+import sys, time
+from PySide6.QtWidgets import QApplication
+from adclone.ui.widgets.video_player import VideoPlayer
+app = QApplication([])
+player = VideoPlayer(); player.show()
+def spin(seconds):
+    end = time.time() + seconds
+    while time.time() < end:
+        app.processEvents(); time.sleep(0.002)
+for i in range(40):
+    player.load(sys.argv[1], 1000 / 30, 5000)
+    spin(0.05 + (i % 5) * 0.04)   # 불러오는 중 / 불러온 직후 등 여러 시점에서 닫는다
+    if i % 3 == 0:
+        player.seek(1000, play=True); spin(0.05)
+    player.unload()
+print("cycles ok")
+"""
+
+
+def test_player_unload_never_deadlocks(samples, tmp_path):
+    """영상을 닫을 때(프로젝트 닫기/영상 교체/앱 종료) 플레이어가 멈추지 않는다.
+
+    닫는 도중 오는 상태 신호 안에서 플레이어를 다시 호출하면 Qt 백엔드가 간헐적으로 교착됐다.
+    교착은 프로세스를 멈추므로 별도 프로세스에서 시간 제한을 두고 확인한다.
+    """
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    script = tmp_path / "cycle.py"
+    script.write_text(_PLAYER_CYCLE, encoding="utf-8")
+    src = str(Path(__file__).resolve().parents[1] / "src")
+    env = {**os.environ, "QT_QPA_PLATFORM": "offscreen"}
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [src, env.get("PYTHONPATH")]))
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script), str(samples["rotated"])], capture_output=True, env=env, timeout=120
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail("플레이어 load/unload 반복이 120초 안에 끝나지 않았습니다 (교착)")
+    assert b"cycles ok" in result.stdout, result.stderr.decode("utf-8", "replace")[-2000:]
