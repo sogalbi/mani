@@ -69,6 +69,9 @@ def _print_summary(service: ProjectService) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import safe_stdio
+
+    safe_stdio()
     parser = argparse.ArgumentParser(prog="adclone.cli", description="AD CLONE STUDIO CLI")
     sub = parser.add_subparsers(dest="command", required=True)
     p_an = sub.add_parser("analyze", help="영상을 가져와 쇼트를 분석")

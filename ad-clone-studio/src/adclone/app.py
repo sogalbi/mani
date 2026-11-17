@@ -52,6 +52,9 @@ def apply_dark_theme(app) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from . import safe_stdio
+
+    safe_stdio()
     log_path = setup_logging()
     log = logging.getLogger("adclone")
     log.info("%s %s starting (log: %s)", APP_NAME, __version__, log_path)

@@ -108,6 +108,9 @@ def make_sample(out: Path, profile: str = "hardcuts", tools: FFmpegTools | None 
 
 
 def main(argv: list[str] | None = None) -> int:
+    from .. import safe_stdio
+
+    safe_stdio()
     parser = argparse.ArgumentParser(description="AD CLONE STUDIO 테스트용 합성 영상 생성")
     parser.add_argument("output", type=Path)
     parser.add_argument("--profile", default="hardcuts", choices=sorted(PROFILES))

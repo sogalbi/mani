@@ -35,6 +35,4 @@ jobs:
           .\.venv\Scripts\python.exe -m adclone.devtools.make_sample "$env:RUNNER_TEMP\한글 폴더\광고 샘플.mp4" --profile ad15
           .\.venv\Scripts\python.exe -m adclone.cli analyze "$env:RUNNER_TEMP\한글 폴더\광고 샘플.mp4" --project "$env:RUNNER_TEMP\한글 폴더\프로젝트" --link
       - name: Tests
-        env:
-          PYTHONUTF8: "1"
         run: .\.venv\Scripts\python.exe -m pytest -q

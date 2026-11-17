@@ -115,3 +115,22 @@ def test_reference_file_missing_is_explained(samples, tmp_path):
     with pytest.raises(Exception, match="원본 영상 파일을 찾을 수 없습니다"):
         service.require_reference_file()
     service.close()
+
+
+def test_cli_survives_console_that_cannot_print_korean(samples, tmp_path):
+    """Windows에서 출력이 cp1252 같은 인코딩으로 연결돼도 한글 메시지 때문에 죽지 않는다."""
+    import os
+    import subprocess
+    import sys
+
+    from pathlib import Path
+
+    src = str(Path(__file__).resolve().parents[1] / "src")  # 패키지를 설치하지 않은 환경에서도 실행되게
+    env = {**os.environ, "PYTHONIOENCODING": "ascii", "PYTHONUTF8": "0"}
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [src, env.get("PYTHONPATH")]))
+    result = subprocess.run(
+        [sys.executable, "-m", "adclone.cli", "analyze", str(samples["single"]), "--project", str(tmp_path / "p")],
+        capture_output=True, env=env, timeout=120,
+    )
+    assert result.returncode == 0, result.stderr.decode("ascii", "replace")
+    assert b"READY" in result.stdout
