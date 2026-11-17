@@ -40,3 +40,10 @@
 - 아주 큰 사진은 긴 변 4096px로 줄여서 저장해요(폰 브라우저 한도). JPEG 품질 95%.
 
 홈 화면에 앱으로 설치: 위 주소를 열고 안드로이드 Chrome은 메뉴(⋮) → **홈 화면에 추가**(또는 **앱 설치**), 아이폰 Safari는 공유 버튼 → **홈 화면에 추가**.
+
+---
+
+# 인스타 작업 (`.claude/instagram/`)
+
+인스타 계정 운영은 클로드 인스타 스킬 13개(`/ig-profile` … `/ig-audit`)로 한다. 글은 스킬이 쓰고 올리는 건 내가 누른다.
+설치 방법, 명령어 순서, 붙여넣을 요청 문구는 [`.claude/instagram/README.md`](.claude/instagram/README.md)에, 내 말투 파일은 [`.claude/instagram/voice.md`](.claude/instagram/voice.md)에 있다. 말투 파일부터 채울 것.
