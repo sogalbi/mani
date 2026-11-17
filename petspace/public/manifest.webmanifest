@@ -1,0 +1,17 @@
+{
+  "name": "꼬리별 추모관 — 반려동물 온라인 추모관",
+  "short_name": "꼬리별",
+  "description": "떠난 아이 사진을 큰 화면에 띄우고, 같이 기억해요.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3ece2",
+  "theme_color": "#f3ece2",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
