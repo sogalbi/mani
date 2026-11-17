@@ -1,0 +1,95 @@
+.hero {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.stat {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.stat b {
+  display: block;
+  font-size: 1.35rem;
+  font-family: var(--font-cute);
+}
+.stat span {
+  font-size: 0.76rem;
+  color: var(--text-2);
+}
+.bar {
+  height: 10px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--sage);
+  border-radius: 99px;
+}
+.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.links a,
+.links .disabled {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+}
+.links li:last-child a,
+.links li:last-child .disabled {
+  border-bottom: 0;
+}
+.disabled {
+  color: var(--text-3);
+}
+.ladder {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.locked {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+.unread {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--terra);
+  flex: none;
+  margin-top: 7px;
+}
+.notif {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.notifRead {
+  background: var(--surface-2);
+  border-color: transparent;
+}
