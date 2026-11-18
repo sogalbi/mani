@@ -1,0 +1,205 @@
+{
+ "_doc": "Camera moves for the vessel cutaway template. World units: healthy lumen radius = 1. Camera looks toward +Y at the cut plane y = 0. Lens in mm on a 36 mm vertical sensor.",
+ "oblique_dolly_in": {
+  "type": "dolly",
+  "ease": "smooth",
+  "from": {
+   "loc": [
+    -6.8,
+    -9.4,
+    4.2
+   ],
+   "target": [
+    0,
+    0,
+    0.6
+   ],
+   "lens": 45
+  },
+  "to": {
+   "loc": [
+    -3.4,
+    -8.8,
+    1.7
+   ],
+   "target": [
+    0,
+    0,
+    0.3
+   ],
+   "lens": 50
+  }
+ },
+ "front_compare_pan": {
+  "type": "dolly",
+  "ease": "smooth",
+  "from": {
+   "loc": [
+    -1.5,
+    -11.0,
+    2.9
+   ],
+   "target": [
+    0,
+    0,
+    1.7
+   ],
+   "lens": 50
+  },
+  "to": {
+   "loc": [
+    -1.2,
+    -10.0,
+    1.0
+   ],
+   "target": [
+    0,
+    0,
+    0.4
+   ],
+   "lens": 50
+  }
+ },
+ "device_wide": {
+  "type": "dolly",
+  "ease": "smooth",
+  "from": {
+   "loc": [
+    -2.6,
+    -13.2,
+    0.2
+   ],
+   "target": [
+    0,
+    0,
+    -1.3
+   ],
+   "lens": 45
+  },
+  "to": {
+   "loc": [
+    -2.0,
+    -11.6,
+    0.5
+   ],
+   "target": [
+    0,
+    0,
+    -0.4
+   ],
+   "lens": 46
+  }
+ },
+ "fixed_cutaway_closeup": {
+  "type": "dolly",
+  "ease": "smooth",
+  "from": {
+   "loc": [
+    -1.8,
+    -10.9,
+    1.4
+   ],
+   "target": [
+    0,
+    0.1,
+    0.1
+   ],
+   "lens": 50
+  },
+  "to": {
+   "loc": [
+    -2.9,
+    -9.6,
+    1.1
+   ],
+   "target": [
+    0,
+    0.1,
+    0.0
+   ],
+   "lens": 50
+  }
+ },
+ "medium_withdraw": {
+  "type": "dolly",
+  "ease": "smooth",
+  "from": {
+   "loc": [
+    -1.9,
+    -10.4,
+    0.9
+   ],
+   "target": [
+    0,
+    0,
+    -0.3
+   ],
+   "lens": 48
+  },
+  "to": {
+   "loc": [
+    -1.6,
+    -11.8,
+    0.5
+   ],
+   "target": [
+    0,
+    0,
+    -0.9
+   ],
+   "lens": 48
+  }
+ },
+ "split_compare_wide": {
+  "type": "dolly",
+  "ease": "smooth",
+  "from": {
+   "loc": [
+    -1.5,
+    -17.0,
+    1.6
+   ],
+   "target": [
+    -1.5,
+    0,
+    0.35
+   ],
+   "lens": 50
+  },
+  "to": {
+   "loc": [
+    -1.5,
+    -16.4,
+    1.4
+   ],
+   "target": [
+    -1.5,
+    0,
+    0.35
+   ],
+   "lens": 50
+  }
+ },
+ "summary_orbit": {
+  "type": "orbit",
+  "ease": "smooth",
+  "target": [
+   0,
+   0,
+   0.1
+  ],
+  "distance": [
+   9.4,
+   8.6
+  ],
+  "azim_deg": [
+   -10,
+   -40
+  ],
+  "elev_deg": [
+   6,
+   15
+  ],
+  "lens": 50
+ }
+}

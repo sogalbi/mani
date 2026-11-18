@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "videos",
+  "type": "object",
+  "required": [
+    "videos"
+  ],
+  "properties": {
+    "videos": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "required": [
+          "video_id",
+          "topic_id",
+          "script_version",
+          "render_version",
+          "upload_status",
+          "published_url"
+        ],
+        "properties": {
+          "upload_status": {
+            "enum": [
+              "draft",
+              "published",
+              "unlisted",
+              "private",
+              "removed"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

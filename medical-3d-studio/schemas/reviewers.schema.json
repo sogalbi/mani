@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "reviewers",
+  "type": "object",
+  "required": [
+    "reviewers"
+  ],
+  "properties": {
+    "reviewers": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "required": [
+          "reviewer_id",
+          "name",
+          "role",
+          "active"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "medical_expert",
+              "rights_manager",
+              "policy_legal",
+              "lawyer",
+              "editor"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

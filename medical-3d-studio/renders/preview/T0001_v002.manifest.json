@@ -1,0 +1,118 @@
+{
+  "topic_id": "T0001",
+  "quality": "preview",
+  "version": 2,
+  "rendered_at": "2026-11-05T20:39:33+09:00",
+  "spec_hash": "ca2a7e3600ef",
+  "script_hash": "cad4615d7137",
+  "claims_hash": "3b023017670f",
+  "shots_hash": "9d583b18987c",
+  "captions_sha256": "6b47b810054e5105",
+  "video": "T0001_v002.mp4",
+  "video_sha256": "9d0c54c5ec0fad12cdbcac64217f6232edcb16a0dff4d88b48a33a08f178cb80",
+  "video_clean": null,
+  "video_clean_sha256": null,
+  "captions_ass": "T0001_v002.ass",
+  "captions_srt": "T0001_v002.srt",
+  "resolution": [
+    540,
+    960
+  ],
+  "fps": 30,
+  "duration_sec": 43,
+  "audio": "AI 내레이션 · supertonic 1.3.1 (Supertone/supertonic-3) · 목소리 F1 (voice_supertonic3)",
+  "narration": {
+    "hash": "fcb647fede03",
+    "track": "T0001_v002_narration.wav",
+    "track_sha256": "ca03ed701468b553b0b22896617000a0f0f3f42b45bc0a182a11dc217ee1b309",
+    "engine": "supertonic 1.3.1 (Supertone/supertonic-3)",
+    "voice_name": "F1",
+    "asset_id": "voice_supertonic3",
+    "made_at": "2026-11-05T20:39:25+09:00",
+    "lines": [
+      {
+        "line_id": "L01",
+        "start": 0.12,
+        "end": 2.552,
+        "speed": 1.21
+      },
+      {
+        "line_id": "L02",
+        "start": 3.12,
+        "end": 6.876,
+        "speed": 1.05
+      },
+      {
+        "line_id": "L03",
+        "start": 9.12,
+        "end": 14.596,
+        "speed": 1.2
+      },
+      {
+        "line_id": "L04",
+        "start": 15.12,
+        "end": 19.529,
+        "speed": 1.07
+      },
+      {
+        "line_id": "L05",
+        "start": 20.12,
+        "end": 24.338,
+        "speed": 1.05
+      },
+      {
+        "line_id": "L06",
+        "start": 25.12,
+        "end": 29.025,
+        "speed": 1.05
+      },
+      {
+        "line_id": "L07",
+        "start": 32.12,
+        "end": 36.739,
+        "speed": 1.07
+      },
+      {
+        "line_id": "L08",
+        "start": 37.12,
+        "end": 42.777,
+        "speed": 1.3
+      }
+    ]
+  },
+  "engine": "Blender Cycles (CPU) via M3D_BPY_PYTHON",
+  "render_settings": {
+    "resolution": [
+      540,
+      960
+    ],
+    "samples": 16,
+    "noise_threshold": 0.04
+  },
+  "provenance": {
+    "builder_code": "c98a52e6bcad",
+    "font_sha256": "2e91915fab54"
+  },
+  "assets": [
+    "artery_cutaway_v1",
+    "artery_front_v1",
+    "balloon_v1",
+    "blood_cell_v1",
+    "catheter_shaft_v1",
+    "guidewire_v1",
+    "plaque_concept_v1",
+    "stent_generic_v1"
+  ],
+  "blend_file": "blender/scenes/T0001_ca2a7e3600ef.blend",
+  "python": "3.13.18",
+  "qa": {
+    "frames_checked": 1290,
+    "luma_jump_threshold": 6.0,
+    "jumps_within_shots": [],
+    "status": "ok",
+    "note": "화면은 T0001_v001.mp4와 같은 스트림 (밝기 점검 결과를 이어받음)"
+  },
+  "frame_notes": "Frames 982-1110 (shot S06) were re-rendered in a fresh process with the same builder code and spec but with Cycles persistent data turned off. In the first pass, persistent data corrupted them (the vessel's inner wall rendered black after objects switched visibility). Later builder code turns persistent data off for every render.",
+  "video_stream_from": "T0001_v001.mp4",
+  "current_code_spec_hash": "fa002e000406"
+}

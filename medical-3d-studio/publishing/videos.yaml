@@ -1,0 +1,2 @@
+# 게시된 영상 기록 (videos 표). `python -m studio published` 가 추가한다.
+videos: []

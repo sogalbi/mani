@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "approvals",
+  "type": "object",
+  "required": [
+    "topic_id",
+    "records"
+  ],
+  "properties": {
+    "records": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "required": [
+          "gate",
+          "reviewer_id",
+          "role",
+          "timestamp",
+          "version_hash",
+          "decision",
+          "comments"
+        ],
+        "properties": {
+          "gate": {
+            "enum": [
+              "G0",
+              "G1",
+              "G2",
+              "G3",
+              "G4"
+            ]
+          },
+          "decision": {
+            "enum": [
+              "PASS",
+              "REVISE",
+              "BLOCK",
+              "UNKNOWN"
+            ]
+          },
+          "version_hash": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "checked_items": {
+            "type": "array"
+          }
+        }
+      }
+    }
+  }
+}

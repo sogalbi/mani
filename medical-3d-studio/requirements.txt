@@ -1,0 +1,8 @@
+# 파이프라인 CLI (python -m studio)
+PyYAML>=6.0
+jsonschema>=4.20
+pytest>=8.0
+# 3D 렌더: Blender 4.4+ 앱(M3D_BLENDER) 또는 아래 모듈을 따로 설치한 파이썬(M3D_BPY_PYTHON)
+#   pip install bpy==5.2.3      # Python 3.13 필요, 약 400MB
+# AI 내레이션(python -m studio narrate): pip install supertonic   # 처음 실행 때 모델 약 400MB
+# 영상 인코딩: ffmpeg (libx264, libass 포함 빌드)

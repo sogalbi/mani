@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "topic",
+  "type": "object",
+  "required": [
+    "topic_id",
+    "subject",
+    "status",
+    "risk_level",
+    "duplicate_score",
+    "scope",
+    "required_specialties"
+  ],
+  "properties": {
+    "topic_id": {
+      "type": "string",
+      "pattern": "^T\\d{4}$"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "idea",
+        "approved",
+        "in_production",
+        "review",
+        "published",
+        "on_hold",
+        "retired"
+      ]
+    },
+    "risk_level": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "duplicate_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "includes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "excludes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "required_specialties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sponsorship": {
+      "type": "string"
+    },
+    "mentions_institution": {
+      "type": "boolean"
+    },
+    "uses_patient_data": {
+      "type": "boolean"
+    }
+  }
+}

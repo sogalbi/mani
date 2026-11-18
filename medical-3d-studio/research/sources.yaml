@@ -1,0 +1,239 @@
+# 출처 목록 (모든 주제가 함께 쓰는 문헌 레지스트리)
+# source_id 는 한 번 정하면 바꾸지 않는다. 주장(claims)은 이 ID로 출처를 가리킨다.
+#
+# verification:
+#   VERIFIED   사람이 원문을 직접 열어 해당 문장을 확인함 (checked_at 필수)
+#   PARTIAL    제목·주소·식별자만 확인, 내용은 검색 요약으로만 봄
+#   UNVERIFIED 아직 확인 안 함
+#
+# 2026-11-05 AI 사전 조사(Evidence Researcher) 메모:
+#   작업 환경의 네트워크 정책 때문에 NHLBI·MedlinePlus·PubMed·KDCA 등 원문 페이지를
+#   열 수 없었다. 아래 출처는 모두 검색 결과(제목·주소·요약)로만 찾은 것이라 PARTIAL이며
+#   checked_at 이 비어 있다. G1(근거 승인) 전에 사람이 각 주소를 열어 문장을 확인하고
+#   verification: VERIFIED, checked_at, 인용(quote)을 채워야 한다.
+sources:
+- source_id: S001
+  title: Coronary Heart Disease - What Is Coronary Heart Disease?
+  authors: National Heart, Lung, and Blood Institute
+  year: null
+  source_type: patient_education
+  publisher: National Heart, Lung, and Blood Institute (NIH)
+  language: en
+  doi: null
+  pmid: null
+  url: https://www.nhlbi.nih.gov/health/coronary-heart-disease
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: 'WebFetch to www.nhlbi.nih.gov failed (DNS error; host blocked by the session''s network allowlist).
+    Title, URL and content summary come from WebSearch results only. Last-reviewed date not seen. Related
+    subpage: https://www.nhlbi.nih.gov/health/coronary-heart-disease/causes'
+- source_id: S002
+  title: Heart Treatments - Percutaneous Coronary Intervention (PCI)
+  authors: National Heart, Lung, and Blood Institute
+  year: null
+  source_type: patient_education
+  publisher: National Heart, Lung, and Blood Institute (NIH)
+  language: en
+  doi: null
+  pmid: null
+  url: https://www.nhlbi.nih.gov/health-topics/percutaneous-coronary-intervention
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: Host blocked (see S001). Search results show this URL titled 'Heart Treatments - Heart Treatments'.
+    The former PCI page now appears to sit inside the combined 'Heart Treatments' page (also listed at
+    https://www.nhlbi.nih.gov/health/heart-treatments-procedures). Content seen only as search summaries.
+    Last-reviewed date not seen.
+- source_id: S003
+  title: Stents - What Are Stents?
+  authors: National Heart, Lung, and Blood Institute
+  year: null
+  source_type: patient_education
+  publisher: National Heart, Lung, and Blood Institute (NIH)
+  language: en
+  doi: null
+  pmid: null
+  url: https://www.nhlbi.nih.gov/health/stents
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: Host blocked (see S001). Content seen only as search summaries. No last-updated date was visible.
+    Search metadata hinted the page was crawled around late 2023 (unconfirmed).
+- source_id: S004
+  title: Stents - Getting a Stent
+  authors: National Heart, Lung, and Blood Institute
+  year: null
+  source_type: patient_education
+  publisher: National Heart, Lung, and Blood Institute (NIH)
+  language: en
+  doi: null
+  pmid: null
+  url: https://www.nhlbi.nih.gov/health/stents/during
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: Host blocked (see S001). Content seen only as search summaries. The search tool said the page
+    is about 3 years old (unconfirmed). The page also covers carotid and airway stents, so the reviewer
+    should cite the coronary part only.
+- source_id: S005
+  title: Stents - When Do You Need a Stent?
+  authors: National Heart, Lung, and Blood Institute
+  year: null
+  source_type: patient_education
+  publisher: National Heart, Lung, and Blood Institute (NIH)
+  language: en
+  doi: null
+  pmid: null
+  url: https://www.nhlbi.nih.gov/health/stents/when-needed
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: Host blocked (see S001). Two searches disagreed. One summary said the page describes starting
+    with monitoring, medicine and lifestyle for mild narrowing, and lists cases where a stent may not
+    be recommended. A second search could not find that section. Check on the live page before relying
+    on it for C08.
+- source_id: S006
+  title: Angioplasty and stent placement - heart (MedlinePlus Medical Encyclopedia)
+  authors: U.S. National Library of Medicine (MedlinePlus; A.D.A.M. Medical Encyclopedia)
+  year: null
+  source_type: patient_education
+  publisher: U.S. National Library of Medicine (NIH)
+  language: en
+  doi: null
+  pmid: null
+  url: https://medlineplus.gov/ency/article/007473.htm
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: WebFetch to medlineplus.gov failed (DNS error; host blocked by the session's network allowlist).
+    Content seen only as search summaries. Review date and reviewer names not seen; the search tool reported
+    the page is about 844 days old (unconfirmed).
+- source_id: S007
+  title: Angioplasty (MedlinePlus Health Topic)
+  authors: U.S. National Library of Medicine (MedlinePlus)
+  year: null
+  source_type: patient_education
+  publisher: U.S. National Library of Medicine (NIH)
+  language: en
+  doi: null
+  pmid: null
+  url: https://medlineplus.gov/angioplasty.html
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: 'Host blocked (see S006). A targeted search for the phrase ''flat against the artery wall'' (domain
+    medlineplus.gov) returned this page as the match. Not opened. Related MedlinePlus video pages have
+    similar wording: https://medlineplus.gov/ency/anatomyvideos/000096.htm (PTCA) and https://medlineplus.gov/ency/anatomyvideos/000008.htm
+    (balloon angioplasty).'
+- source_id: S008
+  title: What Is Coronary Angioplasty? (Answers by Heart patient sheet)
+  authors: American Heart Association
+  year: null
+  source_type: patient_education
+  publisher: American Heart Association
+  language: en
+  doi: null
+  pmid: null
+  url: https://www.heart.org/-/media/files/health-topics/answers-by-heart/what-is-coronary-angioplasty.pdf
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: Not fetched (the environment told us to stop trying more hosts after two DNS failures). PDF title,
+    URL and content summary come from WebSearch only. Publication or review year not seen.
+- source_id: S009
+  title: What is a Stent?
+  authors: American Heart Association
+  year: null
+  source_type: patient_education
+  publisher: American Heart Association
+  language: en
+  doi: null
+  pmid: null
+  url: https://www.heart.org/en/health-topics/heart-attack/treatment-of-a-heart-attack/stent
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: 'Not fetched (see S008). Content seen only as search summaries. Related AHA PDF: ''What Is a
+    Coronary Artery Stent?'' https://www.heart.org/-/media/files/health-topics/answers-by-heart/what-is-a-stent.pdf
+    (not checked). Last-reviewed date not seen.'
+- source_id: S010
+  title: 협심증 (국가건강정보포털)
+  authors: 질병관리청 (Korea Disease Control and Prevention Agency)
+  year: null
+  source_type: patient_education
+  publisher: 질병관리청 국가건강정보포털 (health.kdca.go.kr)
+  language: ko
+  doi: null
+  pmid: null
+  url: https://health.kdca.go.kr/healthinfo/biz/health/gnrlzHealthInfo/gnrlzHealthInfo/gnrlzHealthInfoView.do?cntnts_sn=6566
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: Not fetched (see S008). Seen only in WebSearch results. A second KDCA page, '관상 동맥 - 협심증' (cntnts_sn=5438),
+    also appeared, and the search summaries did not always say which of the two pages a sentence came
+    from. The search summary also noted that the two KDCA pages give different figures for the % narrowing
+    at which resting blood flow falls (50%+ vs 80%+). That detail is not used in the script. Revision
+    date not seen.
+- source_id: S011
+  title: '2021 ACC/AHA/SCAI Guideline for Coronary Artery Revascularization: A Report of the American
+    College of Cardiology/American Heart Association Joint Committee on Clinical Practice Guidelines'
+  authors: Lawton JS, et al.
+  year: 2022
+  source_type: guideline
+  publisher: Circulation (American Heart Association)
+  language: en
+  doi: 10.1161/CIR.0000000000001038
+  pmid: '34882435'
+  url: https://www.ahajournals.org/doi/10.1161/CIR.0000000000001038
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: 'Circulation 2022 Jan 18;145(3):e18-e114; epub 9 Dec 2021. DOI confirmed from the publisher URL
+    shown in search results with the exact title. The PubMed page itself was not opened. PMID 34882435
+    comes from a PubMed mirror record (api-pubmed-ncbi.laibokeji.com/34882435, showing ''Circulation.
+    2022 Jan 18;145(3):e18-e114. doi: 10.1161/CIR.0000000000001038'') and the Weill Cornell VIVO record
+    pubid34882435; please re-check it on PubMed. Do not confuse it with the executive summary (PMID 34882436,
+    DOI 10.1161/CIR.0000000000001039) or the JACC copublication (PMID 34895950, DOI 10.1016/j.jacc.2021.09.006).
+    Superseded? None found: a 2025 ACS guideline and a 2026 perioperative guideline (per search) still
+    cite the 2021 guideline. The ACC ''in progress'' page lists a 2026 Q4 Coronary Revascularization appropriate-use-criteria
+    document, which is not a guideline. Re-check the ACC/AHA guideline hub.'
+- source_id: S012
+  title: '2023 AHA/ACC/ACCP/ASPC/NLA/PCNA Guideline for the Management of Patients With Chronic Coronary
+    Disease: A Report of the American Heart Association/American College of Cardiology Joint Committee
+    on Clinical Practice Guidelines'
+  authors: Virani SS, Newby LK, et al.
+  year: 2023
+  source_type: guideline
+  publisher: Circulation (American Heart Association)
+  language: en
+  doi: 10.1161/CIR.0000000000001168
+  pmid: '37471501'
+  url: https://pubmed.ncbi.nlm.nih.gov/37471501/
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: 'Circulation 2023 Aug 29;148(9):e9-e119. PubMed URL with the exact title and the publisher URL
+    with the DOI both appeared in search results; neither was opened. A correction exists: DOI 10.1161/CIR.0000000000001195
+    (PMID 38048397 per search summary). JACC copublication: DOI 10.1016/j.jacc.2023.04.003. Recommendation
+    wording for C08 was seen only via secondary reproductions (Guideline Central, TCTMD, AHA journal summary)
+    in search results. No replacement found as of 2026-11-05; please re-check.'
+- source_id: S013
+  title: 2024 ESC Guidelines for the management of chronic coronary syndromes
+  authors: Vrints C, Andreotti F, Koskinas KC, et al.
+  year: 2024
+  source_type: guideline
+  publisher: European Heart Journal (European Society of Cardiology / Oxford University Press)
+  language: en
+  doi: 10.1093/eurheartj/ehae177
+  pmid: '39210710'
+  url: https://pubmed.ncbi.nlm.nih.gov/39210710/
+  access_level: unreachable
+  checked_at: null
+  verification: PARTIAL
+  notes: 'Eur Heart J 2024;45(36):3415-3537. PubMed URL with the exact title appeared in search results.
+    The DOI comes from search summaries and institutional repository records (e.g., Oxford RDM, Newcastle
+    eprints); a direct DOI search returned no page. Publisher page: https://academic.oup.com/eurheartj/article/45/36/3415/7743115
+    (not opened). A correction exists: PMID 39982387, DOI 10.1093/eurheartj/ehaf079 (Eur Heart J 2025;46(16):1565).
+    No 2025/2026 CCS replacement found; 2026 ESC heart failure, CKD and cardiac rehabilitation guidelines
+    touch on revascularization but do not replace it. Recommendation content seen only as search summaries.'

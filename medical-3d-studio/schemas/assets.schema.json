@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "assets",
+  "type": "object",
+  "required": [
+    "assets"
+  ],
+  "properties": {
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "license",
+          "commercial_use",
+          "attribution",
+          "version",
+          "accuracy_status"
+        ],
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "license": {
+            "type": "string"
+          },
+          "commercial_use": {
+            "type": "boolean"
+          },
+          "attribution": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "string"
+          },
+          "accuracy_status": {
+            "enum": [
+              "PENDING_MEDICAL_REVIEW",
+              "PASS",
+              "REVISE",
+              "BLOCK",
+              "NOT_APPLICABLE"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

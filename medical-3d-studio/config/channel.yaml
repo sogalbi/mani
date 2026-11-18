@@ -1,0 +1,27 @@
+# 채널 운영 조건 (설계 문서 "확정 운영 조건")
+channel:
+  language: ko
+  audience: 한국어 일반 시청자
+  purpose: 의료 교육용 원리 설명 (개별 환자 진단·치료 지시 금지)
+
+format:
+  aspect: "9:16"
+  min_sec: 30
+  max_sec: 60
+  fps: 30
+  preview_resolution: [540, 960]
+  final_resolution: [1080, 1920]
+  video_codec: H.264
+  container: mp4
+
+# 자막 화면 배치: 쇼츠 UI(오른쪽 버튼, 아래 설명)를 피하는 안전 영역
+caption_safe_area:
+  bottom_margin_ratio: 0.30
+  side_margin_ratio: 0.09
+
+roadmap_stage: mvp_1   # mvp_1 → pilot_10 → ops_50 → scale_300
+
+# 렌더 품질 (프리뷰는 빠르게, 최종은 깨끗하게)
+render:
+  preview: {samples: 16, noise_threshold: 0.04}
+  final:   {samples: 64, noise_threshold: 0.02}

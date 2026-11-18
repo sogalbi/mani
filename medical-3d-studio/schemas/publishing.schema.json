@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "publishing",
+  "type": "object",
+  "required": [
+    "topic_id",
+    "title",
+    "description",
+    "synthetic_content_disclosure",
+    "paid_promotion",
+    "correction_contact"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "synthetic_content_disclosure": {
+      "enum": [
+        "YES",
+        "NO",
+        "UNDECIDED"
+      ]
+    },
+    "paid_promotion": {
+      "type": "boolean"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,Pretendard,86,&H00FFFFFF,&H00FFFFFF,&H00101010,&H64000000,-1,0,0,0,100,100,0,0,1,6,2,5,90,90,0,1
+Style: Disclaimer,Pretendard,36,&H30FFFFFF,&H00FFFFFF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3,0,7,60,60,0,1
+Style: EndCard,Pretendard,53,&H00FFFFFF,&H00FFFFFF,&H00000000,&H50101828,-1,0,0,0,100,100,0,0,3,18,0,5,90,90,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 2,0:00:00.00,0:00:43.00,Disclaimer,,0,0,0,,{\pos(60,120)}교육용 3D 개념도 · 실제 크기·혈류와 다름
+Dialogue: 1,0:00:00.00,0:00:03.00,Caption,L01,0,0,0,,{\pos(540,1267)\fad(80,80)}심장 근육에 피를 보내는\N관상동맥이 좁아지면?
+Dialogue: 1,0:00:03.00,0:00:06.00,Caption,L02,0,0,0,,{\pos(540,1267)\fad(80,80)}혈관 벽에 플라크가 쌓이면
+Dialogue: 1,0:00:06.00,0:00:09.00,Caption,L02,0,0,0,,{\pos(540,1267)\fad(80,80)}혈액이 흐를 공간이\N줄어듭니다
+Dialogue: 1,0:00:09.00,0:00:12.00,Caption,L03,0,0,0,,{\pos(540,1267)\fad(80,80)}의료진은 X선 영상을 보며
+Dialogue: 1,0:00:12.00,0:00:15.00,Caption,L03,0,0,0,,{\pos(540,1267)\fad(80,80)}주로 손목이나 사타구니 혈관으로\N가는 관을 넣어 시술합니다
+Dialogue: 1,0:00:15.00,0:00:17.50,Caption,L04,0,0,0,,{\pos(540,1267)\fad(80,80)}좁아진 곳에서\N풍선을 부풀리면
+Dialogue: 1,0:00:17.50,0:00:20.00,Caption,L04,0,0,0,,{\pos(540,1267)\fad(80,80)}플라크가 혈관 벽 쪽으로\N눌립니다
+Dialogue: 1,0:00:20.00,0:00:22.50,Caption,L05,0,0,0,,{\pos(540,1267)\fad(80,80)}함께 펼쳐진 그물망 관,
+Dialogue: 1,0:00:22.50,0:00:25.00,Caption,L05,0,0,0,,{\pos(540,1267)\fad(80,80)}스텐트가 혈관 안쪽을\N받쳐 줍니다
+Dialogue: 1,0:00:25.00,0:00:28.50,Caption,L06,0,0,0,,{\pos(540,1267)\fad(80,80)}풍선은 오므라들어\N빠져나오고
+Dialogue: 1,0:00:28.50,0:00:32.00,Caption,L06,0,0,0,,{\pos(540,1267)\fad(80,80)}스텐트는\N혈관 안에 남습니다
+Dialogue: 1,0:00:32.00,0:00:34.50,Caption,L07,0,0,0,,{\pos(540,1267)\fad(80,80)}플라크를 없애는 것이 아니라
+Dialogue: 1,0:00:34.50,0:00:37.00,Caption,L07,0,0,0,,{\pos(540,1267)\fad(80,80)}좁아진 통로를 넓혀\N받쳐 주는 원리입니다
+Dialogue: 1,0:00:37.00,0:00:39.80,Caption,L08,0,0,0,,{\pos(540,1267)\fad(80,80)}좁아진 혈관이 모두\N스텐트 대상은 아닙니다
+Dialogue: 1,0:00:39.80,0:00:43.00,Caption,L08,0,0,0,,{\pos(540,1267)\fad(80,80)}치료는 환자 상태에 따라\N의료진과 함께 결정합니다
+Dialogue: 3,0:00:37.60,0:00:43.00,EndCard,,0,0,0,,{\pos(540,384)\fad(250,0)}교육용 3D 개념도.\N환자마다 치료가 다릅니다.

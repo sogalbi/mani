@@ -1,0 +1,104 @@
+# 승인 게이트·검수 체크리스트·자동 점검 규칙 (설계 문서 3~5장, 10장)
+
+decisions: [PASS, REVISE, BLOCK, UNKNOWN]   # UNKNOWN 은 PASS 로 처리하지 않는다
+
+gates:
+  G0:
+    name: 주제 승인
+    roles: [editor]
+    covers: 교육 목적, 시청자, 민감도, 제작 적합성
+    log: legal_policy
+  G1:
+    name: 근거 승인
+    roles: [medical_expert]
+    specialty_must_match: true
+    covers: 핵심 주장, 출처, 대본 범위
+    requires_no_blockers: [topic, claims, sources, script]
+    checklist: medical
+    log: medical
+  G2:
+    name: 자산 승인
+    roles: [rights_manager, editor]
+    covers: 상업적 이용 권리, 저작자 표시, 출처, 정확도
+    requires_no_blockers: [assets]
+    log: legal_policy
+  G3:
+    name: 프리뷰 승인
+    roles: [medical_expert]
+    specialty_must_match: true
+    covers: 실제 3D 움직임, 단면, 자막, 음성
+    requires_preview: true
+    requires_no_blockers: [shots, script, claims, sources]
+    checklist: medical
+    log: medical
+  G4:
+    name: 게시 승인
+    roles: [policy_legal]
+    lawyer_required_if: [sponsorship, mentions_institution, uses_patient_data]
+    covers: 정책·법률·권리·광고·설명란·표시
+    requires_final: true
+    requires_no_blockers: [publishing]
+    checklist: legal
+    log: legal_policy
+
+# 게시 직전 정책 근거 재확인 주기 (일)
+policy_recheck_days: 30
+
+checklists:
+  medical:
+    - {id: M01, text: "영상이 다루는 질병·시술·대상과 제외 범위가 명확하다"}
+    - {id: M02, text: "주요 주장마다 검증 가능한 출처, 확인일, 연구 종류가 기록돼 있다"}
+    - {id: M03, text: "최신 가이드라인과 어긋나는 내용이 없다"}
+    - {id: M04, text: "치료 결과·효과·성공률을 과장하지 않는다"}
+    - {id: M05, text: "환자별 적응증 차이와 불확실성을 표현한다"}
+    - {id: M06, text: "해부학 위치, 비율, 기구 역할, 시술 전후 순서가 적합하다"}
+    - {id: M07, text: "개념적 혈류·변형 표현을 실제 시뮬레이션으로 오인시키지 않는다"}
+    - {id: M08, text: "대본·자막·음성·3D가 같은 내용을 전달한다"}
+    - {id: M09, text: "검수자 성명·전문과목·검수일·검수 버전이 내부 기록에 남는다"}
+    - {id: M10, text: "전문가가 실제 확인한 범위만 '검수'라고 표기한다"}
+  legal:
+    - {id: L01, text: "한국 의료법상 의료광고 해당 여부를 검토했다 (특정 병원·의료인·시술 유인·홍보·협찬이 있으면 법률 전문가 검토)"}
+    - {id: L02, text: "의료 전문가 검수가 의료광고 심의 면제나 법적 안전을 보장하지 않음을 내부 기록에 명시했다"}
+    - {id: L03, text: "논문 내용의 사실 설명과 논문 도표·사진 복제를 구분했다 (복제한 도표·사진 없음 또는 허락 받음)"}
+    - {id: L04, text: "3D 모델·텍스처·폰트·배경음·AI 음성·효과음의 상업 이용권을 확인했다"}
+    - {id: L05, text: "저작자 표시, 수정 허용, 2차 저작물 조건을 확인했다"}
+    - {id: L06, text: "유튜브 의료 허위정보, 폭력적·충격적 장면, 광고 친화성, 반복·대량 생산 콘텐츠 수익화 정책, 합성·변형 콘텐츠 공개 의무를 확인했다"}
+    - {id: L07, text: "AI 사용만으로 저작권이 생긴다고 단정하지 않고 사람의 창작 기여와 권리 관계를 기록했다"}
+    - {id: L08, text: "환자 사진·검사 자료를 쓰면 개인정보·동의를 따로 검토했다 (안 쓰면 해당 없음 확인)"}
+    - {id: L09, text: "설명란에 의료 자문이 개인 진단·치료 권고가 아님을 밝혔다"}
+    - {id: L10, text: "신고·정정 요청을 받는 경로가 설명란에 있다"}
+
+# AI 사전 검증(studio check) 규칙
+lint:
+  # 과장·단정·치료 유인 표현 (대본·자막·라벨·게시 문구에 적용)
+  banned_phrases:
+    - {pattern: "완치", reason: "치료 결과 단정"}
+    - {pattern: "100\\s*%", reason: "효과·성공률 단정"}
+    - {pattern: "부작용(이|은)?\\s*없", reason: "위험 부정"}
+    - {pattern: "(가장|제일)\\s*(좋|안전|효과)", reason: "최상급 비교"}
+    - {pattern: "최고의", reason: "최상급 표현"}
+    - {pattern: "무조건", reason: "단정"}
+    - {pattern: "반드시\\s*(낫|좋아)", reason: "결과 보장"}
+    - {pattern: "(받으세요|받으셔야|추천합니다|권합니다)", reason: "치료 권유(개별 지시) 소지"}
+    - {pattern: "(병원|의원|클리닉)\\s*(에서|으로)\\s*(오|방문)", reason: "의료기관 유인 소지"}
+  # 주제별로 잘못 전달되면 안 되는 내용 (설계 문서 7장)
+  misconception_phrases:
+    - {pattern: "플라크(를|가)\\s*(제거|없애|없어|사라)", unless: "(아니|않)", reason: "스텐트가 플라크를 제거하는 것처럼 보임"}
+    - {pattern: "모든\\s*(협착|좁아진)", unless: "(아니|않)", reason: "모든 협착이 스텐트 대상인 것처럼 보임"}
+  # 실제 수술 수행 매뉴얼로 오해될 세부 조작값
+  procedural_detail_patterns:
+    - {pattern: "\\d+\\s*(atm|기압|mmHg|mm|cm|초간|분간)", reason: "실제 조작값처럼 보이는 숫자"}
+  reading_speed:
+    warn_syllables_per_sec: 7.5
+    block_syllables_per_sec: 9.0
+  caption:
+    max_chars_per_line: 18
+    max_lines: 2
+
+# 10장 중단 규칙 (studio status 가 표시)
+stop_rules:
+  - 근거 미확인·상충 주장 → 연구 단계 보류
+  - 의료 전문가가 정확성 반려 → 대본/3D 수정 후 재검수
+  - 라이선스 불명 → 해당 자산 대체 또는 권리 확인 전 사용 금지
+  - 병원 협찬/치료 권유 → 의료광고 법률 검토 전 보류
+  - 게시 후 중대한 의료 오류 제보 → 임시 비공개 검토, 전문가 재검증, 수정·정정 기록

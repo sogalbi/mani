@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "sources",
+  "type": "object",
+  "required": [
+    "sources"
+  ],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source_id",
+          "title",
+          "url",
+          "source_type",
+          "verification",
+          "checked_at",
+          "access_level"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "pattern": "^S\\d{3,}$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "year": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "doi": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pmid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "patient_education",
+              "guideline",
+              "review",
+              "primary_study",
+              "textbook"
+            ]
+          },
+          "access_level": {
+            "enum": [
+              "open",
+              "abstract_only",
+              "paywalled",
+              "unreachable"
+            ]
+          },
+          "checked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verification": {
+            "enum": [
+              "VERIFIED",
+              "PARTIAL",
+              "UNVERIFIED"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

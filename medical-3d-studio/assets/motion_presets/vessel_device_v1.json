@@ -1,0 +1,12 @@
+{
+  "_doc": "Motion presets for the vessel + device template. Implemented in blender/scripts/m3d/actions.py. Times are fractions of the shot (0 = start, 1 = end).",
+  "presets": {
+    "reveal_cutaway": {"what": "앞쪽 혈관 벽이 서서히 사라지며 단면 공개", "params": {"fade_start": "0~1", "fade_end": "0~1"}},
+    "flow_through_stenosis": {"what": "혈구가 좁아진 통로를 지나감 (개념 표현)", "params": {}},
+    "device_approach": {"what": "가이드와이어가 먼저 지나가고, 접힌 풍선+스텐트가 따라 올라와 병변에 멈춤", "params": {"wire_tip_z": "철사 끝 높이"}},
+    "educational_expansion_visualization": {"what": "풍선이 부풀며 스텐트가 함께 펼쳐지고 플라크가 벽 쪽으로 눌림 (제거 아님)", "params": {"inflate": "[시작, 끝] 0~1"}},
+    "balloon_withdrawal": {"what": "풍선이 오므라든 뒤 카테터·철사와 함께 빠지고 스텐트만 남음", "params": {}},
+    "before_after_compare": {"what": "시술 전 혈관 복제본을 옆에 놓고 나란히 비교", "params": {}},
+    "summary_orbit": {"what": "펼쳐진 스텐트를 천천히 돌아보며 정리", "params": {}}
+  }
+}

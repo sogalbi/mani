@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "claims",
+  "type": "object",
+  "required": [
+    "topic_id",
+    "claims"
+  ],
+  "properties": {
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim_id",
+          "statement",
+          "source_ids",
+          "confidence",
+          "limitations",
+          "reviewer_status"
+        ],
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "pattern": "^C\\d{2,}$"
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 5
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "confidence": {
+            "enum": [
+              "high",
+              "moderate",
+              "low"
+            ]
+          },
+          "limitations": {
+            "type": "string"
+          },
+          "reviewer_status": {
+            "enum": [
+              "PENDING",
+              "PASS",
+              "REVISE",
+              "BLOCK",
+              "UNKNOWN"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source_id"
+              ],
+              "properties": {
+                "strength": {
+                  "enum": [
+                    "full",
+                    "partial",
+                    null
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

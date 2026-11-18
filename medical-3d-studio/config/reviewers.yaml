@@ -1,0 +1,20 @@
+# 검수자 명부. 실제 검수 의료 전문가를 확보하면 여기에 추가한다 (설계 문서 12장: 아직 미정).
+# role: medical_expert | rights_manager | policy_legal | lawyer | editor
+# specialty 는 topic.yaml 의 required_specialties 중 하나와 맞아야 G1/G3 를 승인할 수 있다.
+# credential_checked: 면허·전문의 자격을 운영자가 확인했는지 (내부 기록용, 공개하지 않음)
+# active: false 인 검수자는 승인 기록을 남길 수 없다.
+reviewers:
+  - reviewer_id: EXAMPLE-MD
+    name: (예시) 홍길동
+    role: medical_expert
+    specialty: 순환기내과
+    credential_checked: false
+    contract: null
+    active: false
+  - reviewer_id: OPS-01
+    name: (운영자 이름을 적으세요)
+    role: editor
+    specialty: null
+    credential_checked: false
+    contract: null
+    active: false

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "shots",
+  "type": "object",
+  "required": [
+    "topic_id",
+    "fps",
+    "duration_sec",
+    "scene",
+    "shots"
+  ],
+  "properties": {
+    "fps": {
+      "type": "integer"
+    },
+    "duration_sec": {
+      "type": "number"
+    },
+    "scene": {
+      "type": "object",
+      "required": [
+        "template",
+        "camera_presets",
+        "params"
+      ]
+    },
+    "shots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "shot_id",
+          "start_sec",
+          "end_sec",
+          "claim_ids",
+          "assets",
+          "action",
+          "camera",
+          "disclaimer",
+          "medical_review"
+        ],
+        "properties": {
+          "shot_id": {
+            "type": "string",
+            "pattern": "^S\\d{2}$"
+          },
+          "start_sec": {
+            "type": "number"
+          },
+          "end_sec": {
+            "type": "number"
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "action": {
+            "type": "string"
+          },
+          "camera": {
+            "type": "string"
+          },
+          "disclaimer": {
+            "type": "string"
+          },
+          "medical_review": {
+            "enum": [
+              "PENDING",
+              "PASS",
+              "REVISE",
+              "BLOCK",
+              "UNKNOWN"
+            ]
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "text",
+                "pos"
+              ],
+              "properties": {
+                "pos": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "anchor": {
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
