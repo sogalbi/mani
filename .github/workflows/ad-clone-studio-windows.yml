@@ -1,0 +1,38 @@
+name: AD Clone Studio (Windows)
+
+on:
+  pull_request:
+    paths:
+      - "ad-clone-studio/**"
+      - ".github/workflows/ad-clone-studio-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ad-clone-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install FFmpeg
+        run: choco install ffmpeg -y --no-progress
+      - name: Run the Windows setup script (same one users run)
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File scripts\setup_windows.ps1
+      - name: Environment check
+        run: .\.venv\Scripts\python.exe -m adclone.cli doctor
+      - name: Analyze a generated sample from a Korean path
+        run: |
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\한글 폴더" | Out-Null
+          .\.venv\Scripts\python.exe -m adclone.devtools.make_sample "$env:RUNNER_TEMP\한글 폴더\광고 샘플.mp4" --profile ad15
+          .\.venv\Scripts\python.exe -m adclone.cli analyze "$env:RUNNER_TEMP\한글 폴더\광고 샘플.mp4" --project "$env:RUNNER_TEMP\한글 폴더\프로젝트" --link
+      - name: Tests
+        run: .\.venv\Scripts\python.exe -m pytest -q
